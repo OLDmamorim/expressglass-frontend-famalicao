@@ -69,6 +69,19 @@ function statusToClass(status){
     default:   return 'status-red';
   }
 }
+// === SMOKE TEST ===
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const rows = await apiGet('/api/appointments', { from: hoje, to: hoje });
+    console.log('[API OK] Registos de hoje:', rows);
+    alert(`API OK ✅  ${rows.length} agendamento(s) para ${hoje}`);
+  } catch (e) {
+    console.error('[API ERRO]', e);
+    alert('API ERRO ❌ ' + e.message);
+  }
+});
+
 
 // ===== PORTAL DE AGENDAMENTO MELHORADO =====
 // Versão com localStorage + funcionalidades aprimoradas
