@@ -1,3 +1,64 @@
+// === API CONFIG ===
+const API_BASE = 'https://expressglass-backend-famalicao.netlify.app';
+
+// === CLIENTE API ===
+async function apiGet(path, params = {}) {
+  const url = new URL(API_BASE + path);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
+  });
+  const res = await fetch(url, {
+    headers: { 'X-Tenant-Id': 'famalicao' }
+  });
+  if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
+  return res.json();
+}
+
+async function apiPost(path, data) {
+  const res = await fetch(API_BASE + path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Tenant-Id': 'famalicao'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`POST ${path} -> ${res.status} ${err}`);
+  }
+  return res.json();
+}
+
+async function apiPut(path, data) {
+  const res = await fetch(API_BASE + path, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Tenant-Id': 'famalicao'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error(`PUT ${path} -> ${res.status}`);
+  return res.json();
+}
+
+async function apiDelete(path) {
+  const res = await fetch(API_BASE + path, {
+    method: 'DELETE',
+    headers: { 'X-Tenant-Id': 'famalicao' }
+  });
+  if (!res.ok && res.status !== 204) throw new Error(`DELETE ${path} -> ${res.status}`);
+  return true;
+}
+
+// cor por estado (NE=vermelho, VE=amarelo, ST=verde)
+function colorFor(status) {
+  if (status === 'NE') return '#ef4444';
+  if (status === 'VE') return '#f59e0b';
+  if (status === 'ST') return '#22c55e';
+  return '#64748b';
+}
 
 // ===== Famalicão: cores por status =====
 function statusToClass(status){
