@@ -13,6 +13,30 @@ async function apiGet(path, params = {}) {
   if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
   return res.json();
 }
+// === TESTE RÁPIDO: ler agendamentos de hoje e mostrar no <pre id="out"> ===
+function todayISO() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+async function smokeTest() {
+  const el = document.getElementById('out');
+  if (!el) return;
+
+  el.textContent = 'A consultar /api/appointments ...';
+  try {
+    const d = todayISO();
+    const rows = await apiGet('/api/appointments', { from: d, to: d });
+    el.textContent = JSON.stringify(rows, null, 2);
+  } catch (e) {
+    el.textContent = 'ERRO: ' + e.message;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', smokeTest);
+
 
 async function apiPost(path, data) {
   const res = await fetch(API_BASE + path, {
