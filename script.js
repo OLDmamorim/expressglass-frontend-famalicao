@@ -83,6 +83,25 @@ function formatDateForInput(dateStr) {
     const [y,m,d] = dateStr.split('-'); return `${d}/${m}/${y}`;
   }
   return dateStr;
+  function formatDateForInput(dateStr) {
+  if (!dateStr) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y,m,d] = dateStr.split('-'); 
+    return `${d}/${m}/${y}`;
+  }
+  return dateStr;
+}
+
+// Normaliza o período para 'Manhã' ou 'Tarde'
+function normalizePeriod(p) {
+  if (!p) return 'Manhã';
+  const t = String(p)
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .trim().toLowerCase();
+
+  if (t === 'manha') return 'Manhã';
+  if (t === 'tarde') return 'Tarde';
+  return 'Manhã';
 }
 
 // Estado → cor da barra
