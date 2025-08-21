@@ -557,8 +557,8 @@ async function saveAppointment() {
   };
 
   // Validação mínima
-  if (!appointment.plate || !appointment.car || !appointment.service || !appointment.locality) {
-    showToast('Por favor, preencha todos os campos obrigatórios (Matrícula, Carro, Serviço, Localidade).', 'error');
+ if (!appointment.plate || !appointment.car || !appointment.service) {
+    showToast('Por favor, preencha Matrícula, Carro e Serviço.', 'error');
     return;
   }
 
