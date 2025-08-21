@@ -23,7 +23,7 @@
       </div>
     </header>
 
-    <!-- Barra de pesquisa (oculta por defeito) -->
+    <!-- Barra de pesquisa -->
     <div id="searchBar" class="search-bar hidden">
       <input type="text" id="searchInput" placeholder="Pesquisar por matrícula, carro ou localidade..." />
       <button id="clearSearch" class="search-clear">✕</button>
@@ -41,12 +41,12 @@
       </div>
     </div>
 
-    <!-- Calendário (desktop) -->
+    <!-- Calendário -->
     <div class="schedule-container print-page-1">
       <table id="schedule" class="schedule"></table>
     </div>
 
-    <!-- Serviços por agendar (desktop) -->
+    <!-- Serviços por agendar -->
     <section class="unscheduled-container">
       <h3>SERVIÇOS POR AGENDAR</h3>
       <div class="unscheduled-actions">
@@ -75,7 +75,7 @@
       <button id="addServiceMobile" class="mobile-add-btn">+ Novo Serviço</button>
     </section>
 
-    <!-- Tabela de serviços a realizar -->
+    <!-- Tabela de serviços -->
     <section class="services-table-container print-page-2">
       <h3 id="servicesTableTitle">SERVIÇOS A REALIZAR</h3>
       <div class="services-summary">
@@ -85,14 +85,12 @@
       <div class="table-wrapper">
         <table id="servicesTable" class="services-table">
           <thead>
-            <tbody id="rows-servicos"></tbody>
             <tr>
               <th>Data</th>
               <th>Período</th>
               <th>Matrícula</th>
               <th>Carro</th>
               <th>Serviço</th>
-              
               <th>Observações</th>
               <th>Estado</th>
               <th>Dias</th>
@@ -104,7 +102,7 @@
       </div>
     </section>
 
-    <!-- Formulário de agendamento -->
+    <!-- Formulário -->
     <div id="appointmentModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
@@ -152,20 +150,6 @@
                 <option value="POL">POL - Polimento</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="appointmentLocality">Localidade *</label>
-              <div class="locality-dropdown">
-                <div class="locality-selected" id="localitySelected" onclick="toggleLocalityDropdown()">
-                  <span class="locality-dot" id="selectedLocalityDot"></span>
-                  <span id="selectedLocalityText">Selecione a localidade</span>
-                  <span class="dropdown-arrow">▼</span>
-                </div>
-                <div class="locality-options" id="localityOptions">
-                  <!-- Opções serão preenchidas via JavaScript -->
-                </div>
-                <input type="hidden" id="appointmentLocality" required />
-              </div>
-            </div>
           </div>
 
           <div class="form-row">
@@ -181,12 +165,12 @@
 
           <div class="form-group">
             <label for="appointmentNotes">Observações</label>
-            <textarea id="appointmentNotes" placeholder="Informações adicionais (não aparece no calendário)" rows="3"></textarea>
+            <textarea id="appointmentNotes" placeholder="Informações adicionais" rows="3"></textarea>
           </div>
 
           <div class="form-group">
             <label for="appointmentExtra">Outros dados (opcional)</label>
-            <textarea id="appointmentExtra" placeholder="Informações adicionais (não aparece no calendário)" rows="2"></textarea>
+            <textarea id="appointmentExtra" placeholder="Informações adicionais" rows="2"></textarea>
           </div>
 
           <div class="form-actions">
@@ -198,7 +182,7 @@
       </div>
     </div>
 
-    <!-- Modal de backup -->
+    <!-- Backup -->
     <div id="backupModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
@@ -225,23 +209,21 @@
       </div>
     </div>
 
-    <!-- Modal de estatísticas -->
+    <!-- Estatísticas -->
     <div id="statsModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
           <h3>📊 Estatísticas</h3>
           <button class="close-btn" onclick="closeStatsModal()">✕</button>
         </div>
-        <div id="statsContent" class="stats-content">
-          <!-- Conteúdo gerado dinamicamente -->
-        </div>
+        <div id="statsContent" class="stats-content"></div>
       </div>
     </div>
 
-    <!-- Toast notifications -->
+    <!-- Toasts -->
     <div id="toastContainer" class="toast-container"></div>
     
-    <!-- Seção de impressão para serviços por agendar (oculta, só visível na impressão) -->
+    <!-- Impressão: por agendar -->
     <div class="print-unscheduled-section">
       <h2>SERVIÇOS POR AGENDAR</h2>
       <table class="print-unscheduled-table">
@@ -250,18 +232,16 @@
             <th>Matrícula</th>
             <th>Modelo do Carro</th>
             <th>Serviço</th>
-            
             <th>Estado</th>
             <th>Observações</th>
             <th>Outros Dados</th>
           </tr>
         </thead>
-        <tbody id="printUnscheduledTableBody">
-          <!-- Conteúdo gerado dinamicamente -->
-        </tbody>
+        <tbody id="printUnscheduledTableBody"></tbody>
       </table>
     </div>
-        <!-- Seção de impressão para serviços do dia seguinte (oculta, só visível na impressão) -->
+
+    <!-- Impressão: amanhã -->
     <div class="print-tomorrow-section">
       <h2 id="printTomorrowTitle">SERVIÇOS DE AMANHÃ</h2>
       <div class="print-tomorrow-date" id="printTomorrowDate"></div>
@@ -272,15 +252,12 @@
             <th>Matrícula</th>
             <th>Modelo do Carro</th>
             <th>Serviço</th>
-            
             <th>Estado</th>
             <th>Observações</th>
             <th>Outros Dados</th>
           </tr>
         </thead>
-        <tbody id="printTomorrowTableBody">
-          <!-- Conteúdo gerado dinamicamente -->
-        </tbody>
+        <tbody id="printTomorrowTableBody"></tbody>
       </table>
       <div class="print-tomorrow-empty" id="printTomorrowEmpty" style="display: none;">
         <p>Não há serviços agendados para amanhã.</p>
@@ -290,6 +267,5 @@
   </div>
 
   <script src="script.js"></script>
-  </body>
+</body>
 </html>
-
