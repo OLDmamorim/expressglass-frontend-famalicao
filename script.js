@@ -407,7 +407,7 @@ async function saveAppointment() {
   const appointment = {
     id:     editingId || Date.now() + Math.random(),
     date:   parseDate(rawDate),
-    period: document.getElementById('appointmentPeriod').value,
+    period: normalizePeriod(document.getElementById('appointmentPeriod').value),
     plate:  document.getElementById('appointmentPlate').value.toUpperCase(),
     car:    document.getElementById('appointmentCar').value,
     service:document.getElementById('appointmentService').value,
