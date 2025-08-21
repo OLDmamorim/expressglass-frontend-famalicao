@@ -152,6 +152,9 @@ async function load() {
     appointments = await apiGet('/api/appointments');
     // normalização mínima
     appointments.forEach(a => { if (!a.id) a.id = Date.now() + Math.random(); if (!a.sortIndex) a.sortIndex = 1; });
+    a.period = normalizePeriod(a.period);
+  a.date   = parseDate(a.date);
+});
     showToast('Dados carregados da API!', 'success');
   } catch (e) {
     appointments = [];
