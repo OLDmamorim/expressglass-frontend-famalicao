@@ -549,7 +549,7 @@ async function saveAppointment() {
     plate: document.getElementById('appointmentPlate').value.toUpperCase(),
     car: document.getElementById('appointmentCar').value,
     service: document.getElementById('appointmentService').value,
-    locality: document.getElementById('appointmentLocality').value, // IMPORTANTE
+    locality: '', // opcional; podes remover esta linha também
     status: document.getElementById('appointmentStatus').value,
     notes: document.getElementById('appointmentNotes').value,
     extra: document.getElementById('appointmentExtra').value,
