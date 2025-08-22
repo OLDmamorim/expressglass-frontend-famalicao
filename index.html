@@ -8,14 +8,33 @@
   <meta name="theme-color" content="#2563eb">
 
   <style>
+    /* Mostrar as secções de impressão só no print */
     .print-unscheduled-section, .print-tomorrow-section { display: none; }
     @media print {
       .print-unscheduled-section, .print-tomorrow-section { display: block; }
       .no-print { display: none !important; }
     }
-    /* estado vazio dos "por agendar" */
+
+    /* ====== FIXES MOBILE ====== */
+    /* Header: título + ícones não se sobrepõem em ecrãs pequenos */
+    @media (max-width: 768px) {
+      .page-header { display:flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+      .page-header h1 { font-size: 28px; line-height: 1.15; margin: 0; }
+      .subtitle { font-size: 14px; }
+      .header-actions { display:flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    }
+
+    /* Calendário visível no mobile (antes ficava escondido pelo CSS original) */
+    .schedule-container { display:block !important; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* Garante uma largura mínima para surgir scroll horizontal, se faltar espaço */
+    .schedule { min-width: 960px; }
+
+    /* Mostra botões de navegação no mobile se o CSS antigo os esconder */
+    .nav-left .nav-button { display: inline-flex !important; }
+
+    /* ====== Por Agendar vazio ====== */
     .unscheduled-list .drop-zone.empty{
-      min-height: 100px;
+      min-height: 110px;
       border: 2px dashed #e5e7eb;
       border-radius: 12px;
       background: #fff;
@@ -51,7 +70,7 @@
       <button id="clearSearch" class="search-clear" type="button">✕</button>
     </div>
 
-    <!-- Navegação semana -->
+    <!-- Navegação da semana -->
     <div class="nav-bar">
       <div class="nav-left">
         <button id="prevWeek" class="nav-button" type="button">&lt; Anterior</button>
@@ -85,10 +104,10 @@
     </section>
 
     <script>
-      // fallback de clique
+      // Fallback caso o listener falhe em webviews antigas
       document.getElementById('addServiceBtn')?.addEventListener('click', function(){
         try { window.openAppointmentModal && window.openAppointmentModal(); }
-        catch(e){ alert('Não consegui abrir o formulário.\n'+e.message); }
+        catch(e){ alert('Não consegui abrir o formulário.\\n'+e.message); }
       });
     </script>
 
@@ -282,6 +301,6 @@
     </div>
   </div>
 
-  <script src="script.js?v=6" defer></script>
+  <script src="script.js?v=7" defer></script>
 </body>
 </html>
