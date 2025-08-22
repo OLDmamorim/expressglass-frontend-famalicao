@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
   <style>
-    /* Garantir que secções de impressão não aparecem no ecrã */
+    /* Garantir que secções só de impressão não aparecem no ecrã */
     @media screen {
       .print-unscheduled-section,
       .print-tomorrow-section { display:none; }
@@ -74,167 +74,224 @@
       <div id="ag2Grid" class="ag2-grid"><!-- JS injeta cartões --></div>
     </section>
 
+    <!-- Estilos específicos do bloco ag2 -->
     <style>
-    /* ====== BLOCO ISOLADO ag2- (não afeta o resto) ====== */
-    .ag2-sec{margin:16px 0;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,.06);box-shadow:0 6px 16px rgba(0,0,0,.06);background:#fff}
-    .ag2-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .ag2-title{margin:0;font-size:18px;font-weight:800;color:#1e293b}
-    .ag2-actions{display:flex;align-items:center;gap:10px}
-    .ag2-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border-radius:8px;border:1px solid transparent;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08)}
-    .ag2-btn-primary{background:#2563eb;color:#fff}
-    .ag2-select-wrap{position:relative}
-    .ag2-select{appearance:none;padding:10px 36px 10px 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-weight:500;cursor:pointer}
-    .ag2-caret{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:#64748b;font-size:12px}
-    .ag2-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
-    @media(min-width:1200px){.ag2-grid>.ag2-card{grid-column:span 3}}
-    @media(min-width:800px) and (max-width:1199px){.ag2-grid>.ag2-card{grid-column:span 4}}
-    @media(max-width:799px){.ag2-grid>.ag2-card{grid-column:span 12}}
-    .ag2-card{border-radius:14px;padding:14px 14px 10px;box-shadow:0 4px 12px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.06);position:relative;transition:box-shadow .15s,transform .15s}
-    .ag2-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.10)}
-    /* cor do cartão por estado (card inteiro) */
-    .ag2-NE{background:#f8d1d1}
-    .ag2-VE{background:#d9d0ff}
-    .ag2-ST{background:#bff2e8}
-    .ag2-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-    .ag2-line{font-weight:700;color:#0f172a;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .ag2-body{margin-top:6px;color:#1f2937;font-size:13px;line-height:1.35}
-    .ag2-body small{color:#334155;display:block}
-    .ag2-controls{display:flex;align-items:center;gap:10px;margin-top:10px}
-    .ag2-chks{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .ag2-chk{display:flex;align-items:center;gap:6px;font-weight:600}
-    .ag2-chk input{width:14px;height:14px}
-    .ag2-chk input:checked+span{text-decoration:underline}
-    .ag2-acts{margin-left:auto;display:flex;align-items:center;gap:8px}
-    .ag2-iconbtn{width:30px;height:30px;border-radius:6px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.65);display:grid;place-items:center;cursor:pointer}
-    .ag2-ico{width:16px;height:16px;fill:#334155}
+      .ag2-sec{margin:16px 0;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,.06);box-shadow:0 6px 16px rgba(0,0,0,.06);background:#fff}
+      .ag2-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+      .ag2-title{margin:0;font-size:18px;font-weight:800;color:#1e293b}
+      .ag2-actions{display:flex;align-items:center;gap:10px}
+      .ag2-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border-radius:8px;border:1px solid transparent;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+      .ag2-btn-primary{background:#2563eb;color:#fff}
+      .ag2-select-wrap{position:relative}
+      .ag2-select{appearance:none;padding:10px 36px 10px 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-weight:500;cursor:pointer}
+      .ag2-caret{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:#64748b;font-size:12px}
+      .ag2-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+      @media(min-width:1200px){.ag2-grid>.ag2-card{grid-column:span 3}}
+      @media(min-width:800px) and (max-width:1199px){.ag2-grid>.ag2-card{grid-column:span 4}}
+      @media(max-width:799px){.ag2-grid>.ag2-card{grid-column:span 12}}
+      .ag2-card{border-radius:14px;padding:14px 14px 10px;box-shadow:0 4px 12px rgba(0,0,0,.08);border:1px solid rgba(0,0,0,.06);position:relative;transition:box-shadow .15s,transform .15s}
+      .ag2-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.10)}
+      .ag2-NE{background:#f8d1d1}
+      .ag2-VE{background:#d9d0ff}
+      .ag2-ST{background:#bff2e8}
+      .ag2-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+      .ag2-line{font-weight:700;color:#0f172a;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .ag2-body{margin-top:6px;color:#1f2937;font-size:13px;line-height:1.35}
+      .ag2-body small{color:#334155;display:block}
+      .ag2-controls{display:flex;align-items:center;gap:10px;margin-top:10px}
+      .ag2-chks{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+      .ag2-chk{display:flex;align-items:center;gap:6px;font-weight:600}
+      .ag2-chk input{width:14px;height:14px}
+      .ag2-chk input:checked+span{text-decoration:underline}
+      .ag2-acts{margin-left:auto;display:flex;align-items:center;gap:8px}
+      .ag2-iconbtn{width:30px;height:30px;border-radius:6px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.65);display:grid;place-items:center;cursor:pointer}
+      .ag2-ico{width:16px;height:16px;fill:#334155}
     </style>
 
+    <!-- Script do bloco ag2 (com persistência em localStorage) -->
     <script>
-    /* ====== JS isolado (ag2-) ====== */
-    (function(){
-      const ICON_EDIT = '<svg class="ag2-ico" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>';
-      const ICON_TRASH= '<svg class="ag2-ico" viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+      (function(){
+        const ICON_EDIT = '<svg class="ag2-ico" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>';
+        const ICON_TRASH= '<svg class="ag2-ico" viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
 
-      const estadoClass = s => ({NE:'ag2-NE',VE:'ag2-VE',ST:'ag2-ST'})[s]||'ag2-NE';
-      const mainEstado = (ne,ve,st) => st?'ST':(ve?'VE':'NE');
+        const estadoClass = s => ({NE:'ag2-NE',VE:'ag2-VE',ST:'ag2-ST'})[s]||'ag2-NE';
+        const mainEstado = (ne,ve,st) => st ? 'ST' : (ve ? 'VE' : 'NE');
 
-      // Demo data (substituir por fetch ao backend)
-      const ag2State = {
-        itens: [
-          { id:'1', matricula:'36-PC-67', servico:'PB',  modelo:'ROVER 600',
-            local:'Póvoa de Lanhoso | Donim // 7020AGNGN', obs:'',
-            ne:true, ve:false, st:false, estado:'NE'
-          },
-          { id:'2', matricula:'93-92-JI', servico:'PB',  modelo:'ISUZU',
-            local:'Barcelos | MIGUEL 93-92-JI // 6278AGN+*6279ASMR', obs:'',
-            ne:true, ve:true, st:false, estado:'NE'
-          },
-          { id:'3', matricula:'76-51-BP', servico:'PB',  modelo:'CIVIC',
-            local:'Póvoa de Lanhoso | REFUGIO - FALTAM MOLAS // 3948ABL', obs:'',
-            ne:false, ve:true, st:false, estado:'VE'
-          },
-          { id:'4', matricula:'78-30-UQ', servico:'PB',  modelo:'MERCEDES',
-            local:'Famalicão | RETIRAR PB _ OFICINA | CAMPOS/CRISTINA 967254054', obs:'',
-            ne:false, ve:false, st:true, estado:'ST'
-          },
-        ]
-      };
+        const LS_KEY = 'eg:ag2-unscheduled';
 
-      function renderAg2(lista){
-        const grid = document.getElementById('ag2Grid');
-        if(!grid) return;
-        grid.innerHTML = lista.map(it=>{
-          const cls = estadoClass(it.estado);
-          const title = `${it.matricula} | ${it.servico} | ${it.modelo}`;
-          return `
-            <article class="ag2-card ${cls}" data-id="${it.id}">
-              <div class="ag2-top">
-                <div class="ag2-line" title="${title}">${title}</div>
-                <div class="ag2-acts">
-                  <button class="ag2-iconbtn" title="Editar" onclick="ag2Editar('${it.id}')">${ICON_EDIT}</button>
-                  <button class="ag2-iconbtn" title="Apagar" onclick="ag2Apagar('${it.id}')">${ICON_TRASH}</button>
-                </div>
-              </div>
-              <div class="ag2-body">
-                ${it.local?`<small>${it.local}</small>`:''}
-                ${it.obs?`<small>${it.obs}</small>`:''}
-              </div>
-              <div class="ag2-controls">
-                <div class="ag2-chks">
-                  <label class="ag2-chk"><input type="checkbox" ${it.ne?'checked':''} onchange="ag2Toggle('${it.id}','NE',this.checked)"><span>N/E</span></label>
-                  <label class="ag2-chk"><input type="checkbox" ${it.ve?'checked':''} onchange="ag2Toggle('${it.id}','VE',this.checked)"><span>V/E</span></label>
-                  <label class="ag2-chk"><input type="checkbox" ${it.st?'checked':''} onchange="ag2Toggle('${it.id}','ST',this.checked)"><span>ST</span></label>
-                </div>
-              </div>
-            </article>`;
-        }).join('');
-      }
-
-      // Handlers globais
-      window.ag2Editar = function(id){ console.log('editar',id); /* abrir modal / PUT */ }
-      window.ag2Apagar = function(id){
-        if(!confirm('Apagar este serviço?')) return;
-        ag2State.itens = ag2State.itens.filter(i=>i.id!==id);
-        renderAg2(ag2State.itens);
-        /* DELETE no backend */
-      }
-      window.ag2Toggle = function(id,campo,val){
-        const it = ag2State.itens.find(i=>i.id===id); if(!it) return;
-        if(campo==='NE') it.ne=val;
-        if(campo==='VE') it.ve=val;
-        if(campo==='ST') it.st=val;
-        it.estado = mainEstado(it.ne,it.ve,it.st);
-        renderAg2(ag2State.itens);
-        /* PATCH no backend */
-      }
-
-      // Filtro + render inicial
-      function applyFiltro(){
-        const sel = document.getElementById('ag2Filtro'); if(!sel) return;
-        const v = sel.value;
-        localStorage.setItem('ag2Filtro', v);
-        document.querySelectorAll('.ag2-card').forEach(c=>{
-          if(v==='todos'){ c.style.display=''; return; }
-          const ok = c.classList.contains(v==='NE'?'ag2-NE':v==='VE'?'ag2-VE':'ag2-ST');
-          c.style.display = ok ? '' : 'none';
-        });
-      }
-      document.getElementById('ag2Filtro')?.addEventListener('change', applyFiltro);
-
-      // + Novo Serviço -> abre o modal real (sem alert)
-      document.getElementById('ag2BtnNovo')?.addEventListener('click', () => {
-        // Se o teu script já tiver funções utilitárias, usa-as:
-        if (typeof window.openNewAppointmentModal === 'function') return window.openNewAppointmentModal();
-        if (typeof window.openAppointmentModal === 'function')   return window.openAppointmentModal();
-        if (typeof window.showAppointmentModal === 'function')   return window.showAppointmentModal('new');
-
-        // Fallback direto ao DOM
-        const modal = document.getElementById('appointmentModal');
-        const form  = document.getElementById('appointmentForm');
-        const del   = document.getElementById('deleteAppointment');
-        const title = document.getElementById('modalTitle');
-        if (form) form.reset();
-        if (del)  del.classList.add('hidden');
-        if (title) title.textContent = 'Novo Agendamento';
-        const dt = document.getElementById('appointmentDate');
-        if (dt && !dt.value) dt.valueAsDate = new Date();
-        if (modal) {
-          modal.style.display = 'block';
-          modal.classList.add('open');
-          modal.removeAttribute('aria-hidden');
+        function saveAg2() {
+          try { localStorage.setItem(LS_KEY, JSON.stringify(ag2State.itens)); }
+          catch(e) { console.warn('Falha a gravar ag2 no localStorage', e); }
         }
-        document.body.style.overflow = 'hidden';
-      });
+        function loadAg2() {
+          try {
+            const raw = localStorage.getItem(LS_KEY);
+            return raw ? JSON.parse(raw) : null;
+          } catch(e) { console.warn('Falha a ler ag2 do localStorage', e); return null; }
+        }
 
-      // Inicializar
-      renderAg2(ag2State.itens);
-      const saved = localStorage.getItem('ag2Filtro'); if(saved) { const s=document.getElementById('ag2Filtro'); if(s){s.value=saved;}}
-      applyFiltro();
-    })();
+        // Estado inicial (se não houver storage, usa seed)
+        const ag2State = {
+          itens: loadAg2() || [
+            { id:'1', matricula:'36-PC-67', servico:'PB',  modelo:'ROVER 600',
+              local:'Póvoa de Lanhoso | Donim // 7020AGNGN', obs:'',
+              ne:true, ve:false, st:false, estado:'NE'
+            },
+            { id:'2', matricula:'93-92-JI', servico:'PB',  modelo:'ISUZU',
+              local:'Barcelos | MIGUEL 93-92-JI // 6278AGN+*6279ASMR', obs:'',
+              ne:true, ve:true, st:false, estado:'NE'
+            },
+            { id:'3', matricula:'76-51-BP', servico:'PB',  modelo:'CIVIC',
+              local:'Póvoa de Lanhoso | REFUGIO - FALTAM MOLAS // 3948ABL', obs:'',
+              ne:false, ve:true, st:false, estado:'VE'
+            },
+            { id:'4', matricula:'78-30-UQ', servico:'PB',  modelo:'MERCEDES',
+              local:'Famalicão | RETIRAR PB _ OFICINA | CAMPOS/CRISTINA 967254054', obs:'',
+              ne:false, ve:false, st:true, estado:'ST'
+            },
+          ]
+        };
+        // expõe para outros scripts se precisares
+        window.ag2State = ag2State;
+
+        function renderAg2(lista){
+          const grid = document.getElementById('ag2Grid');
+          if(!grid) return;
+          grid.innerHTML = lista.map(it=>{
+            const cls = estadoClass(it.estado);
+            const title = `${it.matricula} | ${it.servico} | ${it.modelo}`;
+            return `
+              <article class="ag2-card ${cls}" data-id="${it.id}">
+                <div class="ag2-top">
+                  <div class="ag2-line" title="${title}">${title}</div>
+                  <div class="ag2-acts">
+                    <button class="ag2-iconbtn" title="Editar" onclick="ag2Editar('${it.id}')">${ICON_EDIT}</button>
+                    <button class="ag2-iconbtn" title="Apagar" onclick="ag2Apagar('${it.id}')">${ICON_TRASH}</button>
+                  </div>
+                </div>
+                <div class="ag2-body">
+                  ${it.local?`<small>${it.local}</small>`:''}
+                  ${it.obs?`<small>${it.obs}</small>`:''}
+                </div>
+                <div class="ag2-controls">
+                  <div class="ag2-chks">
+                    <label class="ag2-chk"><input type="checkbox" ${it.ne?'checked':''} onchange="ag2Toggle('${it.id}','NE',this.checked)"><span>N/E</span></label>
+                    <label class="ag2-chk"><input type="checkbox" ${it.ve?'checked':''} onchange="ag2Toggle('${it.id}','VE',this.checked)"><span>V/E</span></label>
+                    <label class="ag2-chk"><input type="checkbox" ${it.st?'checked':''} onchange="ag2Toggle('${it.id}','ST',this.checked)"><span>ST</span></label>
+                  </div>
+                </div>
+              </article>`;
+          }).join('');
+        }
+
+        // Handlers globais
+        window.ag2Editar = function(id){
+          const it = ag2State.itens.find(i=>i.id===id);
+          if(!it) return;
+
+          const modal = document.getElementById('appointmentModal');
+          const del   = document.getElementById('deleteAppointment');
+          const title = document.getElementById('modalTitle');
+
+          const dateEl    = document.getElementById('appointmentDate');
+          const periodEl  = document.getElementById('appointmentPeriod');
+          const plateEl   = document.getElementById('appointmentPlate');
+          const carEl     = document.getElementById('appointmentCar');
+          const svcEl     = document.getElementById('appointmentService');
+          const statusEl  = document.getElementById('appointmentStatus');
+          const notesEl   = document.getElementById('appointmentNotes');
+          const extraEl   = document.getElementById('appointmentExtra');
+
+          if (dateEl)   dateEl.value = it.data || '';
+          if (periodEl) periodEl.value = it.periodo || '';
+          if (plateEl)  plateEl.value = it.matricula || '';
+          if (carEl)    carEl.value = it.modelo || '';
+          if (svcEl)    svcEl.value = it.servico || '';
+          if (statusEl) statusEl.value = it.estado || 'NE';
+          if (notesEl)  notesEl.value = it.obs || '';
+          if (extraEl)  extraEl.value = it.extra || '';
+
+          if (title) title.textContent = 'Editar Agendamento';
+          if (del)   del.classList.remove('hidden');
+
+          if (modal) {
+            modal.style.display = 'block';
+            modal.classList.add('open');
+            modal.removeAttribute('aria-hidden');
+          }
+          document.body.style.overflow = 'hidden';
+          window.currentEditId = id;
+        };
+
+        window.ag2Apagar = function(id){
+          if(!confirm('Apagar este serviço?')) return;
+          ag2State.itens = ag2State.itens.filter(i=>i.id!==id);
+          renderAg2(ag2State.itens);
+          saveAg2(); // persiste
+          // Se tiveres API:
+          // window.api?.deleteService?.(id).catch(console.warn);
+        };
+
+        window.ag2Toggle = function(id,campo,val){
+          const it = ag2State.itens.find(i=>i.id===id); if(!it) return;
+          if(campo==='NE') it.ne=val;
+          if(campo==='VE') it.ve=val;
+          if(campo==='ST') it.st=val;
+          it.estado = mainEstado(it.ne,it.ve,it.st);
+          renderAg2(ag2State.itens);
+          saveAg2(); // persiste
+
+          // Se tiveres API, podes enviar também:
+          // window.api?.updateServiceStatus?.(id, { ne: it.ne, ve: it.ve, st: it.st, estado: it.estado })
+          //   .catch(err => console.warn('Falha a gravar na API', err));
+        };
+
+        // Filtro + render inicial
+        function applyFiltro(){
+          const sel = document.getElementById('ag2Filtro'); if(!sel) return;
+          const v = sel.value;
+          localStorage.setItem('ag2Filtro', v);
+          document.querySelectorAll('.ag2-card').forEach(c=>{
+            if(v==='todos'){ c.style.display=''; return; }
+            const ok = c.classList.contains(v==='NE'?'ag2-NE':v==='VE'?'ag2-VE':'ag2-ST');
+            c.style.display = ok ? '' : 'none';
+          });
+        }
+        document.getElementById('ag2Filtro')?.addEventListener('change', applyFiltro);
+
+        // + Novo Serviço -> abre o modal real (fallback)
+        document.getElementById('ag2BtnNovo')?.addEventListener('click', () => {
+          if (typeof window.openNewAppointmentModal === 'function') return window.openNewAppointmentModal();
+          if (typeof window.openAppointmentModal === 'function')   return window.openAppointmentModal();
+          if (typeof window.showAppointmentModal === 'function')   return window.showAppointmentModal('new');
+
+          const modal = document.getElementById('appointmentModal');
+          const form  = document.getElementById('appointmentForm');
+          const del   = document.getElementById('deleteAppointment');
+          const title = document.getElementById('modalTitle');
+          if (form) form.reset();
+          if (del)  del.classList.add('hidden');
+          if (title) title.textContent = 'Novo Agendamento';
+          const dt = document.getElementById('appointmentDate');
+          if (dt && !dt.value) dt.valueAsDate = new Date();
+          if (modal) {
+            modal.style.display = 'block';
+            modal.classList.add('open');
+            modal.removeAttribute('aria-hidden');
+          }
+          document.body.style.overflow = 'hidden';
+        });
+
+        // Inicializar
+        renderAg2(ag2State.itens);
+        const saved = localStorage.getItem('ag2Filtro');
+        if(saved){ const s=document.getElementById('ag2Filtro'); if(s){s.value=saved;} }
+        applyFiltro();
+      })();
     </script>
     <!-- ====== FIM BLOCO ag2 ====== -->
 
-    <!-- Tabela de serviços -->
+    <!-- Tabela de serviços (agenda geral) -->
     <section class="services-table-container print-page-2">
       <h3 id="servicesTableTitle">SERVIÇOS A REALIZAR</h3>
       <div class="services-summary">
@@ -261,8 +318,8 @@
       </div>
     </section>
 
-    <!-- Formulário -->
-    <div id="appointmentModal" class="modal">
+    <!-- Formulário (modal) -->
+    <div id="appointmentModal" class="modal" aria-hidden="true" style="display:none;">
       <div class="modal-content">
         <div class="modal-header">
           <h3 id="modalTitle">Novo Agendamento</h3>
@@ -342,7 +399,7 @@
     </div>
 
     <!-- Backup -->
-    <div id="backupModal" class="modal">
+    <div id="backupModal" class="modal" aria-hidden="true" style="display:none;">
       <div class="modal-content">
         <div class="modal-header">
           <h3>Backup de Dados</h3>
@@ -369,7 +426,7 @@
     </div>
 
     <!-- Estatísticas -->
-    <div id="statsModal" class="modal">
+    <div id="statsModal" class="modal" aria-hidden="true" style="display:none;">
       <div class="modal-content">
         <div class="modal-header">
           <h3>📊 Estatísticas</h3>
@@ -425,6 +482,7 @@
 
   </div>
 
+  <!-- Scripts principais do portal -->
   <script src="script.js"></script>
 </body>
 </html>
