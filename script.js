@@ -259,7 +259,7 @@ function renderSchedule() {
   const table = document.getElementById('schedule'); if (!table) return;
   table.innerHTML = '';
 
-  // >>> Agora mostra 2ª a Sábado (6 dias)
+  // Agora mostra 2ª a Sábado (6 dias)
   const week = [...Array(6)].map((_,i)=> addDays(currentMonday, i));
   const startStr = week[0].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'});
   const endStr   = week[week.length-1].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -350,7 +350,7 @@ function renderMobileDay() {
   const container = document.getElementById('mobileDayList'); if (!container) return;
   container.innerHTML = dayItems.map(a => {
     const bg = STATUS_BG[a.status] || 'rgba(0,0,0,0.06)';
-    the border = STATUS_BORDER[a.status] || '#9ca3af';
+    const border = STATUS_BORDER[a.status] || '#9ca3af';
     return `<div class="appointment-block"
               style="background:${bg}; border-left:6px solid ${border}; margin-bottom:10px;">
               <div class="appt-header">${a.period} - ${(a.plate || '')} | ${(a.service || '')} | ${(a.car || '').toUpperCase()}</div>
