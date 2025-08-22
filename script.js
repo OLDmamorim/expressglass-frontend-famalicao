@@ -128,6 +128,105 @@ const STATUS_BG = { NE:'rgba(239,68,68,.12)', VE:'rgba(245,158,11,.14)', ST:'rgb
 const STATUS_BORDER = { NE:'#ef4444', VE:'#f59e0b', ST:'#10b981' };
 
 /* ===========================
+   GARANTIR MODAL (fallback)
+=========================== */
+function ensureModal() {
+  if (document.getElementById('appointmentModal')) return;
+
+  // CSS mínimo de fallback (não mexe no teu style.css se já existir)
+  const style = document.createElement('style');
+  style.textContent = `
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);z-index:9999}
+    .modal.show{display:flex}
+    .modal-content{background:#fff;max-width:720px;width:96%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.2);padding:16px}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .close-btn{border:0;background:#eee;border-radius:8px;padding:6px 10px;cursor:pointer}
+    .appointment-form .form-row{display:flex;gap:12px}
+    .appointment-form .form-group{flex:1;display:flex;flex-direction:column}
+    .appointment-form input, .appointment-form select, .appointment-form textarea{padding:8px;border:1px solid #e5e7eb;border-radius:8px}
+    .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    .btn{padding:8px 12px;border-radius:8px;border:1px solid #e5e7eb;background:#f8fafc;cursor:pointer}
+    .btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
+    .btn.secondary{background:#eee}
+    .btn.danger{background:#ef4444;color:#fff;border-color:#ef4444}
+  `;
+  document.head.appendChild(style);
+
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = `
+    <div id="appointmentModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle">Novo Agendamento</h3>
+          <button id="closeModal" class="close-btn">✕</button>
+        </div>
+        <form id="appointmentForm" class="appointment-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="appointmentDate">Data</label>
+              <input type="date" id="appointmentDate" />
+            </div>
+            <div class="form-group">
+              <label for="appointmentPeriod">Período</label>
+              <select id="appointmentPeriod">
+                <option value="">—</option>
+                <option value="Manhã">Manhã</option>
+                <option value="Tarde">Tarde</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="appointmentPlate">Matrícula *</label>
+              <input type="text" id="appointmentPlate" placeholder="XX-XX-XX" maxlength="8" required />
+              <small class="form-hint">Formato: XX-XX-XX</small>
+            </div>
+            <div class="form-group">
+              <label for="appointmentCar">Modelo do Carro *</label>
+              <input type="text" id="appointmentCar" placeholder="Ex: BMW X3" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="appointmentService">Tipo de Serviço *</label>
+              <select id="appointmentService" required>
+                <option value="">Selecione o tipo de serviço</option>
+                <option value="PB">PB - Para-brisas</option>
+                <option value="LT">LT - Lateral</option>
+                <option value="OC">OC - Óculo</option>
+                <option value="REP">REP - Reparação</option>
+                <option value="POL">POL - Polimento</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="appointmentStatus">Status do Vidro *</label>
+              <select id="appointmentStatus" required>
+                <option value="NE">N/E - Não Executado</option>
+                <option value="VE">V/E - Vidro Encomendado</option>
+                <option value="ST">ST - Serviço Terminado</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="appointmentNotes">Observações</label>
+            <textarea id="appointmentNotes" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="appointmentExtra">Outros dados (opcional)</label>
+            <textarea id="appointmentExtra" rows="2"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" id="cancelForm" class="btn secondary">Cancelar</button>
+            <button type="button" id="deleteAppointment" class="btn danger hidden">Eliminar</button>
+            <button type="submit" class="btn primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>`;
+  document.body.appendChild(wrapper.firstElementChild);
+}
+
+/* ===========================
    CARREGAR / GUARDAR
 =========================== */
 async function load() {
@@ -146,7 +245,7 @@ async function load() {
     showToast('Erro ao carregar: ' + e.message, 'error');
   }
 }
-async function save(){ /* compat */ }
+async function save(){}
 
 /* ===========================
    FILTROS / PESQUISA
@@ -208,6 +307,7 @@ function normalizeBucketOrder(bucket) {
 async function onDropAppointment(id, targetBucket, targetIndex) {
   const i = appointments.findIndex(a => a.id == id); if (i < 0) return;
   const a = appointments[i];
+
   const prev = { date: a.date, period: a.period, sortIndex: a.sortIndex };
 
   if (targetBucket === 'unscheduled') { a.date = ''; a.period = ''; }
@@ -216,20 +316,27 @@ async function onDropAppointment(id, targetBucket, targetIndex) {
     a.date = d; a.period = p || a.period || 'Manhã';
   }
   normalizeBucketOrder(targetBucket);
-  const list = appointments.filter(x => bucketOf(x) === targetBucket).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
+  const list = appointments
+    .filter(x => bucketOf(x) === targetBucket)
+    .sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
   list.forEach((x,idx)=> x.sortIndex = idx+1);
   if (targetIndex >= list.length) a.sortIndex = list.length + 1;
   else { list.splice(targetIndex,0,a); list.forEach((x,idx)=> x.sortIndex=idx+1); }
 
-  renderAll(); // otimista
+  // Otimista
+  renderAll();
 
   try {
     const updated = await apiPut(`/api/appointments/${id}`, a);
     if (updated && typeof updated === 'object') Object.assign(a, updated);
-    await load(); renderAll(); showToast('Agendamento movido!', 'success');
+    await load();                 // refresh do backend
+    renderAll();
+    showToast('Agendamento movido!', 'success');
   } catch (e) {
+    // Rollback
     a.date = prev.date; a.period = prev.period; a.sortIndex = prev.sortIndex;
-    renderAll(); showToast('Erro a gravar movimento: ' + e.message, 'error');
+    renderAll();
+    showToast('Erro a gravar movimento: ' + e.message, 'error');
   }
 }
 
@@ -380,6 +487,8 @@ function renderAll(){ renderSchedule(); renderUnscheduled(); renderMobileDay(); 
 =========================== */
 function openAppointmentModal(id=null) {
   editingId = id;
+  ensureModal(); // garante que existe
+
   const modal = document.getElementById('appointmentModal');
   if (!modal) { showToast('Modal de agendamento não encontrado no HTML.', 'error'); return; }
 
@@ -404,12 +513,13 @@ function openAppointmentModal(id=null) {
   } else {
     title.textContent = 'Novo Agendamento';
     form?.reset();
-    document.getElementById('appointmentStatus').value = 'NE';
-    del.classList.add('hidden');
+    const st = document.getElementById('appointmentStatus'); if (st) st.value = 'NE';
+    del?.classList.add('hidden');
   }
   modal.classList.add('show');
 }
-function closeAppointmentModal(){ const m=document.getElementById('appointmentModal'); m&&m.classList.remove('show'); editingId=null; }
+function closeAppointmentModal(){ document.getElementById('appointmentModal')?.classList.remove('show'); editingId=null; }
+window.openAppointmentModal = openAppointmentModal;
 
 async function saveAppointment() {
   const rawDate = document.getElementById('appointmentDate').value;
@@ -442,7 +552,7 @@ async function saveAppointment() {
       appointments.push(result || appointment);
       showToast('Agendamento criado!', 'success');
     }
-    await save(); await load(); renderAll(); closeAppointmentModal();  // refresh completo
+    await load(); renderAll(); closeAppointmentModal();
   } catch (e) {
     console.error(e); showToast('Erro ao guardar: ' + e.message, 'error');
   }
@@ -457,9 +567,6 @@ async function deleteAppointment(id) {
     if (editingId == id) closeAppointmentModal();
   } catch (e) { console.error(e); showToast('Erro ao eliminar: ' + e.message, 'error'); }
 }
-
-/* Expor no window para onclick inline se existir no HTML */
-window.openAppointmentModal = openAppointmentModal;
 window.editAppointment = editAppointment;
 window.deleteAppointment = deleteAppointment;
 
@@ -471,7 +578,6 @@ function attachStatusListeners() {
       const id = Number(card.getAttribute('data-id'));
       const st = this.getAttribute('data-status');
 
-      // Exclusividade visual no cartão
       card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(x=>{ if(x!==this) x.checked=false; });
 
       const a = appointments.find(x => x.id == id);
@@ -480,23 +586,21 @@ function attachStatusListeners() {
       const prevStatus = a.status;
       const prevFilter = statusFilter;
 
-      // 1) Otimista
       a.status = st;
 
-      // 2) Se o filtro ativo não bate, limpar já para não desaparecer
       if (statusFilter && a.status !== statusFilter) {
         statusFilter = '';
-        const sel = document.getElementById('filterStatus'); if (sel) sel.value = '';
+        const sel = document.getElementById('filterStatus');
+        if (sel) sel.value = '';
       }
 
-      // 3) Re-render imediato
       renderAll();
 
-      // 4) Persistir + refresh real
       try {
         const updated = await apiPut(`/api/appointments/${id}`, a);
         if (updated && typeof updated === 'object') Object.assign(a, updated);
-        await load(); renderAll();
+        await load();
+        renderAll();
         showToast(`Status gravado: ${st}`, 'success');
       } catch (e) {
         a.status = prevStatus;
@@ -536,7 +640,7 @@ function importFromJson(file){
       const data = JSON.parse(e.target.result);
       if (data.appointments && Array.isArray(data.appointments)) {
         if (confirm(`Importar ${data.appointments.length} agendamentos? Isto substitui os atuais.`)) {
-          appointments = data.appointments; save(); renderAll(); showToast('Dados importados!', 'success');
+          appointments = data.appointments; renderAll(); showToast('Dados importados!', 'success');
           closeBackupModal();
         }
       } else showToast('Ficheiro inválido.', 'error');
@@ -578,47 +682,37 @@ function showStats() {
         <div class="stat-card"><div class="stat-number">${cnt}</div><div class="stat-label">${srv}</div></div>
       `).join('')}
     </div>`;
-  modal.classList.add('show');
+  modal?.classList.add('show');
 }
-function closeBackupModal(){ const m=document.getElementById('backupModal'); m&&m.classList.remove('show'); }
-function closeStatsModal(){ const m=document.getElementById('statsModal');  m&&m.classList.remove('show'); }
+function closeBackupModal(){ document.getElementById('backupModal')?.classList.remove('show'); }
+function closeStatsModal(){ document.getElementById('statsModal')?.classList.remove('show'); }
 
 /* ===========================
-   TRIGGER “NOVO SERVIÇO” (ANTI-CONFLITOS)
+   TRIGGER “NOVO SERVIÇO” (ROBUSTO)
 =========================== */
 const NEW_SERVICE_SELECTOR = '#ag2BtnNovo, #addServiceBtn, #btnNovoServico, .new-service-btn, [data-new-service="true"]';
 
 function rebindNewServiceButton(el){
   try {
-    // clone -> limpa listeners antigos
     const clone = el.cloneNode(true);
     clone.type = 'button';
     clone.addEventListener('click', (e)=>{ e.preventDefault(); openAppointmentModal(); });
     el.replaceWith(clone);
-  } catch(_) { /* ignore */ }
+  } catch(_) {}
 }
-
 function forceBindNewServiceButtons(root=document){
   root.querySelectorAll(NEW_SERVICE_SELECTOR).forEach(rebindNewServiceButton);
 }
-
 function bindGlobalNewServiceTrigger(){
-  // CAPTURA: abre sempre, mesmo com stopPropagation na bolha
   document.addEventListener('click', (e) => {
     const trigger = e.target.closest(NEW_SERVICE_SELECTOR);
     if (trigger) { e.preventDefault(); openAppointmentModal(); }
   }, { capture:true });
-
-  // BOLHA: redundância
   document.addEventListener('click', (e) => {
     const trigger = e.target.closest(NEW_SERVICE_SELECTOR);
     if (trigger) { e.preventDefault(); openAppointmentModal(); }
   });
-
-  // Rebind inicial (remove handlers antigos)
   forceBindNewServiceButtons();
-
-  // Observer: se o botão nascer depois, voltamos a rebindar
   const mo = new MutationObserver((mut)=>{
     for (const m of mut) {
       m.addedNodes.forEach(n=>{
@@ -633,61 +727,69 @@ function bindGlobalNewServiceTrigger(){
 }
 
 /* ===========================
-   LST / EVENTOS
+   LST / EVENTOS + SAFE GUARD
 =========================== */
+window.addEventListener('error', (e)=> showToast('Erro JS: ' + (e.message||'desconhecido'), 'error'));
+
 document.addEventListener('DOMContentLoaded', async () => {
-  // Navegação semana
-  document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday,-7); renderAll(); });
-  document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday, 7); renderAll(); });
-  document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday = getMonday(new Date()); renderAll(); });
+  try {
+    // Navegação semana
+    document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday,-7); renderAll(); });
+    document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday, 7); renderAll(); });
+    document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday = getMonday(new Date()); renderAll(); });
 
-  // Impressão
-  document.getElementById('printPage')?.addEventListener('click', ()=>{
-    updatePrintUnscheduledTable();
-    updatePrintTomorrowTable();
-    window.print();
-  });
+    // Impressão
+    document.getElementById('printPage')?.addEventListener('click', ()=>{
+      updatePrintUnscheduledTable();
+      updatePrintTomorrowTable();
+      window.print();
+    });
 
-  // Pesquisa
-  document.getElementById('searchBtn')?.addEventListener('click', ()=>{
-    const sb = document.getElementById('searchBar');
-    sb?.classList.toggle('hidden');
-    document.getElementById('searchInput')?.focus();
-  });
-  document.getElementById('searchInput')?.addEventListener('input', (e)=>{
-    searchQuery = e.target.value || '';
+    // Pesquisa
+    document.getElementById('searchBtn')?.addEventListener('click', ()=>{
+      const sb = document.getElementById('searchBar');
+      sb?.classList.toggle('hidden');
+      document.getElementById('searchInput')?.focus();
+    });
+    document.getElementById('searchInput')?.addEventListener('input', (e)=>{
+      searchQuery = e.target.value || '';
+      renderAll();
+    });
+    document.getElementById('clearSearch')?.addEventListener('click', ()=>{
+      const i = document.getElementById('searchInput'); if (i) i.value='';
+      searchQuery = ''; renderAll();
+    });
+
+    // Filtro por status
+    document.getElementById('filterStatus')?.addEventListener('change', (e)=>{
+      statusFilter = e.target.value || '';
+      renderAll();
+    });
+
+    // Novo Serviço — bind robusto e anti-conflitos
+    bindGlobalNewServiceTrigger();
+
+    // Modal / Form
+    document.addEventListener('click', (e)=>{
+      if (e.target?.id === 'closeModal' || e.target?.id === 'cancelForm') { e.preventDefault(); closeAppointmentModal(); }
+    });
+    document.getElementById('appointmentForm')?.addEventListener('submit', (e)=>{ e.preventDefault(); saveAppointment(); });
+    document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if (editingId) deleteAppointment(editingId); });
+
+    // Backup / Estatísticas
+    document.getElementById('backupBtn')?.addEventListener('click', ()=> document.getElementById('backupModal')?.classList.add('show'));
+    document.getElementById('statsBtn')?.addEventListener('click', showStats);
+    document.getElementById('importBtn')?.addEventListener('click', ()=> document.getElementById('importFile')?.click());
+    document.getElementById('importFile')?.addEventListener('change', (e)=>{
+      const f = e.target.files?.[0]; if (f) importFromJson(f);
+    });
+    document.getElementById('exportJson')?.addEventListener('click', exportToJson);
+    document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
+
+    await load();
     renderAll();
-  });
-  document.getElementById('clearSearch')?.addEventListener('click', ()=>{
-    const i = document.getElementById('searchInput'); if (i) i.value='';
-    searchQuery = ''; renderAll();
-  });
-
-  // Filtro por status
-  document.getElementById('filterStatus')?.addEventListener('change', (e)=>{
-    statusFilter = e.target.value || '';
-    renderAll();
-  });
-
-  // Novo Serviço — bind robusto e anti-conflitos
-  bindGlobalNewServiceTrigger();
-
-  // Modal / Form
-  document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
-  document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
-  document.getElementById('appointmentForm')?.addEventListener('submit', (e)=>{ e.preventDefault(); saveAppointment(); });
-  document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if (editingId) deleteAppointment(editingId); });
-
-  // Backup / Estatísticas
-  document.getElementById('backupBtn')?.addEventListener('click', ()=> document.getElementById('backupModal')?.classList.add('show'));
-  document.getElementById('statsBtn')?.addEventListener('click', showStats);
-  document.getElementById('importBtn')?.addEventListener('click', ()=> document.getElementById('importFile')?.click());
-  document.getElementById('importFile')?.addEventListener('change', (e)=>{
-    const f = e.target.files?.[0]; if (f) importFromJson(f);
-  });
-  document.getElementById('exportJson')?.addEventListener('click', exportToJson);
-  document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
-
-  await load();
-  renderAll();
+  } catch (err) {
+    console.error(err);
+    showToast('Falha ao iniciar: ' + err.message, 'error');
+  }
 });
