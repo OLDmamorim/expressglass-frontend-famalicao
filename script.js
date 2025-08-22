@@ -1,9 +1,9 @@
-// =====================
-//  API CONFIG
-// =====================
+/* ===========================
+   API CONFIG
+=========================== */
 const API_BASE = 'https://expressglass-backend-famalicao.netlify.app';
 
-// -------- HTTP helpers (com tenant famalicão) --------
+/* -------- HTTP helpers (com tenant famalicão) -------- */
 async function apiGet(path, params = {}) {
   const url = new URL(API_BASE + path);
   Object.entries(params).forEach(([k, v]) => {
@@ -46,9 +46,9 @@ async function apiDelete(path) {
   return true;
 }
 
-// =====================
-//  UTILITÁRIOS
-// =====================
+/* ===========================
+   UTILITÁRIOS
+=========================== */
 function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
 function getMonday(date) {
   const d = new Date(date); const day = d.getDay();
@@ -67,7 +67,7 @@ function fmtHeader(date) {
 }
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 
-// Datas em strings: aceita "YYYY-MM-DD" e "DD/MM/YYYY"
+/* Datas em strings */
 function parseDate(dateStr) {
   if (!dateStr) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;          // YYYY-MM-DD
@@ -76,7 +76,6 @@ function parseDate(dateStr) {
   }
   const dt = new Date(dateStr); return isNaN(dt) ? '' : localISO(dt);
 }
-
 function formatDateForInput(dateStr) {
   if (!dateStr) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
@@ -85,15 +84,18 @@ function formatDateForInput(dateStr) {
   return dateStr;
 }
 
-// Matrícula automática
-function formatPlate(input) {
-  let v = input.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-  if (v.length > 2) v = v.slice(0,2) + '-' + v.slice(2);
-  if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5,7);
-  input.value = v;
+/* Garante que o período é 'Manhã' ou 'Tarde' */
+function normalizePeriod(p) {
+  if (!p) return '';
+  const t = String(p)
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .trim().toLowerCase();
+  if (t === 'manha') return 'Manhã';
+  if (t === 'tarde') return 'Tarde';
+  return '';
 }
 
-// Toast simples
+/* Toast simples */
 function showToast(msg, type='info') {
   const c = document.getElementById('toastContainer'); if (!c) return;
   const t = document.createElement('div'); t.className = `toast ${type}`;
@@ -102,23 +104,17 @@ function showToast(msg, type='info') {
   c.appendChild(t); setTimeout(()=>t.remove(), 3500);
 }
 
-// =====================
-//  CORES POR STATUS (fundo do cartão)
-// =====================
-const statusBg = {
-  NE: '#fee2e2', // vermelho clarinho
-  VE: '#fef3c7', // amarelo/laranja claro
-  ST: '#dcfce7'  // verde claro
-};
-const statusBorder = {
-  NE: '#ef4444',
-  VE: '#f59e0b',
-  ST: '#10b981'
-};
+/* Matrícula automática */
+function formatPlate(input) {
+  let v = input.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  if (v.length > 2) v = v.slice(0,2) + '-' + v.slice(2);
+  if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5,7);
+  input.value = v;
+}
 
-// =====================
-//  ESTADO
-// =====================
+/* ===========================
+   ESTADO
+=========================== */
 let appointments = [];
 let currentMonday  = getMonday(new Date());
 let currentMobileDay = new Date();
@@ -126,45 +122,55 @@ let editingId = null;
 let searchQuery = '';
 let statusFilter = '';
 
-// Aux para drag & drop / ordenação
-function bucketOf(a){ return (a.date && a.period) ? `${a.date}|${a.period}` : 'unscheduled'; }
-function normalizeBucketOrder(bucket) {
-  const items = appointments.filter(a => bucketOf(a) === bucket);
-  items.forEach((item,i)=> item.sortIndex = i+1);
-}
+/* Mapeamento de cores por STATUS (cartão inteiro) */
+const STATUS_BG = {
+  NE: 'rgba(239, 68, 68, 0.12)',   // vermelho claro
+  VE: 'rgba(245, 158, 11, 0.14)',  // laranja/amarelo claro
+  ST: 'rgba(16, 185, 129, 0.14)'   // verde claro
+};
+const STATUS_BORDER = {
+  NE: '#ef4444',
+  VE: '#f59e0b',
+  ST: '#10b981'
+};
 
-// =====================
-//  CARREGAR / GUARDAR
-// =====================
+/* ===========================
+   CARREGAR / GUARDAR
+=========================== */
 async function load() {
   try {
     showToast('A carregar…', 'info');
-    appointments = await apiGet('/api/appointments');
-    // normalização mínima
-    appointments.forEach(a => {
-      if (!a.id) a.id = Date.now() + Math.random();
-      if (!a.sortIndex) a.sortIndex = 1;
-      if (!a.status) a.status = 'NE';
-      if (!a.period) a.period = '';
-    });
+
+    const rows = await apiGet('/api/appointments');
+
+    // Normalização imediata para garantir que o calendário popula
+    appointments = rows.map(a => ({
+      ...a,
+      date: parseDate(a.date),                 // converte DD/MM/YYYY -> YYYY-MM-DD
+      period: normalizePeriod(a.period),       // garante 'Manhã' / 'Tarde'
+      id: a.id ?? (Date.now() + Math.random()),
+      sortIndex: a.sortIndex ?? 1,
+      status: a.status ?? 'NE'
+    }));
+
     showToast('Dados carregados da API!', 'success');
   } catch (e) {
     appointments = [];
     showToast('Erro ao carregar: ' + e.message, 'error');
   }
 }
-async function save(){ /* o backend já guarda; aqui mantemos compatibilidade */ }
+async function save(){ /* o backend já guarda; mantemos compatibilidade */ }
 
-// =====================
-//  FILTROS / PESQUISA
-// =====================
+/* ===========================
+   FILTROS / PESQUISA
+=========================== */
 function filterAppointments(list) {
   let r = [...list];
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     r = r.filter(a =>
       (a.plate || '').toLowerCase().includes(q) ||
-      (a.car   || '').toLowerCase().includes(q) ||
+      (a.car || '').toLowerCase().includes(q)   ||
       (a.notes || '').toLowerCase().includes(q) ||
       (a.extra || '').toLowerCase().includes(q)
     );
@@ -174,18 +180,18 @@ function filterAppointments(list) {
 }
 function highlightSearchResults() {
   if (!searchQuery) return;
-  document.querySelectorAll('.appointment').forEach(el => {
+  document.querySelectorAll('.appointment-block').forEach(el => {
     el.classList.remove('highlight');
     const txt = el.textContent.toLowerCase();
     if (txt.includes(searchQuery.toLowerCase())) el.classList.add('highlight');
   });
 }
 
-// =====================
-//  DRAG & DROP
-// =====================
+/* ===========================
+   DRAG & DROP
+=========================== */
 function enableDragDrop(scope) {
-  (scope || document).querySelectorAll('.appointment[data-id]').forEach(card => {
+  (scope || document).querySelectorAll('.appointment-block[data-id]').forEach(card => {
     card.draggable = true;
     card.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', card.getAttribute('data-id'));
@@ -202,10 +208,15 @@ function enableDragDrop(scope) {
       e.preventDefault(); zone.classList.remove('drag-over');
       const id = Number(e.dataTransfer.getData('text/plain'));
       const targetBucket = zone.getAttribute('data-drop-bucket');
-      const targetIndex  = zone.querySelectorAll('.appointment').length;
+      const targetIndex  = zone.querySelectorAll('.appointment-block').length;
       onDropAppointment(id, targetBucket, targetIndex);
     });
   });
+}
+function bucketOf(a){ return (a.date && a.period) ? `${a.date}|${a.period}` : 'unscheduled'; }
+function normalizeBucketOrder(bucket) {
+  const items = appointments.filter(a => bucketOf(a) === bucket);
+  items.forEach((item,i)=> item.sortIndex = i+1);
 }
 function onDropAppointment(id, targetBucket, targetIndex) {
   const i = appointments.findIndex(a => a.id === id); if (i < 0) return;
@@ -223,15 +234,9 @@ function onDropAppointment(id, targetBucket, targetIndex) {
   save(); renderAll(); showToast('Agendamento movido!', 'success');
 }
 
-// =====================
-//  RENDER
-// =====================
-function cardStyleFor(a) {
-  const bg = statusBg[a.status] || '#f3f4f6';    // cor do cartão inteiro
-  const bd = statusBorder[a.status] || '#9ca3af'; // borda para contraste
-  return `background:${bg}; border:1px solid ${bd};`;
-}
-
+/* ===========================
+   RENDER
+=========================== */
 function renderSchedule() {
   const table = document.getElementById('schedule'); if (!table) return;
   table.innerHTML = '';
@@ -255,10 +260,12 @@ function renderSchedule() {
                   .sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0))
     );
     const blocks = items.map(a => {
-      return `<div class="appointment appointment-block" data-id="${a.id}" draggable="true"
-                 style="${cardStyleFor(a)}">
-                <div class="appt-header">${a.plate} | ${a.service} | ${(a.car||'').toUpperCase()}</div>
-                <div class="appt-sub">${a.notes || ''}</div>
+      const bg = STATUS_BG[a.status] || 'rgba(0,0,0,0.06)';
+      const border = STATUS_BORDER[a.status] || '#9ca3af';
+      return `<div class="appointment-block" data-id="${a.id}" draggable="true"
+                 style="background:${bg}; border-left:6px solid ${border}">
+                <div class="appt-header">${(a.plate || '')} | ${(a.service || '')} | ${(a.car || '').toUpperCase()}</div>
+                <div class="appt-sub">${a.notes ? a.notes : ''}</div>
                 <div class="appt-status">
                   <label><input type="checkbox" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
                   <label><input type="checkbox" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
@@ -287,10 +294,12 @@ function renderUnscheduled() {
     appointments.filter(a=> !a.date || !a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0))
   );
   const blocks = uns.map(a => {
-    return `<div class="appointment unscheduled appointment-block" data-id="${a.id}" draggable="true"
-              style="${cardStyleFor(a)}">
-              <div class="appt-header">${a.plate} | ${a.service} | ${(a.car||'').toUpperCase()}</div>
-              <div class="appt-sub">${a.notes || ''}</div>
+    const bg = STATUS_BG[a.status] || 'rgba(0,0,0,0.06)';
+    const border = STATUS_BORDER[a.status] || '#9ca3af';
+    return `<div class="appointment-block unscheduled" data-id="${a.id}" draggable="true"
+              style="background:${bg}; border-left:6px solid ${border}">
+              <div class="appt-header">${(a.plate || '')} | ${(a.service || '')} | ${(a.car || '').toUpperCase()}</div>
+              <div class="appt-sub">${a.notes ? a.notes : ''}</div>
               <div class="appt-status">
                 <label><input type="checkbox" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
                 <label><input type="checkbox" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
@@ -320,9 +329,11 @@ function renderMobileDay() {
   );
   const container = document.getElementById('mobileDayList'); if (!container) return;
   container.innerHTML = dayItems.map(a => {
-    return `<div class="appointment appointment-block"
-              style="${cardStyleFor(a)}; margin-bottom:10px;">
-              <div class="appt-header">${a.period} - ${a.plate} | ${a.service} | ${(a.car||'').toUpperCase()}</div>
+    const bg = STATUS_BG[a.status] || 'rgba(0,0,0,0.06)';
+    const border = STATUS_BORDER[a.status] || '#9ca3af';
+    return `<div class="appointment-block"
+              style="background:${bg}; border-left:6px solid ${border}; margin-bottom:10px;">
+              <div class="appt-header">${a.period} - ${(a.plate || '')} | ${(a.service || '')} | ${(a.car || '').toUpperCase()}</div>
               <div class="appt-sub">${a.notes || ''}</div>
             </div>`;
   }).join('');
@@ -348,7 +359,7 @@ function renderServicesTable() {
       <td>${a.period || ''}</td>
       <td>${a.plate || ''}</td>
       <td>${a.car || ''}</td>
-      <td><span class="badge badge-${a.service}">${a.service}</span></td>
+      <td><span class="badge badge-${a.service}">${a.service || ''}</span></td>
       <td>${a.notes || ''}</td>
       <td><span class="chip chip-${a.status}">${a.status}</span></td>
       <td>${daysText}</td>
@@ -365,9 +376,9 @@ function renderServicesTable() {
 
 function renderAll(){ renderSchedule(); renderUnscheduled(); renderMobileDay(); renderServicesTable(); }
 
-// =====================
-//  GESTÃO DE AGENDAMENTOS
-// =====================
+/* ===========================
+   GESTÃO DE AGENDAMENTOS
+=========================== */
 function openAppointmentModal(id=null) {
   editingId = id;
   const modal = document.getElementById('appointmentModal'); if (!modal) return;
@@ -379,7 +390,7 @@ function openAppointmentModal(id=null) {
     const a = appointments.find(x=> x.id===id);
     if (a) {
       title.textContent = 'Editar Agendamento';
-      document.getElementById('appointmentDate').value   = parseDate(a.date) ? a.date : '';
+      document.getElementById('appointmentDate').value   = formatDateForInput(a.date) || '';
       document.getElementById('appointmentPeriod').value = a.period || '';
       document.getElementById('appointmentPlate').value  = a.plate || '';
       document.getElementById('appointmentCar').value    = a.car || '';
@@ -404,7 +415,7 @@ async function saveAppointment() {
   const appointment = {
     id:     editingId || Date.now() + Math.random(),
     date:   parseDate(rawDate),
-    period: document.getElementById('appointmentPeriod').value,
+    period: normalizePeriod(document.getElementById('appointmentPeriod').value),
     plate:  document.getElementById('appointmentPlate').value.toUpperCase(),
     car:    document.getElementById('appointmentCar').value,
     service:document.getElementById('appointmentService').value,
@@ -414,7 +425,7 @@ async function saveAppointment() {
     sortIndex: 1
   };
 
-  // ⚠️ Apenas obrigatórios: Matrícula, Carro e Serviço
+  // Apenas os obrigatórios: Matrícula, Carro e Serviço
   if (!appointment.plate || !appointment.car || !appointment.service) {
     showToast('Por favor, preencha Matrícula, Carro e Serviço.', 'error'); return;
   }
@@ -448,31 +459,25 @@ async function deleteAppointment(id) {
   } catch (e) { console.error(e); showToast('Erro ao eliminar: ' + e.message, 'error'); }
 }
 
-// Status toggles
+/* Status toggles */
 function attachStatusListeners() {
   document.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', function() {
-      const el = this.closest('.appointment');
+      const el = this.closest('.appointment-block');
       const id = Number(el.getAttribute('data-id'));
       const st = this.getAttribute('data-status');
       if (this.checked) {
         el.querySelectorAll('.appt-status input[type="checkbox"]').forEach(x=>{ if(x!==this) x.checked=false; });
         const a = appointments.find(x=> x.id===id);
-        if (a) {
-          a.status = st;
-          // Atualiza visual do cartão imediatamente
-          el.setAttribute('style', cardStyleFor(a));
-          save(); renderServicesTable(); // evita re-render total
-          showToast(`Status alterado para ${st}`, 'success');
-        }
+        if (a) { a.status = st; save(); renderAll(); showToast(`Status alterado para ${st}`, 'success'); }
       }
     });
   });
 }
 
-// =====================
-//  BACKUP / EXPORT
-// =====================
+/* ===========================
+   BACKUP / EXPORT
+=========================== */
 function exportToJson() {
   const data = { version:'3.0', exported:new Date().toISOString(), appointments };
   const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
@@ -504,9 +509,9 @@ function importFromJson(file){
   rd.readAsText(file);
 }
 
-// =====================
-//  ESTATÍSTICAS
-// =====================
+/* ===========================
+   ESTATÍSTICAS / MODAIS
+=========================== */
 function generateStats() {
   const total = appointments.length;
   const scheduled = appointments.filter(a => a.date && a.period).length;
@@ -539,27 +544,12 @@ function showStats() {
     </div>`;
   modal.classList.add('show');
 }
-
-// =====================
-//  MODAIS
-// =====================
 function closeBackupModal(){ const m=document.getElementById('backupModal'); m&&m.classList.remove('show'); }
 function closeStatsModal(){ const m=document.getElementById('statsModal');  m&&m.classList.remove('show'); }
 
-// =====================
-//  NAVEGAÇÃO
-// =====================
-function prevWeek(){ currentMonday = addDays(currentMonday,-7); renderAll(); }
-function nextWeek(){ currentMonday = addDays(currentMonday, 7); renderAll(); }
-function todayWeek(){ currentMonday = getMonday(new Date()); renderAll(); }
-
-function prevDay(){ currentMobileDay = addDays(currentMobileDay,-1); renderMobileDay(); }
-function nextDay(){ currentMobileDay = addDays(currentMobileDay, 1); renderMobileDay(); }
-function todayDay(){ currentMobileDay = new Date(); renderMobileDay(); }
-
-// =====================
-//  IMPRESSÃO
-// =====================
+/* ===========================
+   IMPRESSÃO
+=========================== */
 function updatePrintUnscheduledTable() {
   const uns = filterAppointments(appointments.filter(a => !a.date || !a.period)
                                             .sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
@@ -569,9 +559,9 @@ function updatePrintUnscheduledTable() {
   if (sec) sec.style.display='block';
   tbody.innerHTML = uns.map(a => `
     <tr>
-      <td>${a.plate}</td>
-      <td>${a.car}</td>
-      <td><span class="service-badge badge-${a.service}">${a.service}</span></td>
+      <td>${a.plate || ''}</td>
+      <td>${a.car || ''}</td>
+      <td><span class="service-badge badge-${a.service}">${a.service || ''}</span></td>
       <td><span class="status-chip chip-${a.status}">${a.status}</span></td>
       <td>${a.notes || ''}</td>
       <td>${a.extra || ''}</td>
@@ -595,9 +585,9 @@ function updatePrintTomorrowTable() {
   if (tbody) tbody.innerHTML = list.map(a => `
     <tr>
       <td>${a.period || ''}</td>
-      <td>${a.plate}</td>
-      <td>${a.car}</td>
-      <td><span class="service-badge badge-${a.service}">${a.service}</span></td>
+      <td>${a.plate || ''}</td>
+      <td>${a.car || ''}</td>
+      <td><span class="service-badge badge-${a.service}">${a.service || ''}</span></td>
       <td><span class="status-chip chip-${a.status}">${a.status}</span></td>
       <td>${a.notes || ''}</td>
       <td>${a.extra || ''}</td>
@@ -605,20 +595,24 @@ function updatePrintTomorrowTable() {
 }
 function printPage(){ updatePrintUnscheduledTable(); updatePrintTomorrowTable(); window.print(); }
 
-// =====================
-//  INICIALIZAÇÃO
-// =====================
+/* ===========================
+   INICIALIZAÇÃO
+=========================== */
 document.addEventListener('DOMContentLoaded', async function() {
   await load();
   renderAll();
 
   // Navegação
-  document.getElementById('prevWeek')?.addEventListener('click', prevWeek);
-  document.getElementById('nextWeek')?.addEventListener('click', nextWeek);
-  document.getElementById('todayWeek')?.addEventListener('click', todayWeek);
-  document.getElementById('prevDay')?.addEventListener('click', prevDay);
-  document.getElementById('nextDay')?.addEventListener('click', nextDay);
-  document.getElementById('todayDay')?.addEventListener('click', todayDay);
+  document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday,-7); renderAll(); });
+  document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday, 7); renderAll(); });
+  document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday = getMonday(new Date()); renderAll(); });
+
+  // Mobile day
+  document.getElementById('prevDay')?.addEventListener('click', ()=>{ currentMobileDay = addDays(currentMobileDay,-1); renderMobileDay(); });
+  document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay = addDays(currentMobileDay, 1); renderMobileDay(); });
+  document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay = new Date(); renderMobileDay(); });
+
+  // Print
   document.getElementById('printPage')?.addEventListener('click', printPage);
 
   // Ações topo
@@ -667,7 +661,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   });
 });
 
-// Expor funções globais necessárias (para onclicks)
+/* Expor para HTML */
 window.editAppointment   = editAppointment;
 window.deleteAppointment = deleteAppointment;
 window.closeBackupModal  = closeBackupModal;
