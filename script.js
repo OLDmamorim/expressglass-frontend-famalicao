@@ -458,7 +458,7 @@ async function deleteAppointment(id) {
   } catch (e) { console.error(e); showToast('Erro ao eliminar: ' + e.message, 'error'); }
 }
 
-/* Expor no window para onclick inline (se existir no HTML) */
+/* Expor no window para onclick inline se existir no HTML */
 window.openAppointmentModal = openAppointmentModal;
 window.editAppointment = editAppointment;
 window.deleteAppointment = deleteAppointment;
@@ -480,19 +480,19 @@ function attachStatusListeners() {
       const prevStatus = a.status;
       const prevFilter = statusFilter;
 
-      // 1) Otimista: mudar já
+      // 1) Otimista
       a.status = st;
 
-      // 2) Se houver filtro e o novo estado não bate, limpa JÁ o filtro (para o cartão NÃO desaparecer)
+      // 2) Se o filtro ativo não bate, limpar já para não desaparecer
       if (statusFilter && a.status !== statusFilter) {
         statusFilter = '';
         const sel = document.getElementById('filterStatus'); if (sel) sel.value = '';
       }
 
-      // 3) Re-render imediato (sem esperar rede)
+      // 3) Re-render imediato
       renderAll();
 
-      // 4) Persistir no backend + refresh real
+      // 4) Persistir + refresh real
       try {
         const updated = await apiPut(`/api/appointments/${id}`, a);
         if (updated && typeof updated === 'object') Object.assign(a, updated);
@@ -584,41 +584,57 @@ function closeBackupModal(){ const m=document.getElementById('backupModal'); m&&
 function closeStatsModal(){ const m=document.getElementById('statsModal');  m&&m.classList.remove('show'); }
 
 /* ===========================
-   TRIGGER “NOVO SERVIÇO”
+   TRIGGER “NOVO SERVIÇO” (ANTI-CONFLITOS)
 =========================== */
-function bindGlobalNewServiceTrigger(){
-  // Seletores suportados
-  const selector = '#ag2BtnNovo, #addServiceBtn, #btnNovoServico, .new-service-btn, [data-new-service="true"]';
+const NEW_SERVICE_SELECTOR = '#ag2BtnNovo, #addServiceBtn, #btnNovoServico, .new-service-btn, [data-new-service="true"]';
 
-  // 1) Delegação em CAPTURA (para apanhar mesmo que alguém faça stopPropagation na bolha)
-  document.addEventListener('click', (e) => {
-    const trigger = e.target.closest(selector);
-    if (trigger) {
-      console.debug('[Novo Serviço] click (capture) em', trigger);
-      e.preventDefault();
-      openAppointmentModal();
-    }
-  }, { capture:true });
-
-  // 2) Delegação em BOLHA (redundância)
-  document.addEventListener('click', (e) => {
-    const trigger = e.target.closest(selector);
-    if (trigger) {
-      console.debug('[Novo Serviço] click (bubble) em', trigger);
-      e.preventDefault();
-      openAppointmentModal();
-    }
-  });
-
-  // 3) Listeners diretos se já existir no DOM ao carregar
-  ['ag2BtnNovo','addServiceBtn','btnNovoServico'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('click', (e)=>{ console.debug('[Novo Serviço] direto em #'+id); e.preventDefault(); openAppointmentModal(); });
-    }
-  });
+function rebindNewServiceButton(el){
+  try {
+    // clone -> limpa listeners antigos
+    const clone = el.cloneNode(true);
+    clone.type = 'button';
+    clone.addEventListener('click', (e)=>{ e.preventDefault(); openAppointmentModal(); });
+    el.replaceWith(clone);
+  } catch(_) { /* ignore */ }
 }
 
+function forceBindNewServiceButtons(root=document){
+  root.querySelectorAll(NEW_SERVICE_SELECTOR).forEach(rebindNewServiceButton);
+}
+
+function bindGlobalNewServiceTrigger(){
+  // CAPTURA: abre sempre, mesmo com stopPropagation na bolha
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest(NEW_SERVICE_SELECTOR);
+    if (trigger) { e.preventDefault(); openAppointmentModal(); }
+  }, { capture:true });
+
+  // BOLHA: redundância
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest(NEW_SERVICE_SELECTOR);
+    if (trigger) { e.preventDefault(); openAppointmentModal(); }
+  });
+
+  // Rebind inicial (remove handlers antigos)
+  forceBindNewServiceButtons();
+
+  // Observer: se o botão nascer depois, voltamos a rebindar
+  const mo = new MutationObserver((mut)=>{
+    for (const m of mut) {
+      m.addedNodes.forEach(n=>{
+        if (n.nodeType===1) {
+          if (n.matches && n.matches(NEW_SERVICE_SELECTOR)) rebindNewServiceButton(n);
+          if (n.querySelectorAll) forceBindNewServiceButtons(n);
+        }
+      });
+    }
+  });
+  mo.observe(document.body, {childList:true, subtree:true});
+}
+
+/* ===========================
+   LST / EVENTOS
+=========================== */
 document.addEventListener('DOMContentLoaded', async () => {
   // Navegação semana
   document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday,-7); renderAll(); });
@@ -653,7 +669,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderAll();
   });
 
-  // Novo Serviço — bind robusto
+  // Novo Serviço — bind robusto e anti-conflitos
   bindGlobalNewServiceTrigger();
 
   // Modal / Form
