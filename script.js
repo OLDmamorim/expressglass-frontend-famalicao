@@ -656,16 +656,19 @@ function updatePrintTomorrowTable() {
    LST / EVENTOS
 =========================== */
 document.addEventListener('DOMContentLoaded', async () => {
+  // Navegação de semana
   document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday,-7); renderAll(); });
   document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday, 7); renderAll(); });
   document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday = getMonday(new Date()); renderAll(); });
 
+  // Impressão
   document.getElementById('printPage')?.addEventListener('click', ()=>{
     updatePrintUnscheduledTable();
     updatePrintTomorrowTable();
     window.print();
   });
 
+  // Pesquisa
   document.getElementById('searchBtn')?.addEventListener('click', ()=>{
     const sb = document.getElementById('searchBar');
     sb?.classList.toggle('hidden');
@@ -680,18 +683,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     searchQuery = ''; renderAll();
   });
 
+  // Filtro por status
   document.getElementById('filterStatus')?.addEventListener('change', (e)=>{
     statusFilter = e.target.value || '';
     renderAll();
   });
 
-  document.getElementById('addServiceBtn')?.addEventListener('click', ()=> openAppointmentModal());
-  document.getElementById('addServiceMobile')?.addEventListener('click', ()=> openAppointmentModal());
+  // “Novo Serviço” — cobre vários IDs/classes
+  ['addServiceBtn','ag2BtnNovo','btnNovoServico'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', () => openAppointmentModal());
+  });
+  document.getElementById('addServiceMobile')?.addEventListener('click', () => openAppointmentModal());
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.new-service-btn,[data-new-service="true"]');
+    if (btn) { e.preventDefault(); openAppointmentModal(); }
+  });
+
+  // Modal / Form
   document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
   document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
   document.getElementById('appointmentForm')?.addEventListener('submit', (e)=>{ e.preventDefault(); saveAppointment(); });
   document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if (editingId) deleteAppointment(editingId); });
 
+  // Backup / Estatísticas
   document.getElementById('backupBtn')?.addEventListener('click', ()=> document.getElementById('backupModal')?.classList.add('show'));
   document.getElementById('statsBtn')?.addEventListener('click', showStats);
   document.getElementById('importBtn')?.addEventListener('click', ()=> document.getElementById('importFile')?.click());
@@ -701,6 +715,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('exportJson')?.addEventListener('click', exportToJson);
   document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
 
+  // Carregar + render
   await load();
   renderAll();
 });
