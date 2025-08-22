@@ -481,7 +481,7 @@ async function deleteAppointment(id) {
   } catch (e) { console.error(e); showToast('Erro ao eliminar: ' + e.message, 'error'); }
 }
 
-/* Status toggles — grava no backend */
+/* Status toggles — grava no backend e mantém o cartão visível */
 function attachStatusListeners() {
   document.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', async function() {
@@ -489,18 +489,29 @@ function attachStatusListeners() {
       const id = Number(el.getAttribute('data-id'));
       const st = this.getAttribute('data-status');
 
-      // Garantir exclusividade do status visualmente
+      // Exclusividade visual
       el.querySelectorAll('.appt-status input[type="checkbox"]').forEach(x=>{ if(x!==this) x.checked=false; });
 
-      const a = appointments.find(x=> x.id == id);
+      const a = appointments.find(x => x.id == id);
       if (!a) return;
 
       // Otimista
       const prev = a.status;
       a.status = st;
+
       try {
         const updated = await apiPut(`/api/appointments/${id}`, a);
         if (updated && typeof updated === 'object') Object.assign(a, updated);
+
+        // Se houver filtro ativo e o novo estado já não corresponder,
+        // limpamos o filtro para manter o cartão visível.
+        if (statusFilter && a.status !== statusFilter) {
+          statusFilter = '';
+          const sel = document.getElementById('filterStatus');
+          if (sel) sel.value = '';
+          showToast('Filtro limpo para continuares a ver o cartão.', 'info');
+        }
+
         showToast(`Status gravado: ${st}`, 'success');
         renderAll();
       } catch (e) {
@@ -664,7 +675,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     searchQuery = ''; renderAll();
   });
 
-  // Filtro por status (se existir)
+  // Filtro por status (se existir no teu HTML)
   document.getElementById('filterStatus')?.addEventListener('change', (e)=>{
     statusFilter = e.target.value || '';
     renderAll();
