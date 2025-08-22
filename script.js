@@ -219,9 +219,26 @@ function renderSchedule(){
   highlightSearchResults();
 }
 
+/* ====== ALTERADO: mostra placeholder quando está vazio ====== */
 function renderUnscheduled(){
   const container=document.getElementById('unscheduledList'); if(!container) return;
-  const uns=filterAppointments(appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
+
+  const uns=filterAppointments(
+    appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0))
+  );
+
+  if (uns.length === 0){
+    container.innerHTML =
+      `<div class="drop-zone empty" data-drop-bucket="unscheduled">
+         <div class="unscheduled-empty-msg">
+           Sem serviços por agendar.
+           <small>Arrasta para aqui a partir do calendário, ou clica em “+ Novo Serviço”.</small>
+         </div>
+       </div>`;
+    enableDragDrop(container);
+    return;
+  }
+
   const blocks=uns.map(a=>{
     const bg=STATUS_BG[a.status]||'rgba(0,0,0,0.06)'; const border=STATUS_BORDER[a.status]||'#9ca3af';
     return `<div class="appointment-block unscheduled" data-id="${a.id}" draggable="true"
@@ -239,8 +256,9 @@ function renderUnscheduled(){
               </div>
             </div>`;
   }).join('');
+
   container.innerHTML = `<div class="drop-zone" data-drop-bucket="unscheduled">${blocks}</div>`;
-  enableDragDrop();
+  enableDragDrop(container);
   attachStatusListeners();
   highlightSearchResults();
 }
@@ -370,7 +388,7 @@ window.editAppointment = editAppointment;
 window.deleteAppointment = deleteAppointment;
 
 /* ===========================
-   STATUS (checkboxes) — grava no backend e não desaparece
+   STATUS (checkboxes)
 =========================== */
 function attachStatusListeners(){
   document.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb=>{
