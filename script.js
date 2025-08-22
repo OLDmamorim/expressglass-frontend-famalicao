@@ -90,9 +90,7 @@ function formatDateForInput(dateStr) {
 /* Garante que o período é 'Manhã' ou 'Tarde' */
 function normalizePeriod(p) {
   if (!p) return '';
-  const t = String(p)
-    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
-    .trim().toLowerCase();
+  const t = String(p).normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toLowerCase();
   if (t === 'manha') return 'Manhã';
   if (t === 'tarde') return 'Tarde';
   return '';
@@ -126,16 +124,8 @@ let searchQuery = '';
 let statusFilter = '';
 
 /* Mapeamento de cores por STATUS (cartão inteiro) */
-const STATUS_BG = {
-  NE: 'rgba(239, 68, 68, 0.12)',   // vermelho claro
-  VE: 'rgba(245, 158, 11, 0.14)',  // laranja/amarelo claro
-  ST: 'rgba(16, 185, 129, 0.14)'   // verde claro
-};
-const STATUS_BORDER = {
-  NE: '#ef4444',
-  VE: '#f59e0b',
-  ST: '#10b981'
-};
+const STATUS_BG = { NE:'rgba(239,68,68,.12)', VE:'rgba(245,158,11,.14)', ST:'rgba(16,185,129,.14)' };
+const STATUS_BORDER = { NE:'#ef4444', VE:'#f59e0b', ST:'#10b981' };
 
 /* ===========================
    CARREGAR / GUARDAR
@@ -156,8 +146,7 @@ async function load() {
     showToast('Erro ao carregar: ' + e.message, 'error');
   }
 }
-// Mantemos save() por compatibilidade (o backend já persiste)
-async function save(){}
+async function save(){ /* compat */ }
 
 /* ===========================
    FILTROS / PESQUISA
@@ -219,7 +208,6 @@ function normalizeBucketOrder(bucket) {
 async function onDropAppointment(id, targetBucket, targetIndex) {
   const i = appointments.findIndex(a => a.id == id); if (i < 0) return;
   const a = appointments[i];
-
   const prev = { date: a.date, period: a.period, sortIndex: a.sortIndex };
 
   if (targetBucket === 'unscheduled') { a.date = ''; a.period = ''; }
@@ -228,27 +216,20 @@ async function onDropAppointment(id, targetBucket, targetIndex) {
     a.date = d; a.period = p || a.period || 'Manhã';
   }
   normalizeBucketOrder(targetBucket);
-  const list = appointments
-    .filter(x => bucketOf(x) === targetBucket)
-    .sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
+  const list = appointments.filter(x => bucketOf(x) === targetBucket).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
   list.forEach((x,idx)=> x.sortIndex = idx+1);
   if (targetIndex >= list.length) a.sortIndex = list.length + 1;
   else { list.splice(targetIndex,0,a); list.forEach((x,idx)=> x.sortIndex=idx+1); }
 
-  // Otimista
-  renderAll();
+  renderAll(); // otimista
 
   try {
     const updated = await apiPut(`/api/appointments/${id}`, a);
     if (updated && typeof updated === 'object') Object.assign(a, updated);
-    await load();                 // refresh do backend
-    renderAll();
-    showToast('Agendamento movido!', 'success');
+    await load(); renderAll(); showToast('Agendamento movido!', 'success');
   } catch (e) {
-    // Rollback
     a.date = prev.date; a.period = prev.period; a.sortIndex = prev.sortIndex;
-    renderAll();
-    showToast('Erro a gravar movimento: ' + e.message, 'error');
+    renderAll(); showToast('Erro a gravar movimento: ' + e.message, 'error');
   }
 }
 
@@ -259,7 +240,7 @@ function renderSchedule() {
   const table = document.getElementById('schedule'); if (!table) return;
   table.innerHTML = '';
 
-  // Agora mostra 2ª a Sábado (6 dias)
+  // 2ª a Sábado (6 dias)
   const week = [...Array(6)].map((_,i)=> addDays(currentMonday, i));
   const startStr = week[0].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'});
   const endStr   = week[week.length-1].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -399,7 +380,9 @@ function renderAll(){ renderSchedule(); renderUnscheduled(); renderMobileDay(); 
 =========================== */
 function openAppointmentModal(id=null) {
   editingId = id;
-  const modal = document.getElementById('appointmentModal'); if (!modal) return;
+  const modal = document.getElementById('appointmentModal');
+  if (!modal) { showToast('Modal de agendamento não encontrado no HTML.', 'error'); return; }
+
   const form  = document.getElementById('appointmentForm');
   const title = document.getElementById('modalTitle');
   const del   = document.getElementById('deleteAppointment');
@@ -517,7 +500,7 @@ function attachStatusListeners() {
         // Rollback do estado
         a.status = prevStatus;
 
-        // (opcional) restaurar filtro se existia e fazia sentido
+        // Restaurar filtro se existia e fazia sentido
         if (prevFilter) {
           statusFilter = prevFilter;
           const sel = document.getElementById('filterStatus');
@@ -605,58 +588,22 @@ function closeBackupModal(){ const m=document.getElementById('backupModal'); m&&
 function closeStatsModal(){ const m=document.getElementById('statsModal');  m&&m.classList.remove('show'); }
 
 /* ===========================
-   IMPRESSÃO
-=========================== */
-function updatePrintUnscheduledTable() {
-  const uns = filterAppointments(appointments.filter(a => !a.date || !a.period)
-                                            .sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
-  const tbody = document.getElementById('printUnscheduledTableBody'); if (!tbody) return;
-  const sec = document.querySelector('.print-unscheduled-section');
-  if (uns.length === 0) { sec && (sec.style.display = 'none'); return; }
-  sec && (sec.style.display = '');
-  tbody.innerHTML = uns.map(a => `
-    <tr>
-      <td>${a.plate || ''}</td>
-      <td>${a.car || ''}</td>
-      <td>${a.service || ''}</td>
-      <td>${a.status || ''}</td>
-      <td>${a.notes || ''}</td>
-      <td>${a.extra || ''}</td>
-    </tr>
-  `).join('');
-}
-function updatePrintTomorrowTable() {
-  const title = document.getElementById('printTomorrowTitle');
-  const dateEl= document.getElementById('printTomorrowDate');
-  const tbody = document.getElementById('printTomorrowTableBody');
-  const empty = document.getElementById('printTomorrowEmpty');
-  if (!tbody) return;
-  const tomorrow = addDays(new Date(), 1);
-  const iso = localISO(tomorrow);
-  title && (title.textContent = 'SERVIÇOS DE AMANHÃ');
-  dateEl && (dateEl.textContent = tomorrow.toLocaleDateString('pt-PT', { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' }));
-  const rows = appointments.filter(a => a.date === iso)
-                           .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0));
-  if (rows.length === 0) { empty && (empty.style.display='block'); tbody.innerHTML=''; return; }
-  empty && (empty.style.display='none');
-  tbody.innerHTML = rows.map(a => `
-    <tr>
-      <td>${a.period || ''}</td>
-      <td>${a.plate || ''}</td>
-      <td>${a.car || ''}</td>
-      <td>${a.service || ''}</td>
-      <td>${a.status || ''}</td>
-      <td>${a.notes || ''}</td>
-      <td>${a.extra || ''}</td>
-    </tr>
-  `).join('');
-}
-
-/* ===========================
    LST / EVENTOS
 =========================== */
+function bindGlobalNewServiceTrigger(){
+  // Delegação global — apanha cliques em qualquer “Novo Serviço”
+  const selector = '#ag2BtnNovo, #addServiceBtn, #btnNovoServico, .new-service-btn, [data-new-service="true"]';
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest(selector);
+    if (trigger) {
+      e.preventDefault();
+      openAppointmentModal();
+    }
+  }, { capture:false });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-  // Navegação de semana
+  // Navegação semana
   document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday,-7); renderAll(); });
   document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday, 7); renderAll(); });
   document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday = getMonday(new Date()); renderAll(); });
@@ -689,15 +636,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderAll();
   });
 
-  // “Novo Serviço” — cobre vários IDs/classes
-  ['addServiceBtn','ag2BtnNovo','btnNovoServico'].forEach(id => {
-    document.getElementById(id)?.addEventListener('click', () => openAppointmentModal());
-  });
-  document.getElementById('addServiceMobile')?.addEventListener('click', () => openAppointmentModal());
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.new-service-btn,[data-new-service="true"]');
-    if (btn) { e.preventDefault(); openAppointmentModal(); }
-  });
+  // Delegação global para “Novo Serviço”
+  bindGlobalNewServiceTrigger();
 
   // Modal / Form
   document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
@@ -715,7 +655,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('exportJson')?.addEventListener('click', exportToJson);
   document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
 
-  // Carregar + render
   await load();
   renderAll();
 });
