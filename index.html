@@ -4,268 +4,300 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
   <title>Portal de Agendamento - Expressglass</title>
-  <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
+
+  <!-- Estilos GERAIS MUITO LEVES (opcional) -->
+  <style>
+    :root { --azul:#2563eb; --cinza-borda:#e5e7eb; --txt:#0f172a; }
+    * { box-sizing: border-box; }
+    body {
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background:#f7f8fb; color:#0f172a;
+    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 18px 16px 60px; }
+    .header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom: 14px; }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand .logo { width:36px; height:36px; border-radius:8px; background: var(--azul); display:grid; place-items:center; color:#fff; font-weight:800; }
+    .brand h1 { font-size:18px; margin:0; }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; }
+    .btn {
+      display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border-radius:8px; border:1px solid transparent;
+      font-weight:600; cursor:pointer; transition:.15s ease; box-shadow:0 1px 2px rgba(0,0,0,.08);
+    }
+    .btn-primary { background: var(--azul); color:#fff; }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .card {
+      background:#fff; border:1px solid rgba(0,0,0,.06); border-radius:16px; box-shadow:0 6px 16px rgba(0,0,0,.06);
+      padding:16px; margin-bottom:18px;
+    }
+  </style>
+
+  <!-- Estilos ESPECÍFICOS da secção "SERVIÇOS POR AGENDAR" -->
+  <style>
+    /* ===== SERVIÇOS POR AGENDAR (prefixo ag-) ===== */
+    .ag-sec { margin-top: 12px; }
+    .ag-title { font-size: 20px; font-weight: 700; color: #1e293b; margin: 0 0 10px 0; }
+
+    .ag-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 12px;
+    }
+    .ag-actions { display: flex; align-items: center; gap: 10px; }
+
+    .ag-select-wrap { position: relative; }
+    .ag-select {
+      appearance: none; -webkit-appearance: none; -moz-appearance: none;
+      padding: 10px 36px 10px 12px; border-radius: 8px; border: 1px solid #e5e7eb;
+      background: #fff; font-weight: 500; cursor: pointer;
+    }
+    .ag-select-caret {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: #64748b; font-size: 12px;
+    }
+
+    .ag-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+    @media (min-width: 1200px) {.ag-grid > .ag-card{ grid-column: span 3; }}
+    @media (min-width: 800px) and (max-width:1199px) {.ag-grid > .ag-card{ grid-column: span 4; }}
+    @media (max-width: 799px) {.ag-grid > .ag-card{ grid-column: span 12; }}
+
+    .ag-card {
+      border-radius: 14px;
+      padding: 14px 14px 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+      border: 1px solid rgba(0,0,0,.06);
+      position: relative;
+      background:#fff;
+    }
+
+    /* Cores por estado (cor do CARD inteiro) */
+    .ag-status-NE { background: #f8d1d1; }   /* vermelho claro */
+    .ag-status-VE { background: #d9d0ff; }   /* roxo claro */
+    .ag-status-ST { background: #bff2e8; }   /* verde água claro */
+
+    .ag-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .ag-title-line {
+      font-weight: 700; color:#0f172a; font-size: 14px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ag-body { margin-top: 6px; color:#1f2937; font-size: 13px; line-height: 1.35; }
+    .ag-body small { color:#334155; display:block; }
+
+    .ag-controls {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 10px;
+    }
+    .ag-chk-group {
+      display: flex; align-items:center; gap: 8px; flex-wrap: wrap;
+    }
+    .ag-chk { display:flex; align-items:center; gap:6px; font-weight:600; }
+    .ag-chk input { width: 14px; height: 14px; }
+    .ag-chk input:checked + span { text-decoration: underline; }
+
+    .ag-actions-card {
+      margin-left: auto; display:flex; align-items:center; gap:8px;
+    }
+    .ag-icon-btn {
+      width: 30px; height: 30px; border-radius: 6px; border: 1px solid rgba(0,0,0,.12);
+      background: rgba(255,255,255,.65); display:grid; place-items:center; cursor:pointer;
+      transition: .15s ease;
+    }
+    .ag-icon-btn:hover { transform: translateY(-1px); }
+    .ag-icon { width:16px; height:16px; fill:#334155; }
+  </style>
 </head>
 <body>
-  <div class="page">
-    <header class="page-header">
-      <h1>PORTAL DE AGENDAMENTO</h1>
-      <p class="subtitle">Agendamento serviços Expressglass</p>
-      <div class="header-actions">
-        <div id="connectionStatus" class="connection-status" title="Status da conexão">
-          <span id="statusIcon">🌐</span>
-          <span id="statusText">Online</span>
-        </div>
-        <button id="backupBtn" class="header-btn" title="Backup de dados">💾</button>
-        <button id="statsBtn" class="header-btn" title="Estatísticas">📊</button>
-        <button id="searchBtn" class="header-btn" title="Pesquisar">🔍</button>
+  <div class="container">
+    <!-- Cabeçalho simples -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo">EG</div>
+        <h1>Portal de Agendamento — Expressglass</h1>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
       </div>
     </header>
 
-    <!-- Barra de pesquisa -->
-    <div id="searchBar" class="search-bar hidden">
-      <input type="text" id="searchInput" placeholder="Pesquisar por matrícula, carro ou localidade..." />
-      <button id="clearSearch" class="search-clear">✕</button>
-    </div>
-
-    <div class="nav-bar">
-      <div class="nav-left">
-        <button id="prevWeek" class="nav-button">&lt; Anterior</button>
-        <button id="nextWeek" class="nav-button">Próxima &gt;</button>
-        <button id="todayWeek" class="nav-button">📅 Hoje</button>
-      </div>
-      <div class="week-range" id="weekRange">—</div>
-      <div class="nav-right">
-        <button id="printPage" class="nav-button">🖨 Imprimir</button>
-      </div>
-    </div>
-
-    <!-- Calendário -->
-    <div class="schedule-container print-page-1">
-      <table id="schedule" class="schedule"></table>
-    </div>
-
-    <!-- Serviços por agendar -->
-    <section class="unscheduled-container">
-      <h3>SERVIÇOS POR AGENDAR</h3>
-      <div class="unscheduled-actions">
-        <button id="addServiceBtn" class="action-btn primary">+ Novo Serviço</button>
-        <select id="filterStatus" class="filter-select">
-          <option value="">Todos os estados</option>
-          <option value="NE">N/E - Não Executado</option>
-          <option value="VE">V/E - Vidro Encomendado</option>
-          <option value="ST">ST - Serviço Terminado</option>
-        </select>
-      </div>
-      <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
+    <!-- Outras caixas/áreas do teu portal (exemplo) -->
+    <section class="card">
+      <h2 style="margin:0 0 8px 0;font-size:16px;">Resumo (exemplo)</h2>
+      <p style="margin:0;color:#475569;font-size:14px;">Aqui podes manter as tuas outras caixas/indicadores. Esta secção é apenas um placeholder.</p>
     </section>
 
-    <!-- Vista diária (mobile) -->
-    <section id="mobileDayView" class="mobile-day-container">
-      <div class="mobile-day-header">
-        <div id="mobileDayLabel" class="mobile-day-label">—</div>
-        <div class="mobile-day-buttons">
-          <button id="prevDay" class="nav-button small full">◀ Anterior</button>
-          <button id="todayDay" class="nav-button small full">Hoje</button>
-          <button id="nextDay" class="nav-button small full">Seguinte ▶</button>
+    <!-- ===================== SERVIÇOS POR AGENDAR ===================== -->
+    <section class="ag-sec card">
+      <div class="ag-header">
+        <h2 class="ag-title">SERVIÇOS POR AGENDAR</h2>
+        <div class="ag-actions">
+          <button id="agBtnNovo" class="btn btn-primary">+ Novo Serviço</button>
+          <div class="ag-select-wrap">
+            <select id="agFiltroEstados" class="ag-select">
+              <option value="todos">Todos os estados</option>
+              <option value="NE">N/E</option>
+              <option value="VE">V/E</option>
+              <option value="ST">ST</option>
+            </select>
+            <span class="ag-select-caret">▾</span>
+          </div>
         </div>
       </div>
-      <div id="mobileDayList" class="mobile-day-list"></div>
-      <button id="addServiceMobile" class="mobile-add-btn">+ Novo Serviço</button>
+
+      <div id="agGrid" class="ag-grid"><!-- JS insere os cards --></div>
     </section>
 
-    <!-- Tabela de serviços -->
-    <section class="services-table-container print-page-2">
-      <h3 id="servicesTableTitle">SERVIÇOS A REALIZAR</h3>
-      <div class="services-summary">
-        <span id="servicesSummary">Todos os serviços desde hoje em diante</span>
-        <button id="exportServices" class="export-btn">📄 Exportar</button>
-      </div>
-      <div class="table-wrapper">
-        <table id="servicesTable" class="services-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Período</th>
-              <th>Matrícula</th>
-              <th>Carro</th>
-              <th>Serviço</th>
-              <th>Observações</th>
-              <th>Estado</th>
-              <th>Dias</th>
-              <th class="no-print">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="servicesTableBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Formulário -->
-    <div id="appointmentModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 id="modalTitle">Novo Agendamento</h3>
-          <button id="closeModal" class="close-btn">✕</button>
-        </div>
-        
-        <form id="appointmentForm" class="appointment-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentDate">Data</label>
-              <input type="date" id="appointmentDate" />
-            </div>
-            <div class="form-group">
-              <label for="appointmentPeriod">Período</label>
-              <select id="appointmentPeriod">
-                <option value="">—</option>
-                <option value="Manhã">Manhã</option>
-                <option value="Tarde">Tarde</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentPlate">Matrícula *</label>
-              <input type="text" id="appointmentPlate" placeholder="XX-XX-XX" maxlength="8" required />
-              <small class="form-hint">Formato: XX-XX-XX</small>
-            </div>
-            <div class="form-group">
-              <label for="appointmentCar">Modelo do Carro *</label>
-              <input type="text" id="appointmentCar" placeholder="Ex: BMW X3" required />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentService">Tipo de Serviço *</label>
-              <select id="appointmentService" required>
-                <option value="">Selecione o tipo de serviço</option>
-                <option value="PB">PB - Para-brisas</option>
-                <option value="LT">LT - Lateral</option>
-                <option value="OC">OC - Óculo</option>
-                <option value="REP">REP - Reparação</option>
-                <option value="POL">POL - Polimento</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentStatus">Status do Vidro *</label>
-              <select id="appointmentStatus" required>
-                <option value="NE">N/E - Não Executado</option>
-                <option value="VE">V/E - Vidro Encomendado</option>
-                <option value="ST">ST - Serviço Terminado</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="appointmentNotes">Observações</label>
-            <textarea id="appointmentNotes" placeholder="Informações adicionais" rows="3"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="appointmentExtra">Outros dados (opcional)</label>
-            <textarea id="appointmentExtra" placeholder="Informações adicionais" rows="2"></textarea>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" id="cancelForm" class="btn secondary">Cancelar</button>
-            <button type="button" id="deleteAppointment" class="btn danger hidden">Eliminar</button>
-            <button type="submit" class="btn primary">Guardar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Backup -->
-    <div id="backupModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Backup de Dados</h3>
-          <button class="close-btn" onclick="closeBackupModal()">✕</button>
-        </div>
-        <div class="backup-content">
-          <div class="backup-section">
-            <h4>📤 Exportar Dados</h4>
-            <p>Faça backup dos seus agendamentos</p>
-            <div class="backup-actions">
-              <button id="exportJson" class="btn primary">💾 Exportar JSON</button>
-              <button id="exportCsv" class="btn secondary">📊 Exportar CSV</button>
-            </div>
-          </div>
-          <div class="backup-section">
-            <h4>📥 Importar Dados</h4>
-            <p>Restaurar dados de um backup anterior</p>
-            <input type="file" id="importFile" accept=".json" style="display: none;" />
-            <button id="importBtn" class="btn secondary">📁 Selecionar Ficheiro</button>
-            <div id="importStatus" class="import-status"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Estatísticas -->
-    <div id="statsModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>📊 Estatísticas</h3>
-          <button class="close-btn" onclick="closeStatsModal()">✕</button>
-        </div>
-        <div id="statsContent" class="stats-content"></div>
-      </div>
-    </div>
-
-    <!-- Toasts -->
-    <div id="toastContainer" class="toast-container"></div>
-    
-    <!-- Impressão: por agendar -->
-    <div class="print-unscheduled-section">
-      <h2>SERVIÇOS POR AGENDAR</h2>
-      <table class="print-unscheduled-table">
-        <thead>
-          <tr>
-            <th>Matrícula</th>
-            <th>Modelo do Carro</th>
-            <th>Serviço</th>
-            <th>Estado</th>
-            <th>Observações</th>
-            <th>Outros Dados</th>
-          </tr>
-        </thead>
-        <tbody id="printUnscheduledTableBody"></tbody>
-      </table>
-    </div>
-
-    <!-- Impressão: amanhã -->
-    <div class="print-tomorrow-section">
-      <h2 id="printTomorrowTitle">SERVIÇOS DE AMANHÃ</h2>
-      <div class="print-tomorrow-date" id="printTomorrowDate"></div>
-      <table class="print-tomorrow-table">
-        <thead>
-          <tr>
-            <th>Período</th>
-            <th>Matrícula</th>
-            <th>Modelo do Carro</th>
-            <th>Serviço</th>
-            <th>Estado</th>
-            <th>Observações</th>
-            <th>Outros Dados</th>
-          </tr>
-        </thead>
-        <tbody id="printTomorrowTableBody"></tbody>
-      </table>
-      <div class="print-tomorrow-empty" id="printTomorrowEmpty" style="display: none;">
-        <p>Não há serviços agendados para amanhã.</p>
-      </div>
-    </div>
-
+    <!-- Footer simples -->
+    <footer style="opacity:.7; font-size:12px; text-align:center; margin-top:22px;">
+      Expressglass • Portal interno
+    </footer>
   </div>
 
-  <script src="script.js"></script>
+  <!-- ===================== SCRIPTS ===================== -->
+  <script>
+    // ====== Helpers de ícones SVG ======
+    const ICON_EDIT = '<svg class="ag-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>';
+    const ICON_TRASH = '<svg class="ag-icon" viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+
+    // ====== Mapeamento estado -> classe de cor ======
+    const estadoToClass = (s) => {
+      switch (s) {
+        case 'NE': return 'ag-status-NE'; // N/E
+        case 'VE': return 'ag-status-VE'; // V/E
+        case 'ST': return 'ag-status-ST'; // ST
+        default:   return 'ag-status-NE';
+      }
+    };
+
+    // Decide a cor principal do card conforme checkboxes (prioridade: ST > VE > NE)
+    function inferEstadoFromChecks(ne, ve, st) {
+      if (st) return 'ST';
+      if (ve) return 'VE';
+      return 'NE';
+    }
+
+    // ====== Render dos cards ======
+    function renderCards(lista) {
+      const grid = document.getElementById('agGrid');
+      if (!grid) return;
+
+      grid.innerHTML = lista.map(item => {
+        const cls = estadoToClass(item.estado);
+        const title = `${item.matricula} | ${item.servico} | ${item.modelo}`;
+        const local  = `${item.local || ''}`.trim();
+        const obs    = `${item.obs || ''}`.trim();
+
+        return `
+          <article class="ag-card ${cls}" data-id="${item.id}">
+            <div class="ag-top">
+              <div class="ag-title-line" title="${title}">${title}</div>
+              <div class="ag-actions-card">
+                <button class="ag-icon-btn" title="Editar" onclick="onEditar('${item.id}')">${ICON_EDIT}</button>
+                <button class="ag-icon-btn" title="Apagar" onclick="onApagar('${item.id}')">${ICON_TRASH}</button>
+              </div>
+            </div>
+
+            <div class="ag-body">
+              ${local ? `<small>${local}</small>` : ''}
+              ${obs   ? `<small>${obs}</small>`   : ''}
+            </div>
+
+            <div class="ag-controls">
+              <div class="ag-chk-group">
+                <label class="ag-chk">
+                  <input type="checkbox" ${item.ne ? 'checked' : ''} onchange="onToggle('${item.id}','NE',this.checked)">
+                  <span>N/E</span>
+                </label>
+                <label class="ag-chk">
+                  <input type="checkbox" ${item.ve ? 'checked' : ''} onchange="onToggle('${item.id}','VE',this.checked)">
+                  <span>V/E</span>
+                </label>
+                <label class="ag-chk">
+                  <input type="checkbox" ${item.st ? 'checked' : ''} onchange="onToggle('${item.id}','ST',this.checked)">
+                  <span>ST</span>
+                </label>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    // ====== Estado em memória (substitui pelo teu backend) ======
+    const state = {
+      itens: [
+        { id:'1', matricula:'36-PC-67', servico:'PB',  modelo:'ROVER 600',
+          local:'Póvoa de Lanhoso | Donim // 7020AGNGN', obs:'',
+          ne:true, ve:false, st:false, estado:'NE'
+        },
+        { id:'2', matricula:'93-92-JI', servico:'PB',  modelo:'ISUZU',
+          local:'Barcelos | MIGUEL 93-92-JI // 6278AGN+*6279ASMR', obs:'',
+          ne:true, ve:true, st:false, estado:'NE'
+        },
+        { id:'3', matricula:'76-51-BP', servico:'PB',  modelo:'CIVIC',
+          local:'Póvoa de Lanhoso | REFUGIO - FALTAM MOLAS // 3948ABL', obs:'',
+          ne:false, ve:true, st:false, estado:'VE'
+        },
+        { id:'4', matricula:'78-30-UQ', servico:'PB',  modelo:'MERCEDES',
+          local:'Famalicão | RETIRAR PB _ OFICINA | CAMPOS/CRISTINA 967254054', obs:'',
+          ne:false, ve:false, st:true, estado:'ST'
+        },
+      ]
+    };
+
+    // ====== Handlers (liga ao teu backend aqui) ======
+    function onEditar(id) {
+      console.log('editar', id);
+      // abrir modal / preencher formulário / PUT-PATCH para o teu API
+      alert('Editar ID ' + id + ' (liga este handler ao teu backend).');
+    }
+    function onApagar(id) {
+      if (!confirm('Apagar este serviço?')) return;
+      const idx = state.itens.findIndex(i => i.id === id);
+      if (idx >= 0) {
+        state.itens.splice(idx,1);
+        renderCards(state.itens);
+      }
+      // fetch DELETE no teu backend aqui
+    }
+    function onToggle(id, campo, checked) {
+      const item = state.itens.find(i => i.id === id);
+      if (!item) return;
+      if (campo === 'NE') item.ne = checked;
+      if (campo === 'VE') item.ve = checked;
+      if (campo === 'ST') item.st = checked;
+
+      // Recalcular o "estado principal" para a cor do cartão
+      item.estado = inferEstadoFromChecks(item.ne, item.ve, item.st);
+      renderCards(state.itens);
+
+      // PATCH no teu backend aqui (id, campo, checked)
+      // fetch(`/api/servicos/${id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ [campo]: checked, estado: item.estado }) });
+    }
+
+    // ====== Filtro por estado ======
+    document.getElementById('agFiltroEstados')?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      const cards = document.querySelectorAll('.ag-card');
+      cards.forEach(c => {
+        if (val === 'todos') { c.style.display = ''; return; }
+        const ok =
+          (val === 'NE' && c.classList.contains('ag-status-NE')) ||
+          (val === 'VE' && c.classList.contains('ag-status-VE')) ||
+          (val === 'ST' && c.classList.contains('ag-status-ST'));
+        c.style.display = ok ? '' : 'none';
+      });
+    });
+
+    // Botão "Novo Serviço" (exemplo)
+    document.getElementById('agBtnNovo')?.addEventListener('click', () => {
+      alert('Abrir formulário de novo serviço (liga ao teu fluxo).');
+    });
+
+    // ====== Inicializar ======
+    renderCards(state.itens);
+  </script>
 </body>
 </html>
