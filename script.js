@@ -1,11 +1,8 @@
 'use strict';
 
-/* ===========================
-   API CONFIG
-=========================== */
+/* =============  API  ============= */
 const API_BASE = 'https://expressglass-backend-famalicao.netlify.app';
 
-/* -------- HTTP helpers -------- */
 async function apiGet(path, params = {}) {
   const url = new URL(API_BASE + path);
   Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v); });
@@ -37,9 +34,7 @@ async function apiDelete(path) {
   return true;
 }
 
-/* ===========================
-   UTILS
-=========================== */
+/* =============  UTILS  ============= */
 function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
 function getMonday(date) { const d = new Date(date); const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.setDate(diff)); }
 function localISO(date) { const y=date.getFullYear(), m=String(date.getMonth()+1).padStart(2,'0'), d=String(date.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
@@ -54,7 +49,7 @@ function parseDate(dateStr){
 }
 function formatDateForInput(dateStr){ if(!dateStr) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)){ const [y,m,d]=dateStr.split('-'); return `${d}/${m}/${y}`; } return dateStr; }
 
-/* Compat Android/WebView: remover acentos sem \p{Diacritic} */
+/* remover acentos sem \p{Diacritic} */
 function normalizePeriod(p){
   if(!p) return '';
   const t = String(p).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
@@ -64,14 +59,10 @@ function normalizePeriod(p){
 }
 
 function showToast(msg,type='info'){ const c=document.getElementById('toastContainer'); if(!c) return; const t=document.createElement('div'); t.className=`toast ${type}`; const icon=type==='success'?'✅':type==='error'?'❌':'ℹ️'; t.innerHTML=`<span>${icon}</span><span>${msg}</span>`; c.appendChild(t); setTimeout(()=>t.remove(),3500); }
-function formatPlate(input){ let v=input.value.replace(/[^A-Za-z0-9]/g,'').toUpperCase(); if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2); if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5,7); input.value=v; }
 
-/* ===========================
-   STATE
-=========================== */
+/* =============  STATE  ============= */
 let appointments = [];
 let currentMonday  = getMonday(new Date());
-let currentMobileDay = new Date();
 let editingId = null;
 let searchQuery = '';
 let statusFilter = '';
@@ -79,9 +70,7 @@ let statusFilter = '';
 const STATUS_BG = { NE:'rgba(239,68,68,.12)', VE:'rgba(245,158,11,.14)', ST:'rgba(16,185,129,.14)' };
 const STATUS_BORDER = { NE:'#ef4444', VE:'#f59e0b', ST:'#10b981' };
 
-/* ===========================
-   LOAD
-=========================== */
+/* =============  LOAD  ============= */
 async function load(){
   try{
     const rows = await apiGet('/api/appointments');
@@ -98,9 +87,7 @@ async function load(){
   }
 }
 
-/* ===========================
-   FILTERS
-=========================== */
+/* =============  FILTERS  ============= */
 function filterAppointments(list){
   let r=[...list];
   if(searchQuery){
@@ -123,9 +110,7 @@ function highlightSearchResults(){
   });
 }
 
-/* ===========================
-   DnD
-=========================== */
+/* =============  DnD  ============= */
 function enableDragDrop(scope){
   (scope||document).querySelectorAll('.appointment-block[data-id]').forEach(card=>{
     card.draggable=true;
@@ -171,13 +156,11 @@ async function onDropAppointment(id,targetBucket,targetIndex){
   }
 }
 
-/* ===========================
-   RENDER
-=========================== */
+/* =============  RENDER  ============= */
 function renderSchedule(){
   const table=document.getElementById('schedule'); if(!table) return; table.innerHTML='';
 
-  // Segunda -> Sábado (6 dias)
+  // Segunda -> Sábado
   const week=[...Array(6)].map((_,i)=> addDays(currentMonday,i));
   const wr=document.getElementById('weekRange');
   if(wr){ wr.textContent = `${week[0].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})} - ${week[5].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'})}`; }
@@ -219,7 +202,7 @@ function renderSchedule(){
   highlightSearchResults();
 }
 
-/* ====== ALTERADO: mostra placeholder quando está vazio ====== */
+/* “Por agendar” com placeholder */
 function renderUnscheduled(){
   const container=document.getElementById('unscheduledList'); if(!container) return;
 
@@ -263,24 +246,6 @@ function renderUnscheduled(){
   highlightSearchResults();
 }
 
-function renderMobileDay(){
-  const label=document.getElementById('mobileDayLabel');
-  if(label){ const s=currentMobileDay.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}); label.textContent=cap(s); }
-  const iso=localISO(currentMobileDay);
-  const dayItems=filterAppointments(
-    appointments.filter(a=>a.date===iso).sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0))
-  );
-  const container=document.getElementById('mobileDayList'); if(!container) return;
-  container.innerHTML = dayItems.map(a=>{
-    const bg=STATUS_BG[a.status]||'rgba(0,0,0,0.06)'; const border=STATUS_BORDER[a.status]||'#9ca3af';
-    return `<div class="appointment-block" style="background:${bg}; border-left:6px solid ${border}; margin-bottom:10px;">
-              <div class="appt-header">${a.period} - ${(a.plate||'')} | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
-              <div class="appt-sub">${a.notes||''}</div>
-            </div>`;
-  }).join('');
-  highlightSearchResults();
-}
-
 function renderServicesTable(){
   const tbody=document.getElementById('servicesTableBody'); if(!tbody) return;
   const today=new Date();
@@ -308,11 +273,9 @@ function renderServicesTable(){
   const sum=document.getElementById('servicesSummary'); if(sum) sum.textContent = `${future.length} serviços pendentes`;
 }
 
-function renderAll(){ renderSchedule(); renderUnscheduled(); renderMobileDay(); renderServicesTable(); }
+function renderAll(){ renderSchedule(); renderUnscheduled(); renderServicesTable(); }
 
-/* ===========================
-   CRUD
-=========================== */
+/* =============  CRUD  ============= */
 function openAppointmentModal(id=null){
   const modal=document.getElementById('appointmentModal'); if(!modal){ showToast('Modal não encontrado.','error'); return; }
   editingId=id;
@@ -381,15 +344,11 @@ async function deleteAppointment(id){
   try{ await apiDelete(`/api/appointments/${id}`); await load(); renderAll(); showToast('Eliminado!','success'); if(editingId==id) closeAppointmentModal(); }
   catch(e){ console.error(e); showToast('Erro ao eliminar: '+e.message,'error'); }
 }
-
-/* Expor para onclick inline */
 window.openAppointmentModal = openAppointmentModal;
 window.editAppointment = editAppointment;
 window.deleteAppointment = deleteAppointment;
 
-/* ===========================
-   STATUS (checkboxes)
-=========================== */
+/* =============  STATUS (checkboxes)  ============= */
 function attachStatusListeners(){
   document.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb=>{
     cb.addEventListener('change', async function(){
@@ -416,9 +375,7 @@ function attachStatusListeners(){
   });
 }
 
-/* ===========================
-   PRINT helpers
-=========================== */
+/* =============  PRINT  ============= */
 function updatePrintUnscheduledTable(){
   const uns=filterAppointments(appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
   const tbody=document.getElementById('printUnscheduledTableBody'); if(!tbody) return;
@@ -439,53 +396,33 @@ function updatePrintTomorrowTable(){
   tbody.innerHTML = rows.map(a=>`<tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
 }
 
-/* ===========================
-   STUBS p/ botões secundários
-=========================== */
+/* =============  STUBS  ============= */
 function closeBackupModal(){ const m=document.getElementById('backupModal'); if(m) m.classList.remove('show'); }
 function showStats(){ const m=document.getElementById('statsModal'); if(m) m.classList.add('show'); }
-function importFromJson(file){ const s=document.getElementById('importStatus'); if(s) s.textContent=`Ficheiro: ${file.name}`; }
 function exportToJson(){ showToast('Export JSON pronto (stub).','info'); }
 function exportToCsv(){ showToast('Export CSV pronto (stub).','info'); }
 
-/* ===========================
-   BOOT
-=========================== */
+/* =============  BOOT  ============= */
 document.addEventListener('DOMContentLoaded', async ()=>{
-  // Semana
   document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday=addDays(currentMonday,-7); renderAll(); });
   document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday=addDays(currentMonday, 7); renderAll(); });
   document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday=getMonday(new Date()); renderAll(); });
 
-  // Mobile day
-  document.getElementById('prevDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,-1); renderMobileDay(); });
-  document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay=new Date(); renderMobileDay(); });
-  document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,1); renderMobileDay(); });
-
-  // Impressão
   document.getElementById('printPage')?.addEventListener('click', ()=>{ updatePrintUnscheduledTable(); updatePrintTomorrowTable(); window.print(); });
 
-  // Pesquisa
   document.getElementById('searchBtn')?.addEventListener('click', ()=>{ const sb=document.getElementById('searchBar'); if(sb){ sb.classList.toggle('hidden'); const i=document.getElementById('searchInput'); if(i) i.focus(); }});
   document.getElementById('searchInput')?.addEventListener('input', e=>{ searchQuery=e.target.value||''; renderAll(); });
   document.getElementById('clearSearch')?.addEventListener('click', ()=>{ const i=document.getElementById('searchInput'); if(i) i.value=''; searchQuery=''; renderAll(); });
 
-  // Filtro estado
   document.getElementById('filterStatus')?.addEventListener('change', e=>{ statusFilter=e.target.value||''; renderAll(); });
 
-  // Modal & form
-  document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
-  document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
+  document.getElementById('closeModal')?.addEventListener('click', ()=>{ const m=document.getElementById('appointmentModal'); if(m) m.classList.remove('show'); });
+  document.getElementById('cancelForm')?.addEventListener('click', ()=>{ const m=document.getElementById('appointmentModal'); if(m) m.classList.remove('show'); });
   document.getElementById('appointmentForm')?.addEventListener('submit', e=>{ e.preventDefault(); saveAppointment(); });
   document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if(editingId) deleteAppointment(editingId); });
 
-  // Backup/Stats
   document.getElementById('backupBtn')?.addEventListener('click', ()=>{ const m=document.getElementById('backupModal'); if(m) m.classList.add('show'); });
   document.getElementById('statsBtn')?.addEventListener('click', showStats);
-  document.getElementById('importBtn')?.addEventListener('click', ()=>{ const f=document.getElementById('importFile'); if(f) f.click(); });
-  document.getElementById('importFile')?.addEventListener('change', e=>{ const f=e.target.files&&e.target.files[0]; if(f) importFromJson(f); });
-  document.getElementById('exportJson')?.addEventListener('click', exportToJson);
-  document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
 
   await load();
   renderAll();
