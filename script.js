@@ -33,8 +33,11 @@ async function apiPut(path, data) {
     headers: { 'Content-Type': 'application/json', 'X-Tenant-Id': 'famalicao' },
     body: JSON.stringify(data)
   });
-  if (!res.ok) throw new Error(`PUT ${path} -> ${res.status}`);
-  return res.json();
+  if (!res.ok) {
+    const err = await res.text().catch(()=> '');
+    throw new Error(`PUT ${path} -> ${res.status} ${err}`);
+  }
+  try { return await res.json(); } catch { return null; }
 }
 
 async function apiDelete(path) {
@@ -159,7 +162,8 @@ async function load() {
     showToast('Erro ao carregar: ' + e.message, 'error');
   }
 }
-async function save(){ /* o backend já guarda; mantemos compatibilidade */ }
+// Mantemos save() por compatibilidade (o backend já persiste)
+async function save(){}
 
 /* ===========================
    FILTROS / PESQUISA
@@ -218,20 +222,40 @@ function normalizeBucketOrder(bucket) {
   const items = appointments.filter(a => bucketOf(a) === bucket);
   items.forEach((item,i)=> item.sortIndex = i+1);
 }
-function onDropAppointment(id, targetBucket, targetIndex) {
-  const i = appointments.findIndex(a => a.id === id); if (i < 0) return;
+async function onDropAppointment(id, targetBucket, targetIndex) {
+  const i = appointments.findIndex(a => a.id == id); if (i < 0) return;
   const a = appointments[i];
+
+  const prev = { date: a.date, period: a.period, sortIndex: a.sortIndex };
+
   if (targetBucket === 'unscheduled') { a.date = ''; a.period = ''; }
   else {
     const [d,p] = targetBucket.split('|');
     a.date = d; a.period = p || a.period || 'Manhã';
   }
   normalizeBucketOrder(targetBucket);
-  const list = appointments.filter(x => bucketOf(x) === targetBucket).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
-  list.forEach((x,idx)=> x.sortIndex=idx+1);
+  const list = appointments
+    .filter(x => bucketOf(x) === targetBucket)
+    .sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
+  list.forEach((x,idx)=> x.sortIndex = idx+1);
   if (targetIndex >= list.length) a.sortIndex = list.length + 1;
   else { list.splice(targetIndex,0,a); list.forEach((x,idx)=> x.sortIndex=idx+1); }
-  save(); renderAll(); showToast('Agendamento movido!', 'success');
+
+  // Otimista
+  renderAll();
+  showToast('A guardar…', 'info');
+
+  try {
+    const updated = await apiPut(`/api/appointments/${id}`, a);
+    if (updated && typeof updated === 'object') Object.assign(a, updated);
+    showToast('Agendamento movido!', 'success');
+    renderAll();
+  } catch (e) {
+    // Rollback
+    a.date = prev.date; a.period = prev.period; a.sortIndex = prev.sortIndex;
+    renderAll();
+    showToast('Erro a gravar movimento: ' + e.message, 'error');
+  }
 }
 
 /* ===========================
@@ -361,13 +385,11 @@ function renderServicesTable() {
       <td>${a.car || ''}</td>
       <td><span class="badge badge-${a.service}">${a.service || ''}</span></td>
       <td>${a.notes || ''}</td>
-      <td><span class="chip chip-${a.status}">${a.status}</span></td>
+      <td>${a.status || ''}</td>
       <td>${daysText}</td>
       <td class="no-print">
-        <div class="actions">
-          <button class="icon edit" onclick="editAppointment(${a.id})" title="Editar">✏️</button>
-          <button class="icon delete" onclick="deleteAppointment(${a.id})" title="Eliminar">🗑️</button>
-        </div>
+        <button class="table-btn" onclick="editAppointment(${a.id})">✏️</button>
+        <button class="table-btn danger" onclick="deleteAppointment(${a.id})">🗑️</button>
       </td>
     </tr>`;
   }).join('');
@@ -387,7 +409,7 @@ function openAppointmentModal(id=null) {
   const del   = document.getElementById('deleteAppointment');
 
   if (id) {
-    const a = appointments.find(x=> x.id===id);
+    const a = appointments.find(x=> x.id==id);
     if (a) {
       title.textContent = 'Editar Agendamento';
       document.getElementById('appointmentDate').value   = formatDateForInput(a.date) || '';
@@ -434,12 +456,12 @@ async function saveAppointment() {
     let result;
     if (editingId) {
       result = await apiPut(`/api/appointments/${editingId}`, appointment);
-      const idx = appointments.findIndex(a => a.id === editingId);
-      if (idx >= 0) appointments[idx] = { ...appointments[idx], ...result };
+      const idx = appointments.findIndex(a => a.id == editingId);
+      if (idx >= 0) appointments[idx] = { ...appointments[idx], ...(result || appointment) };
       showToast('Agendamento atualizado!', 'success');
     } else {
       result = await apiPost('/api/appointments', appointment);
-      appointments.push(result);
+      appointments.push(result || appointment);
       showToast('Agendamento criado!', 'success');
     }
     await save(); renderAll(); closeAppointmentModal();
@@ -453,23 +475,39 @@ async function deleteAppointment(id) {
   if (!confirm('Eliminar este agendamento?')) return;
   try {
     await apiDelete(`/api/appointments/${id}`);
-    appointments = appointments.filter(a => a.id !== id);
+    appointments = appointments.filter(a => a.id != id);
     await save(); renderAll(); showToast('Agendamento eliminado!', 'success');
-    if (editingId === id) closeAppointmentModal();
+    if (editingId == id) closeAppointmentModal();
   } catch (e) { console.error(e); showToast('Erro ao eliminar: ' + e.message, 'error'); }
 }
 
-/* Status toggles */
+/* Status toggles — grava no backend */
 function attachStatusListeners() {
   document.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', function() {
+    cb.addEventListener('change', async function() {
       const el = this.closest('.appointment-block');
       const id = Number(el.getAttribute('data-id'));
       const st = this.getAttribute('data-status');
-      if (this.checked) {
-        el.querySelectorAll('.appt-status input[type="checkbox"]').forEach(x=>{ if(x!==this) x.checked=false; });
-        const a = appointments.find(x=> x.id===id);
-        if (a) { a.status = st; save(); renderAll(); showToast(`Status alterado para ${st}`, 'success'); }
+
+      // Garantir exclusividade do status visualmente
+      el.querySelectorAll('.appt-status input[type="checkbox"]').forEach(x=>{ if(x!==this) x.checked=false; });
+
+      const a = appointments.find(x=> x.id == id);
+      if (!a) return;
+
+      // Otimista
+      const prev = a.status;
+      a.status = st;
+      try {
+        const updated = await apiPut(`/api/appointments/${id}`, a);
+        if (updated && typeof updated === 'object') Object.assign(a, updated);
+        showToast(`Status gravado: ${st}`, 'success');
+        renderAll();
+      } catch (e) {
+        // Rollback
+        a.status = prev;
+        showToast('Erro a gravar status: ' + e.message, 'error');
+        renderAll();
       }
     });
   });
@@ -555,114 +593,102 @@ function updatePrintUnscheduledTable() {
                                             .sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
   const tbody = document.getElementById('printUnscheduledTableBody'); if (!tbody) return;
   const sec = document.querySelector('.print-unscheduled-section');
-  if (uns.length === 0) { if (sec) sec.style.display='none'; return; }
-  if (sec) sec.style.display='block';
+  if (uns.length === 0) { sec && (sec.style.display = 'none'); return; }
+  sec && (sec.style.display = '');
   tbody.innerHTML = uns.map(a => `
     <tr>
       <td>${a.plate || ''}</td>
       <td>${a.car || ''}</td>
-      <td><span class="service-badge badge-${a.service}">${a.service || ''}</span></td>
-      <td><span class="status-chip chip-${a.status}">${a.status}</span></td>
+      <td>${a.service || ''}</td>
+      <td>${a.status || ''}</td>
       <td>${a.notes || ''}</td>
       <td>${a.extra || ''}</td>
-    </tr>`).join('');
+    </tr>
+  `).join('');
 }
 function updatePrintTomorrowTable() {
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-  const iso = localISO(tomorrow);
-  const list = appointments.filter(a => a.date === iso).sort((a,b)=>{
-    const order = { 'Manhã':1, 'Tarde':2 }; return (order[a.period]||3)-(order[b.period]||3);
-  });
   const title = document.getElementById('printTomorrowTitle');
-  const date  = document.getElementById('printTomorrowDate');
-  if (title) title.textContent = 'SERVIÇOS DE AMANHÃ';
-  if (date) date.textContent = cap(tomorrow.toLocaleDateString('pt-PT',{weekday:'long',year:'numeric',month:'long',day:'numeric'}));
+  const dateEl= document.getElementById('printTomorrowDate');
   const tbody = document.getElementById('printTomorrowTableBody');
   const empty = document.getElementById('printTomorrowEmpty');
-  const table = document.querySelector('.print-tomorrow-table');
-  if (list.length === 0) { if (table) table.style.display='none'; if (empty) empty.style.display='block'; return; }
-  if (table) table.style.display='table'; if (empty) empty.style.display='none';
-  if (tbody) tbody.innerHTML = list.map(a => `
+  if (!tbody) return;
+  const tomorrow = addDays(new Date(), 1);
+  const iso = localISO(tomorrow);
+  title && (title.textContent = 'SERVIÇOS DE AMANHÃ');
+  dateEl && (dateEl.textContent = tomorrow.toLocaleDateString('pt-PT', { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' }));
+  const rows = appointments.filter(a => a.date === iso)
+                           .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0));
+  if (rows.length === 0) { empty && (empty.style.display='block'); tbody.innerHTML=''; return; }
+  empty && (empty.style.display='none');
+  tbody.innerHTML = rows.map(a => `
     <tr>
       <td>${a.period || ''}</td>
       <td>${a.plate || ''}</td>
       <td>${a.car || ''}</td>
-      <td><span class="service-badge badge-${a.service}">${a.service || ''}</span></td>
-      <td><span class="status-chip chip-${a.status}">${a.status}</span></td>
+      <td>${a.service || ''}</td>
+      <td>${a.status || ''}</td>
       <td>${a.notes || ''}</td>
       <td>${a.extra || ''}</td>
-    </tr>`).join('');
+    </tr>
+  `).join('');
 }
-function printPage(){ updatePrintUnscheduledTable(); updatePrintTomorrowTable(); window.print(); }
 
 /* ===========================
-   INICIALIZAÇÃO
+   LST / EVENTOS
 =========================== */
-document.addEventListener('DOMContentLoaded', async function() {
-  await load();
-  renderAll();
-
-  // Navegação
+document.addEventListener('DOMContentLoaded', async () => {
+  // Navegação semana
   document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday,-7); renderAll(); });
   document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday, 7); renderAll(); });
   document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday = getMonday(new Date()); renderAll(); });
 
-  // Mobile day
-  document.getElementById('prevDay')?.addEventListener('click', ()=>{ currentMobileDay = addDays(currentMobileDay,-1); renderMobileDay(); });
-  document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay = addDays(currentMobileDay, 1); renderMobileDay(); });
-  document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay = new Date(); renderMobileDay(); });
+  // Impressão
+  document.getElementById('printPage')?.addEventListener('click', ()=>{
+    updatePrintUnscheduledTable();
+    updatePrintTomorrowTable();
+    window.print();
+  });
 
-  // Print
-  document.getElementById('printPage')?.addEventListener('click', printPage);
-
-  // Ações topo
-  document.getElementById('backupBtn')?.addEventListener('click', ()=> document.getElementById('backupModal')?.classList.add('show'));
-  document.getElementById('statsBtn')?.addEventListener('click', showStats);
+  // Pesquisa
   document.getElementById('searchBtn')?.addEventListener('click', ()=>{
-    const sb = document.getElementById('searchBar'); sb?.classList.toggle('hidden');
-    if (sb && !sb.classList.contains('hidden')) document.getElementById('searchInput')?.focus();
+    const sb = document.getElementById('searchBar');
+    sb?.classList.toggle('hidden');
+    document.getElementById('searchInput')?.focus();
+  });
+  document.getElementById('searchInput')?.addEventListener('input', (e)=>{
+    searchQuery = e.target.value || '';
+    renderAll();
+  });
+  document.getElementById('clearSearch')?.addEventListener('click', ()=>{
+    const i = document.getElementById('searchInput'); if (i) i.value='';
+    searchQuery = ''; renderAll();
   });
 
-  // Pesquisa e filtros
-  document.getElementById('searchInput')?.addEventListener('input', e => { searchQuery = e.target.value; renderAll(); });
-  document.getElementById('clearSearch')?.addEventListener('click', () => {
-    searchQuery = ''; const i=document.getElementById('searchInput'); if (i) i.value='';
-    document.getElementById('searchBar')?.classList.add('hidden'); renderAll();
+  // Filtro por status (se existir)
+  document.getElementById('filterStatus')?.addEventListener('change', (e)=>{
+    statusFilter = e.target.value || '';
+    renderAll();
   });
-  document.getElementById('filterStatus')?.addEventListener('change', e => { statusFilter=e.target.value; renderAll(); });
 
-  // Formulário
-  document.getElementById('addServiceBtn')?.addEventListener('click', ()=>openAppointmentModal());
-  document.getElementById('addServiceMobile')?.addEventListener('click', ()=>openAppointmentModal());
+  // Ações formulário
+  document.getElementById('addServiceBtn')?.addEventListener('click', ()=> openAppointmentModal());
+  document.getElementById('addServiceMobile')?.addEventListener('click', ()=> openAppointmentModal());
   document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
   document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
-  document.getElementById('appointmentForm')?.addEventListener('submit', e => { e.preventDefault(); saveAppointment(); });
+  document.getElementById('appointmentForm')?.addEventListener('submit', (e)=>{ e.preventDefault(); saveAppointment(); });
   document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if (editingId) deleteAppointment(editingId); });
-  document.getElementById('appointmentPlate')?.addEventListener('input', e => formatPlate(e.target));
 
-  // Export / Import
+  // Backup/Estatísticas
+  document.getElementById('backupBtn')?.addEventListener('click', ()=> document.getElementById('backupModal')?.classList.add('show'));
+  document.getElementById('statsBtn')?.addEventListener('click', showStats);
+  document.getElementById('importBtn')?.addEventListener('click', ()=> document.getElementById('importFile')?.click());
+  document.getElementById('importFile')?.addEventListener('change', (e)=>{
+    const f = e.target.files?.[0]; if (f) importFromJson(f);
+  });
   document.getElementById('exportJson')?.addEventListener('click', exportToJson);
   document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
-  document.getElementById('exportServices')?.addEventListener('click', exportToCsv);
-  document.getElementById('importBtn')?.addEventListener('click', ()=> document.getElementById('importFile')?.click());
-  document.getElementById('importFile')?.addEventListener('change', e => { const f=e.target.files[0]; if (f) importFromJson(f); });
 
-  // Fechar modais ao clicar fora
-  document.addEventListener('click', e => { if (e.target.classList?.contains('modal')) e.target.classList.remove('show'); });
-
-  // Atalhos
-  document.addEventListener('keydown', e => {
-    if (e.ctrlKey || e.metaKey) {
-      if (e.key==='f'){ e.preventDefault(); document.getElementById('searchBtn')?.click(); }
-      if (e.key==='s'){ e.preventDefault(); save(); }
-      if (e.key==='n'){ e.preventDefault(); openAppointmentModal(); }
-    }
-    if (e.key==='Escape') document.querySelectorAll('.modal.show').forEach(m=>m.classList.remove('show'));
-  });
+  // Carregar e renderizar
+  await load();
+  renderAll();
 });
-
-/* Expor para HTML */
-window.editAppointment   = editAppointment;
-window.deleteAppointment = deleteAppointment;
-window.closeBackupModal  = closeBackupModal;
-window.closeStatsModal   = closeStatsModal;
