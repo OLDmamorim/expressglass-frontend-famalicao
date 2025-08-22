@@ -448,7 +448,6 @@ async function saveAppointment() {
   }
 }
 function editAppointment(id){ openAppointmentModal(id); }
-
 async function deleteAppointment(id) {
   if (!confirm('Eliminar este agendamento?')) return;
   try {
@@ -458,6 +457,11 @@ async function deleteAppointment(id) {
     if (editingId == id) closeAppointmentModal();
   } catch (e) { console.error(e); showToast('Erro ao eliminar: ' + e.message, 'error'); }
 }
+
+/* Expor no window para onclick inline (se existir no HTML) */
+window.openAppointmentModal = openAppointmentModal;
+window.editAppointment = editAppointment;
+window.deleteAppointment = deleteAppointment;
 
 /* Status toggles — NÃO desaparece e faz refresh do backend */
 function attachStatusListeners() {
@@ -482,8 +486,7 @@ function attachStatusListeners() {
       // 2) Se houver filtro e o novo estado não bate, limpa JÁ o filtro (para o cartão NÃO desaparecer)
       if (statusFilter && a.status !== statusFilter) {
         statusFilter = '';
-        const sel = document.getElementById('filterStatus');
-        if (sel) sel.value = '';
+        const sel = document.getElementById('filterStatus'); if (sel) sel.value = '';
       }
 
       // 3) Re-render imediato (sem esperar rede)
@@ -493,22 +496,15 @@ function attachStatusListeners() {
       try {
         const updated = await apiPut(`/api/appointments/${id}`, a);
         if (updated && typeof updated === 'object') Object.assign(a, updated);
-        await load();      // sincroniza com o backend
-        renderAll();
+        await load(); renderAll();
         showToast(`Status gravado: ${st}`, 'success');
       } catch (e) {
-        // Rollback do estado
         a.status = prevStatus;
-
-        // Restaurar filtro se existia e fazia sentido
         if (prevFilter) {
           statusFilter = prevFilter;
-          const sel = document.getElementById('filterStatus');
-          if (sel) sel.value = prevFilter;
+          const sel = document.getElementById('filterStatus'); if (sel) sel.value = prevFilter;
         }
-
-        await load();  // garantir consistência visual
-        renderAll();
+        await load(); renderAll();
         showToast('Erro a gravar status: ' + e.message, 'error');
       }
     });
@@ -588,18 +584,39 @@ function closeBackupModal(){ const m=document.getElementById('backupModal'); m&&
 function closeStatsModal(){ const m=document.getElementById('statsModal');  m&&m.classList.remove('show'); }
 
 /* ===========================
-   LST / EVENTOS
+   TRIGGER “NOVO SERVIÇO”
 =========================== */
 function bindGlobalNewServiceTrigger(){
-  // Delegação global — apanha cliques em qualquer “Novo Serviço”
+  // Seletores suportados
   const selector = '#ag2BtnNovo, #addServiceBtn, #btnNovoServico, .new-service-btn, [data-new-service="true"]';
+
+  // 1) Delegação em CAPTURA (para apanhar mesmo que alguém faça stopPropagation na bolha)
   document.addEventListener('click', (e) => {
     const trigger = e.target.closest(selector);
     if (trigger) {
+      console.debug('[Novo Serviço] click (capture) em', trigger);
       e.preventDefault();
       openAppointmentModal();
     }
-  }, { capture:false });
+  }, { capture:true });
+
+  // 2) Delegação em BOLHA (redundância)
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest(selector);
+    if (trigger) {
+      console.debug('[Novo Serviço] click (bubble) em', trigger);
+      e.preventDefault();
+      openAppointmentModal();
+    }
+  });
+
+  // 3) Listeners diretos se já existir no DOM ao carregar
+  ['ag2BtnNovo','addServiceBtn','btnNovoServico'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('click', (e)=>{ console.debug('[Novo Serviço] direto em #'+id); e.preventDefault(); openAppointmentModal(); });
+    }
+  });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -636,7 +653,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderAll();
   });
 
-  // Delegação global para “Novo Serviço”
+  // Novo Serviço — bind robusto
   bindGlobalNewServiceTrigger();
 
   // Modal / Form
