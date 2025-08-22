@@ -7,15 +7,13 @@
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
 
-  <!-- Ocultar secções de impressão no ecrã -->
   <style>
     .print-unscheduled-section, .print-tomorrow-section { display: none; }
     @media print {
       .print-unscheduled-section, .print-tomorrow-section { display: block; }
       .no-print { display: none !important; }
     }
-
-    /* NOVO: estado vazio da caixa "Serviços por Agendar" */
+    /* estado vazio dos "por agendar" */
     .unscheduled-list .drop-zone.empty{
       min-height: 100px;
       border: 2px dashed #e5e7eb;
@@ -47,13 +45,13 @@
       </div>
     </header>
 
-    <!-- Barra de pesquisa -->
+    <!-- Pesquisa -->
     <div id="searchBar" class="search-bar hidden">
       <input type="text" id="searchInput" placeholder="Pesquisar por matrícula, carro ou localidade..." />
       <button id="clearSearch" class="search-clear" type="button">✕</button>
     </div>
 
-    <!-- Navegação de semana -->
+    <!-- Navegação semana -->
     <div class="nav-bar">
       <div class="nav-left">
         <button id="prevWeek" class="nav-button" type="button">&lt; Anterior</button>
@@ -76,7 +74,6 @@
       <h3>SERVIÇOS POR AGENDAR</h3>
       <div class="unscheduled-actions">
         <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
-
         <select id="filterStatus" class="filter-select">
           <option value="">Todos os estados</option>
           <option value="NE">N/E - Não Executado</option>
@@ -87,29 +84,15 @@
       <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
     </section>
 
-    <!-- Fallback para garantir o clique -->
     <script>
+      // fallback de clique
       document.getElementById('addServiceBtn')?.addEventListener('click', function(){
         try { window.openAppointmentModal && window.openAppointmentModal(); }
         catch(e){ alert('Não consegui abrir o formulário.\n'+e.message); }
       });
     </script>
 
-    <!-- Vista diária (mobile) -->
-    <section id="mobileDayView" class="mobile-day-container">
-      <div class="mobile-day-header">
-        <div id="mobileDayLabel" class="mobile-day-label">—</div>
-        <div class="mobile-day-buttons">
-          <button id="prevDay" class="nav-button small full" type="button">◀ Anterior</button>
-          <button id="todayDay" class="nav-button small full" type="button">Hoje</button>
-          <button id="nextDay" class="nav-button small full" type="button">Seguinte ▶</button>
-        </div>
-      </div>
-      <div id="mobileDayList" class="mobile-day-list"></div>
-      <button id="addServiceMobile" class="mobile-add-btn" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
-    </section>
-
-    <!-- Tabela de serviços -->
+    <!-- Tabela “Serviços a realizar” -->
     <section class="services-table-container print-page-2">
       <h3 id="servicesTableTitle">SERVIÇOS A REALIZAR</h3>
       <div class="services-summary">
@@ -177,11 +160,11 @@
               <label for="appointmentService">Tipo de Serviço *</label>
               <select id="appointmentService" required>
                 <option value="">Selecione o tipo de serviço</option>
-                <option value="PB">PB - Para-brisas</option>
-                <option value="LT">LT - Lateral</option>
-                <option value="OC">OC - Óculo</option>
-                <option value="REP">REP - Reparação</option>
-                <option value="POL">POL - Polimento</option>
+                <option value="PB">PB</option>
+                <option value="LT">LT</option>
+                <option value="OC">OC</option>
+                <option value="REP">REP</option>
+                <option value="POL">POL</option>
               </select>
             </div>
           </div>
@@ -190,21 +173,21 @@
             <div class="form-group">
               <label for="appointmentStatus">Status do Vidro *</label>
               <select id="appointmentStatus" required>
-                <option value="NE">N/E - Não Executado</option>
-                <option value="VE">V/E - Vidro Encomendado</option>
-                <option value="ST">ST - Serviço Terminado</option>
+                <option value="NE">N/E</option>
+                <option value="VE">V/E</option>
+                <option value="ST">ST</option>
               </select>
             </div>
           </div>
 
           <div class="form-group">
             <label for="appointmentNotes">Observações</label>
-            <textarea id="appointmentNotes" placeholder="Informações adicionais" rows="3"></textarea>
+            <textarea id="appointmentNotes" rows="3"></textarea>
           </div>
 
           <div class="form-group">
             <label for="appointmentExtra">Outros dados (opcional)</label>
-            <textarea id="appointmentExtra" placeholder="Informações adicionais" rows="2"></textarea>
+            <textarea id="appointmentExtra" rows="2"></textarea>
           </div>
 
           <div class="form-actions">
@@ -299,7 +282,6 @@
     </div>
   </div>
 
-  <!-- cache-buster + defer -->
-  <script src="script.js?v=5" defer></script>
+  <script src="script.js?v=6" defer></script>
 </body>
 </html>
