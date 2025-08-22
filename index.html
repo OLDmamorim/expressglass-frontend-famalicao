@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
 
-  <!-- Hotfix: esconder as secções de impressão no ecrã -->
+  <!-- Ocultar secções de impressão no ecrã -->
   <style>
     .print-unscheduled-section, .print-tomorrow-section { display: none; }
     @media print {
@@ -60,9 +60,8 @@
     <section class="unscheduled-container">
       <h3>SERVIÇOS POR AGENDAR</h3>
       <div class="unscheduled-actions">
-        <!-- onclick direto garante a abertura do modal -->
-        <button id="addServiceBtn" class="action-btn primary" type="button"
-                onclick="openAppointmentModal()">+ Novo Serviço</button>
+        <!-- onclick direto + fallback abaixo -->
+        <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
 
         <select id="filterStatus" class="filter-select">
           <option value="">Todos os estados</option>
@@ -73,6 +72,13 @@
       </div>
       <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
     </section>
+
+    <!-- Fallback para garantir clique mesmo que algum listener falhe -->
+    <script>
+      document.getElementById('addServiceBtn')?.addEventListener('click', function(){
+        try { window.openAppointmentModal && window.openAppointmentModal(); } catch(e){ alert('Não consegui abrir o formulário.\n'+e.message); }
+      });
+    </script>
 
     <!-- Vista diária (mobile) -->
     <section id="mobileDayView" class="mobile-day-container">
@@ -85,8 +91,7 @@
         </div>
       </div>
       <div id="mobileDayList" class="mobile-day-list"></div>
-      <button id="addServiceMobile" class="mobile-add-btn" type="button"
-              onclick="openAppointmentModal()">+ Novo Serviço</button>
+      <button id="addServiceMobile" class="mobile-add-btn" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
     </section>
 
     <!-- Tabela de serviços -->
@@ -279,6 +284,7 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- cache-buster + defer para garantir DOM antes do JS -->
+  <script src="script.js?v=4" defer></script>
 </body>
 </html>
