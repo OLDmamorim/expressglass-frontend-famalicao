@@ -6,6 +6,13 @@
   <title>Portal de Agendamento - Expressglass</title>
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
+  <style>
+    /* Garantir que secções de impressão não aparecem no ecrã */
+    @media screen {
+      .print-unscheduled-section,
+      .print-tomorrow-section { display:none; }
+    }
+  </style>
 </head>
 <body>
   <div class="page">
@@ -111,7 +118,7 @@
       const estadoClass = s => ({NE:'ag2-NE',VE:'ag2-VE',ST:'ag2-ST'})[s]||'ag2-NE';
       const mainEstado = (ne,ve,st) => st?'ST':(ve?'VE':'NE');
 
-      // Demo data (substitui por fetch ao teu backend quando quiseres)
+      // Demo data (substituir por fetch ao backend)
       const ag2State = {
         itens: [
           { id:'1', matricula:'36-PC-67', servico:'PB',  modelo:'ROVER 600',
@@ -202,20 +209,6 @@
     })();
     </script>
     <!-- ====== FIM BLOCO ag2 ====== -->
-
-    <!-- Vista diária (mobile) -->
-    <section id="mobileDayView" class="mobile-day-container">
-      <div class="mobile-day-header">
-        <div id="mobileDayLabel" class="mobile-day-label">—</div>
-        <div class="mobile-day-buttons">
-          <button id="prevDay" class="nav-button small full">◀ Anterior</button>
-          <button id="todayDay" class="nav-button small full">Hoje</button>
-          <button id="nextDay" class="nav-button small full">Seguinte ▶</button>
-        </div>
-      </div>
-      <div id="mobileDayList" class="mobile-day-list"></div>
-      <button id="addServiceMobile" class="mobile-add-btn">+ Novo Serviço</button>
-    </section>
 
     <!-- Tabela de serviços -->
     <section class="services-table-container print-page-2">
