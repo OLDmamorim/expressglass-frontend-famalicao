@@ -6,6 +6,15 @@
   <title>Agendamentos Famalicão</title>
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
+
+  <!-- Hotfix: esconder as secções de impressão no ecrã -->
+  <style>
+    .print-unscheduled-section, .print-tomorrow-section { display: none; }
+    @media print {
+      .print-unscheduled-section, .print-tomorrow-section { display: block; }
+      .no-print { display: none !important; }
+    }
+  </style>
 </head>
 <body>
   <div class="page">
@@ -29,6 +38,7 @@
       <button id="clearSearch" class="search-clear" type="button">✕</button>
     </div>
 
+    <!-- Navegação de semana -->
     <div class="nav-bar">
       <div class="nav-left">
         <button id="prevWeek" class="nav-button" type="button">&lt; Anterior</button>
@@ -46,27 +56,22 @@
       <table id="schedule" class="schedule"></table>
     </div>
 
-    <!-- ====== SERVIÇOS POR AGENDAR ====== -->
-    <section id="servicos-por-agendar" class="ag2-sec">
-      <div class="ag2-header">
-        <h2 class="ag2-title">SERVIÇOS POR AGENDAR</h2>
-        <div class="ag2-actions">
-          <!-- onclick direto garante a abertura do modal -->
-          <button id="ag2BtnNovo" class="ag2-btn ag2-btn-primary" type="button"
-                  onclick="openAppointmentModal()">+ Novo Serviço</button>
+    <!-- SERVIÇOS POR AGENDAR -->
+    <section class="unscheduled-container">
+      <h3>SERVIÇOS POR AGENDAR</h3>
+      <div class="unscheduled-actions">
+        <!-- onclick direto garante a abertura do modal -->
+        <button id="addServiceBtn" class="action-btn primary" type="button"
+                onclick="openAppointmentModal()">+ Novo Serviço</button>
 
-          <div class="ag2-select-wrap">
-            <select id="filterStatus" class="ag2-select">
-              <option value="">Todos os estados</option>
-              <option value="NE">N/E</option>
-              <option value="VE">V/E</option>
-              <option value="ST">ST</option>
-            </select>
-            <span class="ag2-caret">▾</span>
-          </div>
-        </div>
+        <select id="filterStatus" class="filter-select">
+          <option value="">Todos os estados</option>
+          <option value="NE">N/E - Não Executado</option>
+          <option value="VE">V/E - Vidro Encomendado</option>
+          <option value="ST">ST - Serviço Terminado</option>
+        </select>
       </div>
-      <div id="unscheduledList" class="ag2-grid"></div>
+      <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
     </section>
 
     <!-- Vista diária (mobile) -->
@@ -111,7 +116,7 @@
       </div>
     </section>
 
-    <!-- Formulário -->
+    <!-- Modal Agendamento -->
     <div id="appointmentModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
@@ -272,7 +277,6 @@
         <p>Não há serviços agendados para amanhã.</p>
       </div>
     </div>
-
   </div>
 
   <script src="script.js"></script>
