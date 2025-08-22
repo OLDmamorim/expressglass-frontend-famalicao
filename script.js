@@ -73,8 +73,8 @@ function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 /* Datas em strings */
 function parseDate(dateStr) {
   if (!dateStr) return '';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;          // YYYY-MM-DD
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {                  // DD/MM/YYYY
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
     const [d, m, y] = dateStr.split('/'); return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
   }
   const dt = new Date(dateStr); return isNaN(dt) ? '' : localISO(dt);
@@ -87,7 +87,6 @@ function formatDateForInput(dateStr) {
   return dateStr;
 }
 
-/* Garante que o período é 'Manhã' ou 'Tarde' */
 function normalizePeriod(p) {
   if (!p) return '';
   const t = String(p).normalize('NFD').replace(/\p{Diacritic}/gu, '').trim().toLowerCase();
@@ -96,7 +95,6 @@ function normalizePeriod(p) {
   return '';
 }
 
-/* Toast simples */
 function showToast(msg, type='info') {
   const c = document.getElementById('toastContainer'); if (!c) return;
   const t = document.createElement('div'); t.className = `toast ${type}`;
@@ -105,7 +103,6 @@ function showToast(msg, type='info') {
   c.appendChild(t); setTimeout(()=>t.remove(), 3500);
 }
 
-/* Matrícula automática */
 function formatPlate(input) {
   let v = input.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   if (v.length > 2) v = v.slice(0,2) + '-' + v.slice(2);
@@ -123,12 +120,11 @@ let editingId = null;
 let searchQuery = '';
 let statusFilter = '';
 
-/* Mapeamento de cores por STATUS (cartão inteiro) */
 const STATUS_BG = { NE:'rgba(239,68,68,.12)', VE:'rgba(245,158,11,.14)', ST:'rgba(16,185,129,.14)' };
 const STATUS_BORDER = { NE:'#ef4444', VE:'#f59e0b', ST:'#10b981' };
 
 /* ===========================
-   CARREGAR / GUARDAR
+   LOAD / SAVE
 =========================== */
 async function load() {
   try {
@@ -146,10 +142,10 @@ async function load() {
     showToast('Erro ao carregar: ' + e.message, 'error');
   }
 }
-async function save(){ /* compat */ }
+async function save(){}
 
 /* ===========================
-   FILTROS / PESQUISA
+   FILTROS
 =========================== */
 function filterAppointments(list) {
   let r = [...list];
@@ -297,7 +293,7 @@ function renderUnscheduled() {
   const blocks = uns.map(a => {
     const bg = STATUS_BG[a.status] || 'rgba(0,0,0,0.06)';
     const border = STATUS_BORDER[a.status] || '#9ca3af';
-    return `<article class="appointment-block ag2-card ${'ag2-'+a.status}" data-id="${a.id}" draggable="true"
+    return `<div class="appointment-block unscheduled" data-id="${a.id}" draggable="true"
               style="background:${bg}; border-left:6px solid ${border}">
               <div class="appt-header">${(a.plate || '')} | ${(a.service || '')} | ${(a.car || '').toUpperCase()}</div>
               <div class="appt-sub">${a.notes ? a.notes : ''}</div>
@@ -310,7 +306,7 @@ function renderUnscheduled() {
                 <button class="icon edit" type="button" onclick="editAppointment(${a.id})" title="Editar">✏️</button>
                 <button class="icon delete" type="button" onclick="deleteAppointment(${a.id})" title="Eliminar">🗑️</button>
               </div>
-            </article>`;
+            </div>`;
   }).join('');
   container.innerHTML = `<div class="drop-zone" data-drop-bucket="unscheduled">${blocks}</div>`;
   enableDragDrop();
@@ -376,11 +372,11 @@ function renderServicesTable() {
 function renderAll(){ renderSchedule(); renderUnscheduled(); renderMobileDay(); renderServicesTable(); }
 
 /* ===========================
-   GESTÃO DE AGENDAMENTOS
+   CRUD
 =========================== */
 function openAppointmentModal(id=null) {
   const modal = document.getElementById('appointmentModal');
-  if (!modal) { showToast('Modal de agendamento não encontrado no HTML.', 'error'); return; }
+  if (!modal) { showToast('Modal de agendamento não encontrado.', 'error'); return; }
 
   editingId = id;
   const form  = document.getElementById('appointmentForm');
@@ -442,7 +438,7 @@ async function saveAppointment() {
       appointments.push(result || appointment);
       showToast('Agendamento criado!', 'success');
     }
-    await load(); renderAll(); closeAppointmentModal();  // refresh completo
+    await load(); renderAll(); closeAppointmentModal();
   } catch (e) {
     console.error(e); showToast('Erro ao guardar: ' + e.message, 'error');
   }
@@ -458,12 +454,14 @@ async function deleteAppointment(id) {
   } catch (e) { console.error(e); showToast('Erro ao eliminar: ' + e.message, 'error'); }
 }
 
-/* Expor no window para onclick inline */
+/* Expor para onclick inline */
 window.openAppointmentModal = openAppointmentModal;
 window.editAppointment = editAppointment;
 window.deleteAppointment = deleteAppointment;
 
-/* Status toggles — NÃO desaparece e faz refresh do backend */
+/* ===========================
+   STATUS (checkboxes) — não desaparece
+=========================== */
 function attachStatusListeners() {
   document.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', async function() {
@@ -471,7 +469,7 @@ function attachStatusListeners() {
       const id = Number(card.getAttribute('data-id'));
       const st = this.getAttribute('data-status');
 
-      // Exclusivo por cartão
+      // Exclusividade no cartão
       card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(x=>{ if(x!==this) x.checked=false; });
 
       const a = appointments.find(x => x.id == id);
@@ -480,10 +478,9 @@ function attachStatusListeners() {
       const prevStatus = a.status;
       const prevFilter = statusFilter;
 
-      // otimista
-      a.status = st;
+      a.status = st; // otimista
 
-      // não desaparecer com filtro
+      // Não deixa desaparecer se filtro ativo for diferente
       if (statusFilter && a.status !== statusFilter) {
         statusFilter = '';
         const sel = document.getElementById('filterStatus'); if (sel) sel.value = '';
@@ -558,7 +555,7 @@ function updatePrintTomorrowTable() {
 }
 
 /* ===========================
-   LST / EVENTOS
+   DOMContentLoaded
 =========================== */
 document.addEventListener('DOMContentLoaded', async () => {
   // Semana
@@ -566,7 +563,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday, 7); renderAll(); });
   document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday = getMonday(new Date()); renderAll(); });
 
-  // Mobile day nav
+  // Mobile day
   document.getElementById('prevDay')?.addEventListener('click', ()=>{ currentMobileDay = addDays(currentMobileDay,-1); renderMobileDay(); });
   document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay = new Date(); renderMobileDay(); });
   document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay = addDays(currentMobileDay, 1); renderMobileDay(); });
@@ -593,19 +590,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     searchQuery = ''; renderAll();
   });
 
-  // Filtro por status (usa o <select> do bloco ag2)
+  // Filtro por estado (select da secção “por agendar”)
   document.getElementById('filterStatus')?.addEventListener('change', (e)=>{
     statusFilter = e.target.value || '';
     renderAll();
   });
 
-  // Modal/Form
+  // Modal & form
   document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
   document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
   document.getElementById('appointmentForm')?.addEventListener('submit', (e)=>{ e.preventDefault(); saveAppointment(); });
   document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if (editingId) deleteAppointment(editingId); });
 
-  // Backup/Estatísticas
+  // Backup/Stats
   document.getElementById('backupBtn')?.addEventListener('click', ()=> document.getElementById('backupModal')?.classList.add('show'));
   document.getElementById('statsBtn')?.addEventListener('click', showStats);
   document.getElementById('importBtn')?.addEventListener('click', ()=> document.getElementById('importFile')?.click());
