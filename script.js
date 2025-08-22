@@ -128,105 +128,6 @@ const STATUS_BG = { NE:'rgba(239,68,68,.12)', VE:'rgba(245,158,11,.14)', ST:'rgb
 const STATUS_BORDER = { NE:'#ef4444', VE:'#f59e0b', ST:'#10b981' };
 
 /* ===========================
-   GARANTIR MODAL (fallback)
-=========================== */
-function ensureModal() {
-  if (document.getElementById('appointmentModal')) return;
-
-  // CSS mínimo de fallback (não mexe no teu style.css se já existir)
-  const style = document.createElement('style');
-  style.textContent = `
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.35);z-index:9999}
-    .modal.show{display:flex}
-    .modal-content{background:#fff;max-width:720px;width:96%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.2);padding:16px}
-    .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-    .close-btn{border:0;background:#eee;border-radius:8px;padding:6px 10px;cursor:pointer}
-    .appointment-form .form-row{display:flex;gap:12px}
-    .appointment-form .form-group{flex:1;display:flex;flex-direction:column}
-    .appointment-form input, .appointment-form select, .appointment-form textarea{padding:8px;border:1px solid #e5e7eb;border-radius:8px}
-    .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-    .btn{padding:8px 12px;border-radius:8px;border:1px solid #e5e7eb;background:#f8fafc;cursor:pointer}
-    .btn.primary{background:#2563eb;color:#fff;border-color:#2563eb}
-    .btn.secondary{background:#eee}
-    .btn.danger{background:#ef4444;color:#fff;border-color:#ef4444}
-  `;
-  document.head.appendChild(style);
-
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
-    <div id="appointmentModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 id="modalTitle">Novo Agendamento</h3>
-          <button id="closeModal" class="close-btn">✕</button>
-        </div>
-        <form id="appointmentForm" class="appointment-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentDate">Data</label>
-              <input type="date" id="appointmentDate" />
-            </div>
-            <div class="form-group">
-              <label for="appointmentPeriod">Período</label>
-              <select id="appointmentPeriod">
-                <option value="">—</option>
-                <option value="Manhã">Manhã</option>
-                <option value="Tarde">Tarde</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentPlate">Matrícula *</label>
-              <input type="text" id="appointmentPlate" placeholder="XX-XX-XX" maxlength="8" required />
-              <small class="form-hint">Formato: XX-XX-XX</small>
-            </div>
-            <div class="form-group">
-              <label for="appointmentCar">Modelo do Carro *</label>
-              <input type="text" id="appointmentCar" placeholder="Ex: BMW X3" required />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentService">Tipo de Serviço *</label>
-              <select id="appointmentService" required>
-                <option value="">Selecione o tipo de serviço</option>
-                <option value="PB">PB - Para-brisas</option>
-                <option value="LT">LT - Lateral</option>
-                <option value="OC">OC - Óculo</option>
-                <option value="REP">REP - Reparação</option>
-                <option value="POL">POL - Polimento</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="appointmentStatus">Status do Vidro *</label>
-              <select id="appointmentStatus" required>
-                <option value="NE">N/E - Não Executado</option>
-                <option value="VE">V/E - Vidro Encomendado</option>
-                <option value="ST">ST - Serviço Terminado</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="appointmentNotes">Observações</label>
-            <textarea id="appointmentNotes" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="appointmentExtra">Outros dados (opcional)</label>
-            <textarea id="appointmentExtra" rows="2"></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="button" id="cancelForm" class="btn secondary">Cancelar</button>
-            <button type="button" id="deleteAppointment" class="btn danger hidden">Eliminar</button>
-            <button type="submit" class="btn primary">Guardar</button>
-          </div>
-        </form>
-      </div>
-    </div>`;
-  document.body.appendChild(wrapper.firstElementChild);
-}
-
-/* ===========================
    CARREGAR / GUARDAR
 =========================== */
 async function load() {
@@ -245,7 +146,7 @@ async function load() {
     showToast('Erro ao carregar: ' + e.message, 'error');
   }
 }
-async function save(){}
+async function save(){ /* compat */ }
 
 /* ===========================
    FILTROS / PESQUISA
@@ -307,7 +208,6 @@ function normalizeBucketOrder(bucket) {
 async function onDropAppointment(id, targetBucket, targetIndex) {
   const i = appointments.findIndex(a => a.id == id); if (i < 0) return;
   const a = appointments[i];
-
   const prev = { date: a.date, period: a.period, sortIndex: a.sortIndex };
 
   if (targetBucket === 'unscheduled') { a.date = ''; a.period = ''; }
@@ -316,27 +216,20 @@ async function onDropAppointment(id, targetBucket, targetIndex) {
     a.date = d; a.period = p || a.period || 'Manhã';
   }
   normalizeBucketOrder(targetBucket);
-  const list = appointments
-    .filter(x => bucketOf(x) === targetBucket)
-    .sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
+  const list = appointments.filter(x => bucketOf(x) === targetBucket).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
   list.forEach((x,idx)=> x.sortIndex = idx+1);
   if (targetIndex >= list.length) a.sortIndex = list.length + 1;
   else { list.splice(targetIndex,0,a); list.forEach((x,idx)=> x.sortIndex=idx+1); }
 
-  // Otimista
-  renderAll();
+  renderAll(); // otimista
 
   try {
     const updated = await apiPut(`/api/appointments/${id}`, a);
     if (updated && typeof updated === 'object') Object.assign(a, updated);
-    await load();                 // refresh do backend
-    renderAll();
-    showToast('Agendamento movido!', 'success');
+    await load(); renderAll(); showToast('Agendamento movido!', 'success');
   } catch (e) {
-    // Rollback
     a.date = prev.date; a.period = prev.period; a.sortIndex = prev.sortIndex;
-    renderAll();
-    showToast('Erro a gravar movimento: ' + e.message, 'error');
+    renderAll(); showToast('Erro a gravar movimento: ' + e.message, 'error');
   }
 }
 
@@ -404,7 +297,7 @@ function renderUnscheduled() {
   const blocks = uns.map(a => {
     const bg = STATUS_BG[a.status] || 'rgba(0,0,0,0.06)';
     const border = STATUS_BORDER[a.status] || '#9ca3af';
-    return `<div class="appointment-block unscheduled" data-id="${a.id}" draggable="true"
+    return `<article class="appointment-block ag2-card ${'ag2-'+a.status}" data-id="${a.id}" draggable="true"
               style="background:${bg}; border-left:6px solid ${border}">
               <div class="appt-header">${(a.plate || '')} | ${(a.service || '')} | ${(a.car || '').toUpperCase()}</div>
               <div class="appt-sub">${a.notes ? a.notes : ''}</div>
@@ -414,10 +307,10 @@ function renderUnscheduled() {
                 <label><input type="checkbox" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
               </div>
               <div class="unscheduled-actions">
-                <button class="icon edit" onclick="editAppointment(${a.id})" title="Editar">✏️</button>
-                <button class="icon delete" onclick="deleteAppointment(${a.id})" title="Eliminar">🗑️</button>
+                <button class="icon edit" type="button" onclick="editAppointment(${a.id})" title="Editar">✏️</button>
+                <button class="icon delete" type="button" onclick="deleteAppointment(${a.id})" title="Eliminar">🗑️</button>
               </div>
-            </div>`;
+            </article>`;
   }).join('');
   container.innerHTML = `<div class="drop-zone" data-drop-bucket="unscheduled">${blocks}</div>`;
   enableDragDrop();
@@ -472,8 +365,8 @@ function renderServicesTable() {
       <td>${a.status || ''}</td>
       <td>${daysText}</td>
       <td class="no-print">
-        <button class="table-btn" onclick="editAppointment(${a.id})">✏️</button>
-        <button class="table-btn danger" onclick="deleteAppointment(${a.id})">🗑️</button>
+        <button class="table-btn" type="button" onclick="editAppointment(${a.id})">✏️</button>
+        <button class="table-btn danger" type="button" onclick="deleteAppointment(${a.id})">🗑️</button>
       </td>
     </tr>`;
   }).join('');
@@ -486,12 +379,10 @@ function renderAll(){ renderSchedule(); renderUnscheduled(); renderMobileDay(); 
    GESTÃO DE AGENDAMENTOS
 =========================== */
 function openAppointmentModal(id=null) {
-  editingId = id;
-  ensureModal(); // garante que existe
-
   const modal = document.getElementById('appointmentModal');
   if (!modal) { showToast('Modal de agendamento não encontrado no HTML.', 'error'); return; }
 
+  editingId = id;
   const form  = document.getElementById('appointmentForm');
   const title = document.getElementById('modalTitle');
   const del   = document.getElementById('deleteAppointment');
@@ -513,13 +404,12 @@ function openAppointmentModal(id=null) {
   } else {
     title.textContent = 'Novo Agendamento';
     form?.reset();
-    const st = document.getElementById('appointmentStatus'); if (st) st.value = 'NE';
-    del?.classList.add('hidden');
+    document.getElementById('appointmentStatus').value = 'NE';
+    del.classList.add('hidden');
   }
   modal.classList.add('show');
 }
-function closeAppointmentModal(){ document.getElementById('appointmentModal')?.classList.remove('show'); editingId=null; }
-window.openAppointmentModal = openAppointmentModal;
+function closeAppointmentModal(){ const m=document.getElementById('appointmentModal'); m&&m.classList.remove('show'); editingId=null; }
 
 async function saveAppointment() {
   const rawDate = document.getElementById('appointmentDate').value;
@@ -552,7 +442,7 @@ async function saveAppointment() {
       appointments.push(result || appointment);
       showToast('Agendamento criado!', 'success');
     }
-    await load(); renderAll(); closeAppointmentModal();
+    await load(); renderAll(); closeAppointmentModal();  // refresh completo
   } catch (e) {
     console.error(e); showToast('Erro ao guardar: ' + e.message, 'error');
   }
@@ -567,6 +457,9 @@ async function deleteAppointment(id) {
     if (editingId == id) closeAppointmentModal();
   } catch (e) { console.error(e); showToast('Erro ao eliminar: ' + e.message, 'error'); }
 }
+
+/* Expor no window para onclick inline */
+window.openAppointmentModal = openAppointmentModal;
 window.editAppointment = editAppointment;
 window.deleteAppointment = deleteAppointment;
 
@@ -578,6 +471,7 @@ function attachStatusListeners() {
       const id = Number(card.getAttribute('data-id'));
       const st = this.getAttribute('data-status');
 
+      // Exclusivo por cartão
       card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(x=>{ if(x!==this) x.checked=false; });
 
       const a = appointments.find(x => x.id == id);
@@ -586,12 +480,13 @@ function attachStatusListeners() {
       const prevStatus = a.status;
       const prevFilter = statusFilter;
 
+      // otimista
       a.status = st;
 
+      // não desaparecer com filtro
       if (statusFilter && a.status !== statusFilter) {
         statusFilter = '';
-        const sel = document.getElementById('filterStatus');
-        if (sel) sel.value = '';
+        const sel = document.getElementById('filterStatus'); if (sel) sel.value = '';
       }
 
       renderAll();
@@ -599,8 +494,7 @@ function attachStatusListeners() {
       try {
         const updated = await apiPut(`/api/appointments/${id}`, a);
         if (updated && typeof updated === 'object') Object.assign(a, updated);
-        await load();
-        renderAll();
+        await load(); renderAll();
         showToast(`Status gravado: ${st}`, 'success');
       } catch (e) {
         a.status = prevStatus;
@@ -616,180 +510,111 @@ function attachStatusListeners() {
 }
 
 /* ===========================
-   BACKUP / EXPORT
+   IMPRESSÃO
 =========================== */
-function exportToJson() {
-  const data = { version:'3.0', exported:new Date().toISOString(), appointments };
-  const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
-  const url = URL.createObjectURL(blob); const a = document.createElement('a');
-  a.href=url; a.download=`agendamentos_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url);
-  showToast('Backup JSON exportado!', 'success');
+function updatePrintUnscheduledTable() {
+  const uns = filterAppointments(appointments.filter(a => !a.date || !a.period)
+                                            .sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
+  const tbody = document.getElementById('printUnscheduledTableBody'); if (!tbody) return;
+  const sec = document.querySelector('.print-unscheduled-section');
+  if (uns.length === 0) { sec && (sec.style.display = 'none'); return; }
+  sec && (sec.style.display = '');
+  tbody.innerHTML = uns.map(a => `
+    <tr>
+      <td>${a.plate || ''}</td>
+      <td>${a.car || ''}</td>
+      <td>${a.service || ''}</td>
+      <td>${a.status || ''}</td>
+      <td>${a.notes || ''}</td>
+      <td>${a.extra || ''}</td>
+    </tr>
+  `).join('');
 }
-function exportToCsv() {
-  const headers = ['Data','Período','Matrícula','Carro','Serviço','Status','Observações'];
-  const rows = appointments.map(a => [a.date||'',a.period||'',a.plate||'',a.car||'',a.service||'',a.status||'',a.notes||'']);
-  const csv = [headers,...rows].map(r => r.map(f => `"${f}"`).join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=`agendamentos_${new Date().toISOString().split('T')[0]}.csv`; a.click();
-  URL.revokeObjectURL(url); showToast('CSV exportado!', 'success');
-}
-function importFromJson(file){
-  const rd = new FileReader();
-  rd.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (data.appointments && Array.isArray(data.appointments)) {
-        if (confirm(`Importar ${data.appointments.length} agendamentos? Isto substitui os atuais.`)) {
-          appointments = data.appointments; renderAll(); showToast('Dados importados!', 'success');
-          closeBackupModal();
-        }
-      } else showToast('Ficheiro inválido.', 'error');
-    } catch (err) { showToast('Erro a ler ficheiro: ' + err.message, 'error'); }
-  };
-  rd.readAsText(file);
+function updatePrintTomorrowTable() {
+  const title = document.getElementById('printTomorrowTitle');
+  const dateEl= document.getElementById('printTomorrowDate');
+  const tbody = document.getElementById('printTomorrowTableBody');
+  const empty = document.getElementById('printTomorrowEmpty');
+  if (!tbody) return;
+  const tomorrow = addDays(new Date(), 1);
+  const iso = localISO(tomorrow);
+  title && (title.textContent = 'SERVIÇOS DE AMANHÃ');
+  dateEl && (dateEl.textContent = tomorrow.toLocaleDateString('pt-PT', { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' }));
+  const rows = appointments.filter(a => a.date === iso)
+                           .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0));
+  if (rows.length === 0) { empty && (empty.style.display='block'); tbody.innerHTML=''; return; }
+  empty && (empty.style.display='none');
+  tbody.innerHTML = rows.map(a => `
+    <tr>
+      <td>${a.period || ''}</td>
+      <td>${a.plate || ''}</td>
+      <td>${a.car || ''}</td>
+      <td>${a.service || ''}</td>
+      <td>${a.status || ''}</td>
+      <td>${a.notes || ''}</td>
+      <td>${a.extra || ''}</td>
+    </tr>
+  `).join('');
 }
 
 /* ===========================
-   ESTATÍSTICAS / MODAIS
+   LST / EVENTOS
 =========================== */
-function generateStats() {
-  const total = appointments.length;
-  const scheduled = appointments.filter(a => a.date && a.period).length;
-  const unscheduled = total - scheduled;
-  const byStatus = { NE:0, VE:0, ST:0 };
-  appointments.forEach(a => { if (byStatus[a.status] !== undefined) byStatus[a.status]++; });
-  const byService = {}; appointments.forEach(a => { byService[a.service] = (byService[a.service]||0) + 1; });
-  return { total, scheduled, unscheduled, byStatus, byService };
-}
-function showStats() {
-  const s = generateStats(); const modal = document.getElementById('statsModal');
-  const c = document.getElementById('statsContent');
-  c.innerHTML = `
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-number">${s.total}</div><div class="stat-label">Total</div></div>
-      <div class="stat-card"><div class="stat-number">${s.scheduled}</div><div class="stat-label">Agendados</div></div>
-      <div class="stat-card"><div class="stat-number">${s.unscheduled}</div><div class="stat-label">Por agendar</div></div>
-    </div>
-    <h4>Por Status</h4>
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-number">${s.byStatus.NE}</div><div class="stat-label">N/E</div></div>
-      <div class="stat-card"><div class="stat-number">${s.byStatus.VE}</div><div class="stat-label">V/E</div></div>
-      <div class="stat-card"><div class="stat-number">${s.byStatus.ST}</div><div class="stat-label">ST</div></div>
-    </div>
-    <h4>Por Serviço</h4>
-    <div class="stats-grid">
-      ${Object.entries(s.byService).map(([srv,cnt])=>`
-        <div class="stat-card"><div class="stat-number">${cnt}</div><div class="stat-label">${srv}</div></div>
-      `).join('')}
-    </div>`;
-  modal?.classList.add('show');
-}
-function closeBackupModal(){ document.getElementById('backupModal')?.classList.remove('show'); }
-function closeStatsModal(){ document.getElementById('statsModal')?.classList.remove('show'); }
-
-/* ===========================
-   TRIGGER “NOVO SERVIÇO” (ROBUSTO)
-=========================== */
-const NEW_SERVICE_SELECTOR = '#ag2BtnNovo, #addServiceBtn, #btnNovoServico, .new-service-btn, [data-new-service="true"]';
-
-function rebindNewServiceButton(el){
-  try {
-    const clone = el.cloneNode(true);
-    clone.type = 'button';
-    clone.addEventListener('click', (e)=>{ e.preventDefault(); openAppointmentModal(); });
-    el.replaceWith(clone);
-  } catch(_) {}
-}
-function forceBindNewServiceButtons(root=document){
-  root.querySelectorAll(NEW_SERVICE_SELECTOR).forEach(rebindNewServiceButton);
-}
-function bindGlobalNewServiceTrigger(){
-  document.addEventListener('click', (e) => {
-    const trigger = e.target.closest(NEW_SERVICE_SELECTOR);
-    if (trigger) { e.preventDefault(); openAppointmentModal(); }
-  }, { capture:true });
-  document.addEventListener('click', (e) => {
-    const trigger = e.target.closest(NEW_SERVICE_SELECTOR);
-    if (trigger) { e.preventDefault(); openAppointmentModal(); }
-  });
-  forceBindNewServiceButtons();
-  const mo = new MutationObserver((mut)=>{
-    for (const m of mut) {
-      m.addedNodes.forEach(n=>{
-        if (n.nodeType===1) {
-          if (n.matches && n.matches(NEW_SERVICE_SELECTOR)) rebindNewServiceButton(n);
-          if (n.querySelectorAll) forceBindNewServiceButtons(n);
-        }
-      });
-    }
-  });
-  mo.observe(document.body, {childList:true, subtree:true});
-}
-
-/* ===========================
-   LST / EVENTOS + SAFE GUARD
-=========================== */
-window.addEventListener('error', (e)=> showToast('Erro JS: ' + (e.message||'desconhecido'), 'error'));
-
 document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    // Navegação semana
-    document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday,-7); renderAll(); });
-    document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday, 7); renderAll(); });
-    document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday = getMonday(new Date()); renderAll(); });
+  // Semana
+  document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday,-7); renderAll(); });
+  document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday = addDays(currentMonday, 7); renderAll(); });
+  document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday = getMonday(new Date()); renderAll(); });
 
-    // Impressão
-    document.getElementById('printPage')?.addEventListener('click', ()=>{
-      updatePrintUnscheduledTable();
-      updatePrintTomorrowTable();
-      window.print();
-    });
+  // Mobile day nav
+  document.getElementById('prevDay')?.addEventListener('click', ()=>{ currentMobileDay = addDays(currentMobileDay,-1); renderMobileDay(); });
+  document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay = new Date(); renderMobileDay(); });
+  document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay = addDays(currentMobileDay, 1); renderMobileDay(); });
 
-    // Pesquisa
-    document.getElementById('searchBtn')?.addEventListener('click', ()=>{
-      const sb = document.getElementById('searchBar');
-      sb?.classList.toggle('hidden');
-      document.getElementById('searchInput')?.focus();
-    });
-    document.getElementById('searchInput')?.addEventListener('input', (e)=>{
-      searchQuery = e.target.value || '';
-      renderAll();
-    });
-    document.getElementById('clearSearch')?.addEventListener('click', ()=>{
-      const i = document.getElementById('searchInput'); if (i) i.value='';
-      searchQuery = ''; renderAll();
-    });
+  // Impressão
+  document.getElementById('printPage')?.addEventListener('click', ()=>{
+    updatePrintUnscheduledTable();
+    updatePrintTomorrowTable();
+    window.print();
+  });
 
-    // Filtro por status
-    document.getElementById('filterStatus')?.addEventListener('change', (e)=>{
-      statusFilter = e.target.value || '';
-      renderAll();
-    });
-
-    // Novo Serviço — bind robusto e anti-conflitos
-    bindGlobalNewServiceTrigger();
-
-    // Modal / Form
-    document.addEventListener('click', (e)=>{
-      if (e.target?.id === 'closeModal' || e.target?.id === 'cancelForm') { e.preventDefault(); closeAppointmentModal(); }
-    });
-    document.getElementById('appointmentForm')?.addEventListener('submit', (e)=>{ e.preventDefault(); saveAppointment(); });
-    document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if (editingId) deleteAppointment(editingId); });
-
-    // Backup / Estatísticas
-    document.getElementById('backupBtn')?.addEventListener('click', ()=> document.getElementById('backupModal')?.classList.add('show'));
-    document.getElementById('statsBtn')?.addEventListener('click', showStats);
-    document.getElementById('importBtn')?.addEventListener('click', ()=> document.getElementById('importFile')?.click());
-    document.getElementById('importFile')?.addEventListener('change', (e)=>{
-      const f = e.target.files?.[0]; if (f) importFromJson(f);
-    });
-    document.getElementById('exportJson')?.addEventListener('click', exportToJson);
-    document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
-
-    await load();
+  // Pesquisa
+  document.getElementById('searchBtn')?.addEventListener('click', ()=>{
+    const sb = document.getElementById('searchBar');
+    sb?.classList.toggle('hidden');
+    document.getElementById('searchInput')?.focus();
+  });
+  document.getElementById('searchInput')?.addEventListener('input', (e)=>{
+    searchQuery = e.target.value || '';
     renderAll();
-  } catch (err) {
-    console.error(err);
-    showToast('Falha ao iniciar: ' + err.message, 'error');
-  }
+  });
+  document.getElementById('clearSearch')?.addEventListener('click', ()=>{
+    const i = document.getElementById('searchInput'); if (i) i.value='';
+    searchQuery = ''; renderAll();
+  });
+
+  // Filtro por status (usa o <select> do bloco ag2)
+  document.getElementById('filterStatus')?.addEventListener('change', (e)=>{
+    statusFilter = e.target.value || '';
+    renderAll();
+  });
+
+  // Modal/Form
+  document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
+  document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
+  document.getElementById('appointmentForm')?.addEventListener('submit', (e)=>{ e.preventDefault(); saveAppointment(); });
+  document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if (editingId) deleteAppointment(editingId); });
+
+  // Backup/Estatísticas
+  document.getElementById('backupBtn')?.addEventListener('click', ()=> document.getElementById('backupModal')?.classList.add('show'));
+  document.getElementById('statsBtn')?.addEventListener('click', showStats);
+  document.getElementById('importBtn')?.addEventListener('click', ()=> document.getElementById('importFile')?.click());
+  document.getElementById('importFile')?.addEventListener('change', (e)=>{
+    const f = e.target.files?.[0]; if (f) importFromJson(f);
+  });
+  document.getElementById('exportJson')?.addEventListener('click', exportToJson);
+  document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
+
+  await load();
+  renderAll();
 });
