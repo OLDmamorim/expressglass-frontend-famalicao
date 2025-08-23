@@ -2,58 +2,494 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
-  <title>Agendamentos Famalicão</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <title>Portal de Agendamento — ExpressGlass</title>
   <meta name="theme-color" content="#2563eb">
-
   <style>
-    .print-unscheduled-section, .print-tomorrow-section { display: none; }
+    /* ====== Reset básico ====== */
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    :root{
+      --bg:#0b1220;
+      --card:#111a2b;
+      --muted:#8292a6;
+      --text:#e6eefc;
+      --primary:#2563eb;
+      --primary-600:#1e4fd1;
+      --danger:#ef4444;
+      --ok:#10b981;
+      --amber:#f59e0b;
+      --ring: rgba(37,99,235,.35);
+    }
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial, 'Apple Color Emoji','Segoe UI Emoji';
+      background: linear-gradient(180deg, #0a0f1c, #0e1526 60%);
+      color: var(--text);
+    }
+    /* ====== Topbar ====== */
+    .topbar{
+      position: sticky; top:0; z-index: 30;
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 10px 14px; background: rgba(9,14,26,.8);
+      backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .brand{ display:flex; align-items:center; gap:10px; }
+    .logo{
+      width:36px; height:36px; border-radius:9px; display:grid; place-items:center;
+      font-weight:800; letter-spacing:.5px;
+      background: conic-gradient(from 210deg, #ef4444, #2563eb, #22c55e, #ef4444);
+      color:#fff;
+    }
+    .brand-text h1{ font-size:14px; margin:0; font-weight:700; line-height:1; }
+    .brand-text span{ font-size:12px; color: var(--muted); }
+    .actions { display:flex; gap:8px; align-items:center; flex-wrap: wrap; }
+    .btn{
+      appearance:none; border:1px solid rgba(255,255,255,.1);
+      padding:8px 12px; border-radius:9px; background:#0f1729; color:var(--text);
+      cursor:pointer; font-weight:600; font-size:14px;
+      touch-action: manipulation;
+    }
+    .btn:hover{ border-color: rgba(255,255,255,.2); }
+    .btn.primary{ background: var(--primary); border-color: var(--primary); }
+    .btn.primary:hover{ background: var(--primary-600); }
+    .btn.ghost{ background: transparent; }
+    .btn.danger{ background: var(--danger); border-color: var(--danger); }
+    .btn.danger.ghost{ background: transparent; color: var(--danger); border-color: rgba(239,68,68,.4); }
+    .icon-btn{ background: transparent; border:none; color: var(--muted); cursor:pointer; font-size:18px; touch-action: manipulation; }
+
+    /* ====== Toolbar ====== */
+    .toolbar{
+      display:grid; gap:12px; grid-template-columns: 1fr auto 1fr;
+      align-items:center; padding: 12px 14px;
+    }
+    .stat-card{
+      background: linear-gradient(180deg, #1a243a, #121a2b);
+      border:1px solid rgba(255,255,255,.08); border-radius:12px;
+      padding:10px 12px;
+    }
+    .stat-title{ font-size:12px; color: var(--muted); }
+    .stat-value{ font-size:20px; font-weight:800; }
+    .week-nav{ display:flex; align-items:center; gap:10px; justify-content:center; }
+    .week-label{ font-weight:700; letter-spacing:.4px; }
+    .search{
+      position:relative; display:flex; align-items:center; justify-content:flex-end;
+    }
+    .search input{
+      width:100%; max-width:360px;
+      background: #0f1729; border:1px solid rgba(255,255,255,.1);
+      padding:10px 36px 10px 12px; border-radius:10px; color:var(--text);
+    }
+    .search input:focus{ outline:none; border-color: var(--ring); box-shadow: 0 0 0 3px var(--ring); }
+    .search .icon{ position:absolute; right:10px; font-size:14px; color:var(--muted); }
+
+    /* ====== Calendar ====== */
+    .calendar-wrap{ padding: 0 14px 24px; }
+    .calendar{
+      display:grid; gap:10px; grid-template-columns: repeat(5, minmax(260px,1fr));
+      overflow-x:auto; padding-bottom: 10px;
+    }
+    .col{ background: var(--card); border:1px solid rgba(255,255,255,.06); border-radius:12px; min-width: 260px; display:flex; flex-direction:column; }
+    .col-header{ padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.06); display:flex; justify-content:space-between; align-items:center;}
+    .col-header .dow{ font-weight:700; }
+    .col-header .date{ color:var(--muted); font-size:12px; }
+    .period{ padding:10px 12px; border-top:1px dashed rgba(255,255,255,.06); }
+    .period h4{ margin:0 0 8px 0; font-size:12px; color: var(--muted); letter-spacing:.4px; text-transform:uppercase; }
+    .slot{ display:flex; flex-direction:column; gap:8px; min-height: 80px; }
+
+    .card{
+      border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:10px;
+      display:flex; gap:10px; align-items:flex-start; cursor:pointer;
+      transition: transform .08s ease, border-color .2s ease;
+    }
+    .card:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.2); }
+    .badge{ font-size:11px; color:#000; background:#fff; border-radius:999px; padding:2px 6px; font-weight:800; }
+    .title{ font-weight:700; font-size:14px; }
+    .meta{ color: var(--muted); font-size:12px; }
+    .note{ font-size:12px; opacity:.9; }
+
+    /* Estado do vidro -> pinta o cartão todo */
+    .card[data-vidro="Falta Encomendar"]{ background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.6); }
+    .card[data-vidro="Encomendado"]{ background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.6); }
+    .card[data-vidro="Recebido"]{ background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.6); }
+
+    /* ====== Modal ====== */
+    .modal-overlay{
+      position:fixed; inset:0; background: rgba(0,0,0,.5);
+      display:grid; place-items:center;
+    }
+    .hidden{ display:none !important; }
+    .modal{
+      width:min(720px, calc(100% - 24px));
+      background: #0f1729; border:1px solid rgba(255,255,255,.08);
+      border-radius:14px; padding:14px;
+    }
+    .modal-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .form{ display:flex; flex-direction:column; gap:12px; }
+    .form-row{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    label{ display:flex; flex-direction:column; gap:6px; font-size:13px; color: var(--muted); }
+    input, select, textarea{
+      background:#0b1220; color:var(--text);
+      border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:10px;
+    }
+    input:focus, select:focus, textarea:focus{ outline:none; border-color: var(--ring); box-shadow: 0 0 0 3px var(--ring); }
+
+    .modal-actions{ display:flex; align-items:center; gap:10px; }
+    .spacer{ flex:1; }
+
+    /* ====== Footer ====== */
+    .footer{ padding: 12px 14px; color: var(--muted); }
+
+    /* ====== Responsive ====== */
+    @media (max-width: 900px){
+      .toolbar{ grid-template-columns: 1fr; }
+      .actions{ justify-content:flex-end; }
+      .form-row{ grid-template-columns: 1fr; }
+      .calendar{ grid-template-columns: repeat(5, minmax(220px, 1fr)); }
+    }
     @media print {
-      .print-unscheduled-section, .print-tomorrow-section { display: block; }
-      .no-print { display: none !important; }
+      body{ background:#fff; color:#000; }
+      .topbar, .toolbar, .footer, .modal-overlay{ display:none !important; }
+      .calendar-wrap{ padding:0; }
+      .calendar{ gap:8px; }
+      .col{ break-inside: avoid; }
     }
-
-    /* ===== MOBILE FIXES ===== */
-    .header-actions { position: static !important; }
-    @media (max-width: 768px) {
-      .page-header{ display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
-      .page-header h1{ font-size:26px; line-height:1.15; margin:0; }
-      .subtitle{ font-size:14px; }
-      .header-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
-    }
-
-    /* calendário a 100% no mobile */
-    .schedule-container{ display:block !important; overflow-x:hidden; }
-    .schedule{ width:100%; table-layout:fixed; border-collapse:separate; border-spacing:0; }
-    .schedule th:first-child{ width:70px; }
-
-    @media (max-width: 560px){
-      .schedule{ font-size:12px; }
-      .schedule th, .schedule td{ padding:6px; }
-      .schedule .day{ font-size:12px; white-space:nowrap; }
-      .schedule .date{ font-size:11px; color:#6b7280; }
-      .appointment-block{ font-size:12px; padding:6px; }
-      .nav-left .nav-button{ display:inline-flex !important; }
-    }
-
-    /* Por Agendar vazio (placeholder) */
-    .unscheduled-list .drop-zone.empty{
-      min-height:110px; border:2px dashed #e5e7eb; border-radius:12px; background:#fff;
-      display:flex; align-items:center; justify-content:center; color:#64748b; text-align:center; padding:12px;
-    }
-    .unscheduled-empty-msg small{ color:#94a3b8; display:block; margin-top:4px; }
   </style>
 </head>
 <body>
-  <div class="page">
-    <header class="page-header">
-      <h1>AGENDAMENTOS FAMALICÃO</h1>
-      <p class="subtitle">Agendamento serviços Expressglass</p>
-      <div class="header-actions">
-        <div id="connectionStatus" class="connection-status" title="Status da conexão">
-          <span id="statusIcon">🌐</span>
-          <span id="statusText">Online</span>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">EG</div>
+    <div class="brand-text">
+      <h1>ExpressGlass</h1>
+      <span>Portal de Agendamento</span>
+    </div>
+  </div>
+  <div class="actions">
+    <button id="btnHoje" class="btn ghost" title="Voltar para hoje">Hoje</button>
+    <button id="btnNovo" class="btn primary">Novo Serviço</button>
+    <button id="btnImprimir" class="btn ghost" title="Imprimir">Imprimir</button>
+    <button id="btnReset" class="btn danger" title="Limpar dados">Reset</button>
+  </div>
+</header>
+
+<section class="toolbar">
+  <div class="stat-card">
+    <div class="stat-title">Serviços — Falta encomendar vidro</div>
+    <div id="statFaltaEncomendar" class="stat-value">0</div>
+  </div>
+
+  <div class="week-nav">
+    <button id="btnPrev" class="btn ghost" aria-label="Semana anterior">&larr;</button>
+    <div id="weekLabel" class="week-label">Semana</div>
+    <button id="btnNext" class="btn ghost" aria-label="Semana seguinte">&rarr;</button>
+  </div>
+
+  <div class="search">
+    <input id="searchInput" type="search" placeholder="Pesquisar (matrícula, carro, notas)…" />
+    <span class="icon" aria-hidden="true">🔎</span>
+  </div>
+</section>
+
+<main class="calendar-wrap">
+  <div id="calendar" class="calendar">
+    <!-- construído via JS -->
+  </div>
+</main>
+
+<footer class="footer">
+  <small>© ExpressGlass — uso interno. <span id="appVersion"></span></small>
+</footer>
+
+<!-- Modal -->
+<div id="modalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Novo serviço</h2>
+      <button id="modalClose" class="icon-btn" aria-label="Fechar">✕</button>
+    </div>
+    <form id="formAgendamento" class="form">
+      <input type="hidden" id="agendamentoId" />
+      <div class="form-row">
+        <label>Data
+          <input type="date" id="data" required/>
+        </label>
+        <label>Período
+          <select id="periodo" required>
+            <option value="Manhã">Manhã</option>
+            <option value="Tarde">Tarde</option>
+          </select>
+        </label>
+      </div>
+      <div class="form-row">
+        <label>Matrícula
+          <input type="text" id="matricula" placeholder="AA-00-BB" required/>
+        </label>
+        <label>Carro
+          <input type="text" id="carro" placeholder="Marca e modelo" required/>
+        </label>
+      </div>
+      <div class="form-row">
+        <label>Tipo de Serviço
+          <select id="tipo" required>
+            <option value="PB">PB (Para-brisas)</option>
+            <option value="LT">LT (Lateral)</option>
+            <option value="OC">OC (Óptica)</option>
+            <option value="REP">REP (Reparação)</option>
+            <option value="POL">POL (Polimento)</option>
+          </select>
+        </label>
+        <label>Status do vidro
+          <select id="vidroStatus" required>
+            <option value="Falta Encomendar">Falta Encomendar</option>
+            <option value="Encomendado">Encomendado</option>
+            <option value="Recebido">Recebido</option>
+          </select>
+        </label>
+      </div>
+      <div class="form-row">
+        <label>Observações
+          <textarea id="obs" rows="2" placeholder="Notas internas…"></textarea>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btnApagar" class="btn danger ghost hidden">Apagar</button>
+        <div class="spacer"></div>
+        <button type="button" id="btnCancelar" class="btn ghost">Cancelar</button>
+        <button type="submit" class="btn primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+/* ExpressGlass — Agendamentos (v3) */
+(() => {
+  const VERSION = 'v3.0.0';
+  const LS_KEY = 'eg_agendamentos_v3';
+
+  // ===== Utils =====
+  const $ = (sel, el=document) => el.querySelector(sel);
+  const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+  const fmtDate = (d) => d.toISOString().slice(0,10);
+  const parseDate = (str) => new Date(str + 'T12:00:00');
+  const ptWeekday = (d) => d.toLocaleDateString('pt-PT', { weekday:'long' });
+  const ptDate = (d) => d.toLocaleDateString('pt-PT', { day:'2-digit', month:'2-digit' });
+
+  function startOfWeek(date) {
+    const d = new Date(date);
+    const day = (d.getDay() + 6) % 7; // Monday=0
+    d.setDate(d.getDate() - day);
+    d.setHours(12,0,0,0);
+    return d;
+  }
+  function addDays(date, n){ const d = new Date(date); d.setDate(d.getDate()+n); return d; }
+
+  function uid(){ return Math.random().toString(36).slice(2,10); }
+
+  // ===== Data =====
+  function load(){
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+    catch(e){ console.error(e); return []; }
+  }
+  function save(list){ localStorage.setItem(LS_KEY, JSON.stringify(list)); }
+
+  let data = load();
+
+  // ===== State =====
+  let state = {
+    weekStart: startOfWeek(new Date()),
+    search: ''
+  };
+
+  // ===== Elements =====
+  const elWeekLabel = $('#weekLabel');
+  const elCalendar = $('#calendar');
+  const elStat = $('#statFaltaEncomendar');
+  const elAppVersion = $('#appVersion');
+
+  // toolbar buttons
+  $('#btnPrev').addEventListener('click', () => { state.weekStart = addDays(state.weekStart, -7); render(); });
+  $('#btnNext').addEventListener('click', () => { state.weekStart = addDays(state.weekStart, +7); render(); });
+  $('#btnHoje').addEventListener('click', () => { state.weekStart = startOfWeek(new Date()); render(); });
+  $('#btnImprimir').addEventListener('click', () => window.print());
+  $('#btnReset').addEventListener('click', () => {
+    if(confirm('Apagar todos os agendamentos guardados neste dispositivo?')){
+      data = []; save(data); render();
+    }
+  });
+
+  // search
+  $('#searchInput').addEventListener('input', (e)=> {
+    state.search = (e.target.value || '').trim().toLowerCase();
+    render();
+  });
+
+  // novo serviço
+  $('#btnNovo').addEventListener('click', ()=> openModal());
+
+  // Modal
+  const overlay = $('#modalOverlay');
+  const form = $('#formAgendamento');
+  const field = {
+    id: $('#agendamentoId'),
+    data: $('#data'),
+    periodo: $('#periodo'),
+    matricula: $('#matricula'),
+    carro: $('#carro'),
+    tipo: $('#tipo'),
+    vidro: $('#vidroStatus'),
+    obs: $('#obs'),
+  };
+  $('#modalClose').addEventListener('click', closeModal);
+  $('#btnCancelar').addEventListener('click', closeModal);
+  $('#btnApagar').addEventListener('click', onDelete);
+
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const rec = {
+      id: field.id.value || uid(),
+      date: field.data.value,
+      period: field.periodo.value,
+      matricula: field.matricula.value.toUpperCase(),
+      carro: field.carro.value,
+      tipo: field.tipo.value,
+      vidroStatus: field.vidro.value,
+      obs: field.obs.value || '',
+      createdAt: field.id.value ? (data.find(x=>x.id===field.id.value)?.createdAt || Date.now()) : Date.now()
+    };
+    const idx = data.findIndex(x => x.id === rec.id);
+    if(idx>=0){ data[idx] = rec; } else { data.push(rec); }
+    save(data);
+    closeModal();
+    render();
+  });
+
+  function openModal(existing){
+    overlay.classList.remove('hidden');
+    $('#modalTitle').textContent = existing ? 'Editar serviço' : 'Novo serviço';
+    $('#btnApagar').classList.toggle('hidden', !existing);
+    // default values
+    const today = fmtDate(new Date());
+    field.id.value = existing?.id || '';
+    field.data.value = existing?.date || today;
+    field.periodo.value = existing?.period || 'Manhã';
+    field.matricula.value = existing?.matricula || '';
+    field.carro.value = existing?.carro || '';
+    field.tipo.value = existing?.tipo || 'PB';
+    field.vidro.value = existing?.vidroStatus || 'Falta Encomendar';
+    field.obs.value = existing?.obs || '';
+    setTimeout(()=> field.matricula.focus(), 50);
+  }
+  function closeModal(){ overlay.classList.add('hidden'); }
+  function onDelete(){
+    const id = field.id.value;
+    if(!id) return;
+    if(confirm('Apagar este agendamento?')){
+      data = data.filter(x => x.id !== id);
+      save(data);
+      closeModal();
+      render();
+    }
+  }
+
+  // ===== Render =====
+  function matchesSearch(rec, term){
+    if(!term) return true;
+    const hay = [rec.matricula, rec.carro, rec.tipo, rec.vidroStatus, rec.obs].join(' ').toLowerCase();
+    return hay.includes(term);
+  }
+
+  function render(){
+    // Header week label
+    const d0 = new Date(state.weekStart);
+    const d4 = addDays(d0, 4);
+    elWeekLabel.textContent = `${ptDate(d0)} — ${ptDate(d4)}`;
+
+    // Stat: falta encomendar (tudo)
+    const falta = data.filter(x => x.vidroStatus === 'Falta Encomendar').length;
+    elStat.textContent = String(falta);
+
+    // Build columns Mon..Fri
+    elCalendar.innerHTML = '';
+    for(let i=0;i<5;i++){
+      const day = addDays(d0, i);
+      const dayStr = fmtDate(day);
+      const col = document.createElement('div');
+      col.className = 'col';
+      const dow = ptWeekday(day);
+      col.innerHTML = `
+        <div class="col-header">
+          <div>
+            <div class="dow">${dow[0].toUpperCase() + dow.slice(1)}</div>
+            <div class="date">${ptDate(day)}</div>
+          </div>
+            <button class="btn ghost btnAdd" data-date="${dayStr}">+ Novo</button>
         </div>
-        <button id="backupBtn" class="header-btn" title="Backup de dados">💾</button>
-        <button id="stats
+        <div class="period">
+          <h4>Manhã</h4>
+          <div class="slot slot-manha"></div>
+        </div>
+        <div class="period">
+          <h4>Tarde</h4>
+          <div class="slot slot-tarde"></div>
+        </div>
+      `;
+
+      // items for this date
+      const items = data
+        .filter(x => x.date === dayStr && matchesSearch(x, state.search))
+        .sort((a,b) => a.createdAt - b.createdAt);
+
+      const manha = $('.slot-manha', col);
+      const tarde = $('.slot-tarde', col);
+      for(const rec of items){
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.vidro = rec.vidroStatus;
+        card.innerHTML = `
+          <div class="badge">${rec.tipo}</div>
+          <div class="content">
+            <div class="title">${rec.matricula} — ${rec.carro}</div>
+            <div class="meta">${rec.period} · ${rec.vidroStatus}</div>
+            ${rec.obs ? `<div class="note">📝 ${escapeHtml(rec.obs)}</div>` : ''}
+          </div>
+        `;
+        card.addEventListener('click', ()=> openModal(rec));
+        if(rec.period === 'Manhã') manha.appendChild(card); else tarde.appendChild(card);
+      }
+
+      elCalendar.appendChild(col);
+    }
+
+    // handle per-day add buttons
+    $$('.btnAdd').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openModal({ date: btn.dataset.date });
+      });
+    });
+
+    // version
+    elAppVersion.textContent = VERSION;
+  }
+
+  function escapeHtml(str=''){
+    return str.replace(/[&<>"']/g, (m)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  // Seed demo if empty (one-time)
+  if(data.length === 0){
+    const base = startOfWeek(new Date());
+    const demo = [
+      { date: fmtDate(base), period:'Manhã', matricula:'AA-00-AA', carro:'VW Golf', tipo:'PB', vidroStatus:'Falta Encomendar', obs:'Cliente aguarda orçamento' },
+      { date: fmtDate(addDays(base,1)), period:'Tarde', matricula:'11-CC-22', carro:'Renault Clio', tipo:'REP', vidroStatus:'Encomendado', obs:'' },
+      { date: fmtDate(addDays(base,2)), period:'Manhã', matricula:'33-DD-44', carro:'BMW 320d', tipo:'LT', vidroStatus:'Recebido', obs:'Com ADAS' },
+    ].map(x => ({ id: uid(), createdAt: Date.now()+Math.random()*1000, ...x }));
+    data = demo; save(data);
+  }
+
+  render();
+
+})();
+</script>
+</body>
+</html>
