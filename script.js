@@ -1,14 +1,18 @@
 /* ===========================================
-   script.js — compatível e alinhado ao teu index.html
+   script.js — alinhado ao teu index.html (desktop preservado)
    =========================================== */
 (function(){
   "use strict";
 
-  // ===== API base =====
+  /* ===== API base ===== */
   var API_BASE = location.hostname.indexOf("localhost") > -1 ? "http://localhost:8888/api" : "/api";
   var API = API_BASE + "/appointments";
+  var IS_MOBILE = function(){ return matchMedia("(max-width: 820px)").matches; };
 
-  // ===== Estado =====
+  /* ===== Chave da fila offline ===== */
+  var PENDING_STATUS_KEY = "eg_pending_status_v1";
+
+  /* ===== Estado ===== */
   var state = {
     weekStart: startOfWeek(new Date()),
     selectedDay: new Date(),
@@ -16,17 +20,21 @@
     filter: ""
   };
 
-  // ===== Arranque =====
+  /* ===== Arranque ===== */
   document.addEventListener("DOMContentLoaded", function(){
-    bindWeekNav();
-    bindDayNav();
-    bindSearch();
-    bindPrint();
-    bindModal();
+    bindWeekNav();      // prevWeek / nextWeek / todayWeek
+    bindDayNav();       // prevDay / nextDay / todayDay
+    bindSearch();       // searchBtn / searchBar / searchInput / clearSearch
+    bindPrint();        // printPage
+    bindModal();        // abrir/fechar + submit
+    updateConnectionBadge();
+    flushPendingStatusQueue();
     loadAndRenderWeek(state.weekStart);
   });
+  window.addEventListener("online",  function(){ updateConnectionBadge(); flushPendingStatusQueue(); });
+  window.addEventListener("offline", function(){ updateConnectionBadge(); });
 
-  // ===== Ligações UI =====
+  /* ===== Ligações UI ===== */
   function bindWeekNav(){
     var prev = byId("prevWeek"), next = byId("nextWeek"), today = byId("todayWeek");
     if (prev) prev.addEventListener("click", function(){ shiftWeek(-1); });
@@ -72,7 +80,7 @@
   }
   function bindPrint(){ var p = byId("printPage"); if (p) p.addEventListener("click", function(){ window.print(); }); }
 
-  // ===== Modal: abrir/fechar + submit =====
+  /* ===== Modal: abrir/fechar + submit ===== */
   function bindModal(){
     var closeBtn = byId("closeModal");
     var cancelBtn = byId("cancelForm");
@@ -86,13 +94,12 @@
     if (addMobile) addMobile.addEventListener("click", openAppointmentModal);
     if (addDesk) addDesk.addEventListener("click", openAppointmentModal);
 
-    // Expor função global para o teu onclick inline
+    // expor para onclick inline existente
     window.openAppointmentModal = openAppointmentModal;
   }
 
   function openAppointmentModal(){
-    // Limpar form
-    setValue("appointmentDate", "");
+    setValue("appointmentDate", toISODate(state.selectedDay));
     setValue("appointmentPeriod", "");
     setValue("appointmentPlate", "");
     setValue("appointmentCar", "");
@@ -102,23 +109,13 @@
     setValue("appointmentExtra", "");
     var title = byId("modalTitle"); if (title) title.textContent = "Novo Agendamento";
     var del = byId("deleteAppointment"); if (del) addClass(del, "hidden");
-
-    // Pré-preenche a data com o dia selecionado
-    var d = toISODate(state.selectedDay);
-    setValue("appointmentDate", d);
-
-    var modal = byId("appointmentModal");
-    if (modal) addClass(modal, "show");
+    addClass(byId("appointmentModal"), "show");
   }
-  function closeAppointmentModal(){
-    var modal = byId("appointmentModal");
-    if (modal) removeClass(modal, "show");
-  }
+  function closeAppointmentModal(){ removeClass(byId("appointmentModal"), "show"); }
 
   function onFormSubmit(e){
     e.preventDefault();
 
-    // Ler campos
     var date = getValue("appointmentDate");
     var periodLabel = getValue("appointmentPeriod"); // "Manhã" | "Tarde" | ""
     var period = periodLabel === "Manhã" ? "AM" : periodLabel === "Tarde" ? "PM" : "";
@@ -150,22 +147,20 @@
     apiCreateAppointment(payload, function(err, created){
       setLoading(false);
       if (err){
-        // Fallback local
-        var local = payload;
-        local.id = "local-" + Date.now();
+        // fallback local
+        var local = payload; local.id = "local-" + Date.now();
         state.appointments.push(local);
         toast("info","Sem ligação: guardado localmente.");
       } else {
         state.appointments.push(created);
         toast("success","Agendamento criado.");
       }
-      // Re-render e fechar
       renderAll();
       closeAppointmentModal();
     });
   }
 
-  // ===== API =====
+  /* ===== API ===== */
   function apiListWeek(weekStart, weekEnd, cb){
     var url = API + "?weekStart=" + toISODate(weekStart) + "&weekEnd=" + toISODate(weekEnd);
     fetch(url).then(function(res){
@@ -173,14 +168,13 @@
       return res.json();
     }).then(function(data){
       cb(null, data && (data.appointments || data) || []);
-    }).catch(function(e){
-      console.warn("GET falhou, usar mock:", e && e.message);
-      // MOCK
+    }).catch(function(){
+      // MOCK para poder navegar se backend falhar
       var b = startOfWeek(weekStart);
       var mock = [
-        { id:"m1", date: toISODate(b),           period:"AM", status:"NE", plate:"AA-11-BB", car:"Astra",  serviceType:"PB", store:"Guimarães" },
-        { id:"m2", date: toISODate(addDays(b,1)), period:"PM", status:"VE", plate:"CC-22-DD", car:"Focus",  serviceType:"LT", store:"Famalicão" },
-        { id:"m3", date: toISODate(addDays(b,3)), period:"AM", status:"ST", plate:"EE-33-FF", car:"Golf",   serviceType:"OC", store:"Braga" }
+        { id:"m1", date: toISODate(b),            period:"AM", status:"NE", plate:"AA-11-BB", car:"Astra",  serviceType:"PB", store:"Guimarães" },
+        { id:"m2", date: toISODate(addDays(b, 1)), period:"PM", status:"VE", plate:"CC-22-DD", car:"Focus",  serviceType:"LT", store:"Famalicão" },
+        { id:"m3", date: toISODate(addDays(b, 3)), period:"AM", status:"ST", plate:"EE-33-FF", car:"Golf",   serviceType:"OC", store:"Braga" }
       ];
       cb(null, mock);
     });
@@ -195,10 +189,9 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       return res.json();
     }).then(function(obj){
-      // a Function pode devolver o objeto criado ou {id:..}
       var created = typeof obj === "object" ? obj : {};
       if (!created.id) created.id = "srv-" + Date.now();
-      // Garante campos visuais
+      // garantir campos visuais
       if (!created.date) created.date = payload.date;
       if (!created.period) created.period = payload.period;
       if (!created.plate) created.plate = payload.plate;
@@ -207,31 +200,102 @@
       if (!created.status) created.status = payload.status;
       if (!created.store) created.store = payload.store;
       cb(null, created);
-    }).catch(function(e){
-      cb(e || new Error("Falha POST"));
+    }).catch(function(e){ cb(e || new Error("Falha POST")); });
+  }
+
+  // ==== UPDATE DO ESTADO (robusto c/ fallback + fila) ====
+  function apiUpdateStatus(id, status, cb){
+    tryUpdateStatusMulti(id, status).then(function () {
+      cb && cb(null, { ok:true });
+    }).catch(function (err) {
+      // não voltamos atrás visualmente: fica em fila para sync
+      queueStatusUpdate(id, status);
+      updateConnectionBadge();
+      toast("info","Sem ligação: estado em fila para sincronizar.");
+      cb && cb(err || new Error("Falha PUT"));
     });
   }
 
-  function apiUpdateStatus(id, status, cb){
-    fetch(API + "/" + encodeURIComponent(id), {
-      method: "PUT",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ status: status })
-    }).then(function(res){
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    }).then(function(x){ cb(null, x); })
-      .catch(function(e){ cb(e || new Error("Falha PUT")); });
+  // tenta PUT/PATCH/POST em /:id e /:id/status com vários body keys
+  function tryUpdateStatusMulti(id, status){
+    var urls = [
+      API + "/" + encodeURIComponent(id),
+      API + "/" + encodeURIComponent(id) + "/status"
+    ];
+    var methods = ["PUT","PATCH","POST"];
+    var bodies = [
+      JSON.stringify({ status: status }),
+      JSON.stringify({ Status: status }),
+      JSON.stringify({ estado: status }),
+      JSON.stringify({ Estado: status })
+    ];
+    var headers = { "Content-Type": "application/json" };
+
+    var attempts = [];
+    for (var u=0; u<urls.length; u++){
+      for (var m=0; m<methods.length; m++){
+        for (var b=0; b<bodies.length; b++){
+          (function(url, method, body){
+            attempts.push(function(){
+              return fetch(url, { method: method, headers: headers, body: body })
+                .then(function(res){ if (!res.ok) throw new Error(method+" "+url+" "+res.status); });
+            });
+          })(urls[u], methods[m], bodies[b]);
+        }
+      }
+    }
+    var p = Promise.reject();
+    attempts.forEach(function(fn){ p = p.catch(fn); });
+    return p.catch(function(){ throw new Error("Nenhum endpoint aceitou o update"); });
   }
 
-  // ===== Load & Render =====
+  /* ===== Fila offline ===== */
+  function queueStatusUpdate(id, status){
+    try {
+      var q = JSON.parse(localStorage.getItem(PENDING_STATUS_KEY) || "[]");
+      q = q.filter(function(x){ return x.id !== id; });
+      q.push({ id:id, status:status, ts:Date.now() });
+      localStorage.setItem(PENDING_STATUS_KEY, JSON.stringify(q));
+    } catch(e){}
+  }
+  function flushPendingStatusQueue(){
+    if (!navigator.onLine) return;
+    var q = JSON.parse(localStorage.getItem(PENDING_STATUS_KEY) || "[]");
+    if (!q.length) return;
+    (function next(){
+      var item = q.shift(); if (!item){ localStorage.setItem(PENDING_STATUS_KEY, "[]"); toast("success","Estados sincronizados."); updateConnectionBadge(); return; }
+      tryUpdateStatusMulti(item.id, item.status)
+        .then(function(){ localStorage.setItem(PENDING_STATUS_KEY, JSON.stringify(q)); next(); })
+        .catch(function(){ q.unshift(item); localStorage.setItem(PENDING_STATUS_KEY, JSON.stringify(q)); });
+    })();
+  }
+
+  /* ===== Badge Online/Offline do header ===== */
+  function updateConnectionBadge(){
+    var box  = byId("connectionStatus");
+    var text = byId("statusText");
+    var icon = byId("statusIcon");
+    if (!box || !text || !icon) return;
+    var pend = JSON.parse(localStorage.getItem(PENDING_STATUS_KEY) || "[]").length;
+    if (navigator.onLine){
+      removeClass(box,"offline");
+      text.textContent = pend ? "Online (a sincronizar…)" : "Online";
+      icon.textContent = "🌐";
+    } else {
+      addClass(box,"offline");
+      text.textContent = "Offline";
+      icon.textContent = "📱";
+    }
+  }
+
+  /* ===== Load & Render ===== */
   function loadAndRenderWeek(weekStart){
     var weekEnd = addDays(weekStart, 6);
     updateWeekRangeLabel(weekStart, weekEnd);
     state.selectedDay = clampToWeek(state.selectedDay, weekStart) || weekStart;
 
     setLoading(true);
-    apiListWeek(weekStart, weekEnd, function(err, list){
+    apiListWeek(weekStart, weekEnd, function(_err, list){
       setLoading(false);
       state.appointments = Array.isArray(list) ? list : [];
       renderAll();
@@ -246,7 +310,7 @@
     initMobileStatusControls();
   }
 
-  // ===== Calendário semanal =====
+  /* ===== Calendário semanal (desktop) ===== */
   function renderSchedule(){
     var table = byId("schedule");
     if (!table) return;
@@ -304,7 +368,7 @@
     }
   }
 
-  // ===== Unscheduled =====
+  /* ===== Unscheduled (desktop) ===== */
   function renderUnscheduled(){
     var listEl = byId("unscheduledList"); if (!listEl) return;
     listEl.innerHTML = "";
@@ -318,7 +382,7 @@
     }
   }
 
-  // ===== Tabela de serviços =====
+  /* ===== Tabela de serviços (desktop) ===== */
   function renderServicesTable(){
     var tbody = byId("servicesTableBody"); if (!tbody) return;
     tbody.innerHTML = "";
@@ -339,7 +403,7 @@
     }
   }
 
-  // ===== Vista diária (mobile) =====
+  /* ===== Vista diária (mobile) ===== */
   function renderMobileDay(date){
     var label = byId("mobileDayLabel"), list = byId("mobileDayList");
     if (!label || !list) return;
@@ -361,7 +425,7 @@
     for (var i=0;i<items.length;i++){ list.appendChild(makeCard(items[i])); }
   }
 
-  // ===== Cartões + status mobile =====
+  /* ===== Cartões + status (mobile) ===== */
   function makeCard(appt, unscheduled){
     var card = document.createElement("div");
     card.className = "appointment" + (unscheduled ? " unscheduled" : "");
@@ -385,10 +449,8 @@
     chip.textContent = status;
     card.appendChild(chip);
 
-    // Pintar cartão no mobile
-    if (matchMedia("(max-width: 820px)").matches){
+    if (IS_MOBILE()){
       paintCard(card, status);
-      // controlos NE/VE/ST no mobile
       var ctrl = document.createElement("div");
       ctrl.className = "appt-status-controls";
       ["NE","VE","ST"].forEach(function(code){
@@ -406,7 +468,6 @@
     }
     return card;
   }
-
   function chipClass(s){ s=(s||"NE").toUpperCase(); return s==="VE"?"chip-VE":(s==="ST"?"chip-ST":"chip-NE"); }
   function paintCard(card, s){
     removeClass(card,"card-NE"); removeClass(card,"card-VE"); removeClass(card,"card-ST");
@@ -415,30 +476,23 @@
   function onStatusClick(card, newStatus, ctrl){
     var id = card.getAttribute("data-id");
     if (!id){ toast("error","Falta o id do agendamento."); return; }
-    var prev = (card.getAttribute("data-status") || "NE").toUpperCase();
-    if (prev === newStatus) return;
 
+    // atualiza optimista
     setActiveButton(ctrl, newStatus);
-    // chip
     var chip = card.querySelector(".chip"); if (chip){ chip.className = "chip " + chipClass(newStatus); chip.textContent = newStatus; }
     paintCard(card, newStatus);
     card.setAttribute("data-status", newStatus);
 
+    // tenta gravar; se falhar, fica em fila (sem erro para o utilizador)
     apiUpdateStatus(id, newStatus, function(err){
-      if (err){
-        // rollback
-        setActiveButton(ctrl, prev);
-        if (chip){ chip.className = "chip " + chipClass(prev); chip.textContent = prev; }
-        paintCard(card, prev);
-        card.setAttribute("data-status", prev);
-        toast("error","Falha ao gravar estado.");
-      } else {
-        toast("success","Estado atualizado para " + newStatus + ".");
+      if (!err){
         // refletir no state
         for (var i=0;i<state.appointments.length;i++){
           if (state.appointments[i].id === id){ state.appointments[i].status = newStatus; break; }
         }
+        toast("success","Estado atualizado para " + newStatus + ".");
       }
+      // se err -> já ficou em fila e mostramos info (feito em apiUpdateStatus)
     });
   }
   function setActiveButton(ctrl, status){
@@ -449,7 +503,7 @@
     }
   }
 
-  // ===== Navegação =====
+  /* ===== Navegação ===== */
   function shiftWeek(delta){
     state.weekStart = addDays(state.weekStart, delta*7);
     state.selectedDay = clampToWeek(state.selectedDay, state.weekStart) || state.weekStart;
@@ -480,7 +534,7 @@
     renderMobileDay(state.selectedDay);
   }
 
-  // ===== Filtro/agrupamento =====
+  /* ===== Filtro/agrupamento ===== */
   function filteredAppointments(){
     if (!state.filter) return state.appointments.slice();
     var f = state.filter;
@@ -501,7 +555,7 @@
     return map;
   }
 
-  // ===== Helpers UI =====
+  /* ===== Helpers UI ===== */
   function updateWeekRangeLabel(start, end){
     var el = byId("weekRange"); if (!el) return;
     var same = start.getMonth() === end.getMonth();
@@ -520,7 +574,7 @@
     setTimeout(function(){ if (t && t.parentNode) t.parentNode.removeChild(t); }, 2400);
   }
 
-  // ===== Datas =====
+  /* ===== Datas ===== */
   function startOfWeek(d){ var x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); var day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); return x; }
   function weekDays(ws){ var a=[]; for (var i=0;i<7;i++) a.push(addDays(ws,i)); return a; }
   function addDays(d,n){ var x=new Date(d); x.setDate(x.getDate()+n); return x; }
@@ -532,11 +586,11 @@
   function pad2(n){ n=String(n); return n.length===1?"0"+n:n; }
   function clampToWeek(date, start){ var s=new Date(start), e=addDays(s,6); if (date<s) return s; if (date>e) return e; return date; }
 
-  // ===== DOM utils =====
+  /* ===== DOM utils ===== */
   function byId(s){ return document.getElementById(s); }
-  function addClass(el,c){ if (!el) return; if (el.classList) el.classList.add(c); }
-  function removeClass(el,c){ if (!el) return; if (el.classList) el.classList.remove(c); }
-  function toggleClass(el,c){ if (!el) return; if (el.classList) el.classList.toggle(c); }
+  function addClass(el,c){ if (el && el.classList) el.classList.add(c); }
+  function removeClass(el,c){ if (el && el.classList) el.classList.remove(c); }
+  function toggleClass(el,c){ if (el && el.classList) el.classList.toggle(c); }
   function setValue(id,v){ var el=byId(id); if (el) el.value = v; }
   function getValue(id){ var el=byId(id); return el ? el.value : ""; }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"'`=\/]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;","/":"&#x2F;","`":"&#x60;","=":"&#x3D;"}[c]; }); }
