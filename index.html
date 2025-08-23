@@ -8,42 +8,39 @@
   <meta name="theme-color" content="#2563eb">
 
   <style>
-    /* Mostrar as secções de impressão só no print */
     .print-unscheduled-section, .print-tomorrow-section { display: none; }
     @media print {
       .print-unscheduled-section, .print-tomorrow-section { display: block; }
       .no-print { display: none !important; }
     }
 
-    /* ====== FIXES MOBILE ====== */
-    /* Header: título + ícones não se sobrepõem em ecrãs pequenos */
+    /* ===== MOBILE FIXES ===== */
+    .header-actions { position: static !important; }
     @media (max-width: 768px) {
-      .page-header { display:flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-      .page-header h1 { font-size: 28px; line-height: 1.15; margin: 0; }
-      .subtitle { font-size: 14px; }
-      .header-actions { display:flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+      .page-header{ display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
+      .page-header h1{ font-size:26px; line-height:1.15; margin:0; }
+      .subtitle{ font-size:14px; }
+      .header-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
     }
 
-    /* Calendário visível no mobile (antes ficava escondido pelo CSS original) */
-    .schedule-container { display:block !important; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    /* Garante uma largura mínima para surgir scroll horizontal, se faltar espaço */
-    .schedule { min-width: 960px; }
+    /* calendário a 100% no mobile */
+    .schedule-container{ display:block !important; overflow-x:hidden; }
+    .schedule{ width:100%; table-layout:fixed; border-collapse:separate; border-spacing:0; }
+    .schedule th:first-child{ width:70px; }
 
-    /* Mostra botões de navegação no mobile se o CSS antigo os esconder */
-    .nav-left .nav-button { display: inline-flex !important; }
+    @media (max-width: 560px){
+      .schedule{ font-size:12px; }
+      .schedule th, .schedule td{ padding:6px; }
+      .schedule .day{ font-size:12px; white-space:nowrap; }
+      .schedule .date{ font-size:11px; color:#6b7280; }
+      .appointment-block{ font-size:12px; padding:6px; }
+      .nav-left .nav-button{ display:inline-flex !important; }
+    }
 
-    /* ====== Por Agendar vazio ====== */
+    /* Por Agendar vazio (placeholder) */
     .unscheduled-list .drop-zone.empty{
-      min-height: 110px;
-      border: 2px dashed #e5e7eb;
-      border-radius: 12px;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #64748b;
-      text-align: center;
-      padding: 12px;
+      min-height:110px; border:2px dashed #e5e7eb; border-radius:12px; background:#fff;
+      display:flex; align-items:center; justify-content:center; color:#64748b; text-align:center; padding:12px;
     }
     .unscheduled-empty-msg small{ color:#94a3b8; display:block; margin-top:4px; }
   </style>
@@ -59,248 +56,4 @@
           <span id="statusText">Online</span>
         </div>
         <button id="backupBtn" class="header-btn" title="Backup de dados">💾</button>
-        <button id="statsBtn" class="header-btn" title="Estatísticas">📊</button>
-        <button id="searchBtn" class="header-btn" title="Pesquisar">🔍</button>
-      </div>
-    </header>
-
-    <!-- Pesquisa -->
-    <div id="searchBar" class="search-bar hidden">
-      <input type="text" id="searchInput" placeholder="Pesquisar por matrícula, carro ou localidade..." />
-      <button id="clearSearch" class="search-clear" type="button">✕</button>
-    </div>
-
-    <!-- Navegação da semana -->
-    <div class="nav-bar">
-      <div class="nav-left">
-        <button id="prevWeek" class="nav-button" type="button">&lt; Anterior</button>
-        <button id="nextWeek" class="nav-button" type="button">Próxima &gt;</button>
-        <button id="todayWeek" class="nav-button" type="button">📅 Hoje</button>
-      </div>
-      <div class="week-range" id="weekRange">—</div>
-      <div class="nav-right">
-        <button id="printPage" class="nav-button" type="button">🖨 Imprimir</button>
-      </div>
-    </div>
-
-    <!-- Calendário -->
-    <div class="schedule-container print-page-1">
-      <table id="schedule" class="schedule"></table>
-    </div>
-
-    <!-- SERVIÇOS POR AGENDAR -->
-    <section class="unscheduled-container">
-      <h3>SERVIÇOS POR AGENDAR</h3>
-      <div class="unscheduled-actions">
-        <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
-        <select id="filterStatus" class="filter-select">
-          <option value="">Todos os estados</option>
-          <option value="NE">N/E - Não Executado</option>
-          <option value="VE">V/E - Vidro Encomendado</option>
-          <option value="ST">ST - Serviço Terminado</option>
-        </select>
-      </div>
-      <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
-    </section>
-
-    <script>
-      // Fallback caso o listener falhe em webviews antigas
-      document.getElementById('addServiceBtn')?.addEventListener('click', function(){
-        try { window.openAppointmentModal && window.openAppointmentModal(); }
-        catch(e){ alert('Não consegui abrir o formulário.\\n'+e.message); }
-      });
-    </script>
-
-    <!-- Tabela “Serviços a realizar” -->
-    <section class="services-table-container print-page-2">
-      <h3 id="servicesTableTitle">SERVIÇOS A REALIZAR</h3>
-      <div class="services-summary">
-        <span id="servicesSummary">Todos os serviços desde hoje em diante</span>
-        <button id="exportServices" class="export-btn" type="button">📄 Exportar</button>
-      </div>
-      <div class="table-wrapper">
-        <table id="servicesTable" class="services-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Período</th>
-              <th>Matrícula</th>
-              <th>Carro</th>
-              <th>Serviço</th>
-              <th>Observações</th>
-              <th>Estado</th>
-              <th>Dias</th>
-              <th class="no-print">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="servicesTableBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Modal Agendamento -->
-    <div id="appointmentModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 id="modalTitle">Novo Agendamento</h3>
-          <button id="closeModal" class="close-btn" type="button">✕</button>
-        </div>
-
-        <form id="appointmentForm" class="appointment-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentDate">Data</label>
-              <input type="date" id="appointmentDate" />
-            </div>
-            <div class="form-group">
-              <label for="appointmentPeriod">Período</label>
-              <select id="appointmentPeriod">
-                <option value="">—</option>
-                <option value="Manhã">Manhã</option>
-                <option value="Tarde">Tarde</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentPlate">Matrícula *</label>
-              <input type="text" id="appointmentPlate" placeholder="XX-XX-XX" maxlength="8" required />
-              <small class="form-hint">Formato: XX-XX-XX</small>
-            </div>
-            <div class="form-group">
-              <label for="appointmentCar">Modelo do Carro *</label>
-              <input type="text" id="appointmentCar" placeholder="Ex: BMW X3" required />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentService">Tipo de Serviço *</label>
-              <select id="appointmentService" required>
-                <option value="">Selecione o tipo de serviço</option>
-                <option value="PB">PB</option>
-                <option value="LT">LT</option>
-                <option value="OC">OC</option>
-                <option value="REP">REP</option>
-                <option value="POL">POL</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentStatus">Status do Vidro *</label>
-              <select id="appointmentStatus" required>
-                <option value="NE">N/E</option>
-                <option value="VE">V/E</option>
-                <option value="ST">ST</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="appointmentNotes">Observações</label>
-            <textarea id="appointmentNotes" rows="3"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="appointmentExtra">Outros dados (opcional)</label>
-            <textarea id="appointmentExtra" rows="2"></textarea>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" id="cancelForm" class="btn secondary">Cancelar</button>
-            <button type="button" id="deleteAppointment" class="btn danger hidden">Eliminar</button>
-            <button type="submit" class="btn primary">Guardar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Backup -->
-    <div id="backupModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Backup de Dados</h3>
-          <button class="close-btn" type="button" onclick="closeBackupModal()">✕</button>
-        </div>
-        <div class="backup-content">
-          <div class="backup-section">
-            <h4>📤 Exportar Dados</h4>
-            <p>Faça backup dos seus agendamentos</p>
-            <div class="backup-actions">
-              <button id="exportJson" class="btn primary" type="button">💾 Exportar JSON</button>
-              <button id="exportCsv" class="btn secondary" type="button">📊 Exportar CSV</button>
-            </div>
-          </div>
-          <div class="backup-section">
-            <h4>📥 Importar Dados</h4>
-            <p>Restaurar dados de um backup anterior</p>
-            <input type="file" id="importFile" accept=".json" style="display: none;" />
-            <button id="importBtn" class="btn secondary" type="button">📁 Selecionar Ficheiro</button>
-            <div id="importStatus" class="import-status"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Estatísticas -->
-    <div id="statsModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>📊 Estatísticas</h3>
-          <button class="close-btn" type="button" onclick="closeStatsModal()">✕</button>
-        </div>
-        <div id="statsContent" class="stats-content"></div>
-      </div>
-    </div>
-
-    <!-- Toasts -->
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Impressão: por agendar -->
-    <div class="print-unscheduled-section">
-      <h2>SERVIÇOS POR AGENDAR</h2>
-      <table class="print-unscheduled-table">
-        <thead>
-          <tr>
-            <th>Matrícula</th>
-            <th>Modelo do Carro</th>
-            <th>Serviço</th>
-            <th>Estado</th>
-            <th>Observações</th>
-            <th>Outros Dados</th>
-          </tr>
-        </thead>
-        <tbody id="printUnscheduledTableBody"></tbody>
-      </table>
-    </div>
-
-    <!-- Impressão: amanhã -->
-    <div class="print-tomorrow-section">
-      <h2 id="printTomorrowTitle">SERVIÇOS DE AMANHÃ</h2>
-      <div class="print-tomorrow-date" id="printTomorrowDate"></div>
-      <table class="print-tomorrow-table">
-        <thead>
-          <tr>
-            <th>Período</th>
-            <th>Matrícula</th>
-            <th>Modelo do Carro</th>
-            <th>Serviço</th>
-            <th>Estado</th>
-            <th>Observações</th>
-            <th>Outros Dados</th>
-          </tr>
-        </thead>
-        <tbody id="printTomorrowTableBody"></tbody>
-      </table>
-      <div class="print-tomorrow-empty" id="printTomorrowEmpty" style="display: none;">
-        <p>Não há serviços agendados para amanhã.</p>
-      </div>
-    </div>
-  </div>
-
-  <script src="script.js?v=7" defer></script>
-</body>
-</html>
+        <button id="stats
