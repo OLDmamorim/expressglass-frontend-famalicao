@@ -1,11 +1,13 @@
 'use strict';
 
-/* =============  API  ============= */
+/* ================= API ================= */
 const API_BASE = 'https://expressglass-backend-famalicao.netlify.app';
 
 async function apiGet(path, params = {}) {
   const url = new URL(API_BASE + path);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v); });
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
+  });
   const res = await fetch(url, { headers: { 'X-Tenant-Id': 'famalicao' } });
   if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
   return res.json();
@@ -34,33 +36,38 @@ async function apiDelete(path) {
   return true;
 }
 
-/* =============  UTILS  ============= */
+/* ================ UTILS ================ */
 function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
 function getMonday(date) { const d = new Date(date); const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.setDate(diff)); }
 function localISO(date) { const y=date.getFullYear(), m=String(date.getMonth()+1).padStart(2,'0'), d=String(date.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
-function fmtHeader(date){ return { day: date.toLocaleDateString('pt-PT',{weekday:'long'}), dm: date.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'}) }; }
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
-
-function parseDate(dateStr){
-  if(!dateStr) return '';
-  if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)){ const [d,m,y]=dateStr.split('/'); return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`; }
-  const dt = new Date(dateStr); return isNaN(dt)?'':localISO(dt);
+function parseDate(s){
+  if(!s) return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){const [d,m,y]=s.split('/');return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;}
+  const dt=new Date(s); return isNaN(dt)?'':localISO(dt);
 }
-function formatDateForInput(dateStr){ if(!dateStr) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)){ const [y,m,d]=dateStr.split('-'); return `${d}/${m}/${y}`; } return dateStr; }
-
-/* remover acentos sem \p{Diacritic} */
+function formatDateForInput(s){
+  if(!s) return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)){const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`;}
+  return s;
+}
 function normalizePeriod(p){
   if(!p) return '';
-  const t = String(p).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  const t=String(p).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   if(t==='manha') return 'Manhã';
   if(t==='tarde') return 'Tarde';
   return '';
 }
+function showToast(msg,type='info'){
+  const c=document.getElementById('toastContainer'); if(!c) return;
+  const t=document.createElement('div'); t.className=`toast ${type}`;
+  const icon=type==='success'?'✅':type==='error'?'❌':'ℹ️';
+  t.innerHTML=`<span>${icon}</span><span>${msg}</span>`;
+  c.appendChild(t); setTimeout(()=>t.remove(),3500);
+}
 
-function showToast(msg,type='info'){ const c=document.getElementById('toastContainer'); if(!c) return; const t=document.createElement('div'); t.className=`toast ${type}`; const icon=type==='success'?'✅':type==='error'?'❌':'ℹ️'; t.innerHTML=`<span>${icon}</span><span>${msg}</span>`; c.appendChild(t); setTimeout(()=>t.remove(),3500); }
-
-/* =============  STATE  ============= */
+/* ================ STATE ================ */
 let appointments = [];
 let currentMonday  = getMonday(new Date());
 let editingId = null;
@@ -70,7 +77,7 @@ let statusFilter = '';
 const STATUS_BG = { NE:'rgba(239,68,68,.12)', VE:'rgba(245,158,11,.14)', ST:'rgba(16,185,129,.14)' };
 const STATUS_BORDER = { NE:'#ef4444', VE:'#f59e0b', ST:'#10b981' };
 
-/* =============  LOAD  ============= */
+/* ================ LOAD ================ */
 async function load(){
   try{
     const rows = await apiGet('/api/appointments');
@@ -87,7 +94,7 @@ async function load(){
   }
 }
 
-/* =============  FILTERS  ============= */
+/* ============== FILTER/SEARCH ============== */
 function filterAppointments(list){
   let r=[...list];
   if(searchQuery){
@@ -110,11 +117,14 @@ function highlightSearchResults(){
   });
 }
 
-/* =============  DnD  ============= */
+/* ================ DRAG & DROP ================ */
 function enableDragDrop(scope){
   (scope||document).querySelectorAll('.appointment-block[data-id]').forEach(card=>{
     card.draggable=true;
-    card.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain',card.getAttribute('data-id')); e.dataTransfer.effectAllowed='move'; card.classList.add('dragging'); });
+    card.addEventListener('dragstart',e=>{
+      e.dataTransfer.setData('text/plain',card.getAttribute('data-id'));
+      e.dataTransfer.effectAllowed='move'; card.classList.add('dragging');
+    });
     card.addEventListener('dragend',()=> card.classList.remove('dragging'));
   });
   (scope||document).querySelectorAll('[data-drop-bucket]').forEach(zone=>{
@@ -156,17 +166,25 @@ async function onDropAppointment(id,targetBucket,targetIndex){
   }
 }
 
-/* =============  RENDER  ============= */
+/* ========= label curto para dias (mobile) ========= */
+function dayShortPT(d){ return ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][d.getDay()]; }
+
+/* ================ RENDER ================ */
 function renderSchedule(){
   const table=document.getElementById('schedule'); if(!table) return; table.innerHTML='';
 
-  // Segunda -> Sábado
-  const week=[...Array(6)].map((_,i)=> addDays(currentMonday,i));
+  const week=[...Array(6)].map((_,i)=> addDays(currentMonday,i)); // Seg..Sáb
   const wr=document.getElementById('weekRange');
   if(wr){ wr.textContent = `${week[0].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})} - ${week[5].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'})}`; }
 
+  const isNarrow = window.matchMedia('(max-width: 560px)').matches;
+
   let thead='<thead><tr><th>Período</th>';
-  for(const d of week){ const h=fmtHeader(d); thead+=`<th><div class="day">${cap(h.day)}</div><div class="date">${h.dm}</div></th>`; }
+  for(const d of week){
+    const dayLabel = isNarrow ? dayShortPT(d) : d.toLocaleDateString('pt-PT',{weekday:'long'});
+    const dateLabel = d.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'});
+    thead+=`<th><div class="day">${cap(dayLabel)}</div><div class="date">${dateLabel}</div></th>`;
+  }
   thead+='</tr></thead>'; table.insertAdjacentHTML('beforeend',thead);
 
   const renderCell=(period,dayDate)=>{
@@ -202,10 +220,8 @@ function renderSchedule(){
   highlightSearchResults();
 }
 
-/* “Por agendar” com placeholder */
 function renderUnscheduled(){
   const container=document.getElementById('unscheduledList'); if(!container) return;
-
   const uns=filterAppointments(
     appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0))
   );
@@ -270,12 +286,13 @@ function renderServicesTable(){
       </td>
     </tr>`;
   }).join('');
-  const sum=document.getElementById('servicesSummary'); if(sum) sum.textContent = `${future.length} serviços pendentes`;
+  const sum=document.getElementById('servicesSummary');
+  if(sum) sum.textContent = `${future.length} serviços pendentes`;
 }
 
 function renderAll(){ renderSchedule(); renderUnscheduled(); renderServicesTable(); }
 
-/* =============  CRUD  ============= */
+/* ================= CRUD ================ */
 function openAppointmentModal(id=null){
   const modal=document.getElementById('appointmentModal'); if(!modal){ showToast('Modal não encontrado.','error'); return; }
   editingId=id;
@@ -348,7 +365,7 @@ window.openAppointmentModal = openAppointmentModal;
 window.editAppointment = editAppointment;
 window.deleteAppointment = deleteAppointment;
 
-/* =============  STATUS (checkboxes)  ============= */
+/* ======= STATUS (checkboxes) ======= */
 function attachStatusListeners(){
   document.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb=>{
     cb.addEventListener('change', async function(){
@@ -375,12 +392,17 @@ function attachStatusListeners(){
   });
 }
 
-/* =============  PRINT  ============= */
+/* ======= PRINT ======= */
 function updatePrintUnscheduledTable(){
   const uns=filterAppointments(appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
   const tbody=document.getElementById('printUnscheduledTableBody'); if(!tbody) return;
-  const sec=document.querySelector('.print-unscheduled-section'); if(uns.length===0){ if(sec) sec.style.display='none'; return; } if(sec) sec.style.display='';
-  tbody.innerHTML = uns.map(a=>`<tr><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
+  const sec=document.querySelector('.print-unscheduled-section');
+  if(uns.length===0){ if(sec) sec.style.display='none'; return; }
+  if(sec) sec.style.display='';
+  tbody.innerHTML = uns.map(a=>`<tr>
+    <td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td>
+    <td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td>
+  </tr>`).join('');
 }
 function updatePrintTomorrowTable(){
   const title=document.getElementById('printTomorrowTitle');
@@ -390,19 +412,18 @@ function updatePrintTomorrowTable(){
   const tomorrow=addDays(new Date(),1); const iso=localISO(tomorrow);
   if(title) title.textContent='SERVIÇOS DE AMANHÃ';
   if(dateEl) dateEl.textContent=tomorrow.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
-  const rows=appointments.filter(a=>a.date===iso).sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0));
+  const rows=appointments.filter(a=>a.date===iso).sort((a,b)=>
+    a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0)
+  );
   if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
   if(empty) empty.style.display='none';
-  tbody.innerHTML = rows.map(a=>`<tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
+  tbody.innerHTML = rows.map(a=>`<tr>
+    <td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td>
+    <td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td>
+  </tr>`).join('');
 }
 
-/* =============  STUBS  ============= */
-function closeBackupModal(){ const m=document.getElementById('backupModal'); if(m) m.classList.remove('show'); }
-function showStats(){ const m=document.getElementById('statsModal'); if(m) m.classList.add('show'); }
-function exportToJson(){ showToast('Export JSON pronto (stub).','info'); }
-function exportToCsv(){ showToast('Export CSV pronto (stub).','info'); }
-
-/* =============  BOOT  ============= */
+/* ======= BOOT ======= */
 document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday=addDays(currentMonday,-7); renderAll(); });
   document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday=addDays(currentMonday, 7); renderAll(); });
@@ -422,7 +443,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if(editingId) deleteAppointment(editingId); });
 
   document.getElementById('backupBtn')?.addEventListener('click', ()=>{ const m=document.getElementById('backupModal'); if(m) m.classList.add('show'); });
-  document.getElementById('statsBtn')?.addEventListener('click', showStats);
+  document.getElementById('statsBtn')?.addEventListener('click', ()=>{ const m=document.getElementById('statsModal'); if(m) m.classList.add('show'); });
 
   await load();
   renderAll();
