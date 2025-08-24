@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda de Serviços</title>
+    <title>Agenda de Serviços - Desktop</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -14,311 +14,315 @@
         }
         
         body {
-            background-color: #f8f9fa;
+            background-color: #f0f2f5;
             color: #333;
-            padding: 16px;
-            max-width: 500px;
-            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
         }
         
-        .header {
+        .desktop-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .desktop-header {
+            background: linear-gradient(135deg, #2c3e50, #1a2530);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .app-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .current-date {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .desktop-content {
+            display: flex;
+            min-height: 500px;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-right: 1px solid #e0e0e0;
+        }
+        
+        .nav-menu {
+            list-style: none;
+        }
+        
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-item:hover {
+            background-color: #e9ecef;
+        }
+        
+        .nav-item.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .nav-icon {
+            margin-right: 10px;
+            font-size: 1.1rem;
+            width: 24px;
             text-align: center;
-            margin-bottom: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 25px;
+        }
+        
+        .content-header {
+            margin-bottom: 25px;
             padding-bottom: 15px;
             border-bottom: 1px solid #e0e0e0;
         }
         
-        .app-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-        
-        .current-date {
-            font-size: 1.1rem;
-            color: #7f8c8d;
-        }
-        
-        .services-container {
-            margin-bottom: 80px;
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
         }
         
         .service-card {
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transition: transform 0.2s ease;
-        }
-        
-        .service-card:active {
-            transform: scale(0.98);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #3498db;
+            background: white;
         }
         
         .service-card.manha {
-            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-left-color: #3498db;
         }
         
         .service-card.tarde {
-            background: linear-gradient(135deg, #e67e22, #d35400);
+            border-left-color: #e67e22;
         }
         
         .license-plate {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: bold;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .license-plate i {
-            margin-right: 10px;
-            font-size: 1.2rem;
-        }
-        
-        .details {
-            display: flex;
-            justify-content: space-between;
             margin-bottom: 12px;
-            flex-wrap: wrap;
+            color: #2c3e50;
         }
         
         .time-badge {
-            background-color: rgba(255, 255, 255, 0.25);
+            display: inline-block;
             padding: 5px 12px;
             border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 10px;
         }
         
-        .time-badge i {
-            margin-right: 5px;
+        .time-badge.manha {
+            background-color: #ebf5fb;
+            color: #3498db;
+        }
+        
+        .time-badge.tarde {
+            background-color: #fef5e7;
+            color: #e67e22;
         }
         
         .service-type {
-            background-color: rgba(255, 255, 255, 0.25);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
         }
         
         .vehicle-info {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            margin-top: 8px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
             font-size: 0.95rem;
-            opacity: 0.9;
-        }
-        
-        .divider {
-            height: 1px;
-            background-color: rgba(255, 255, 255, 0.3);
-            margin: 12px 0;
         }
         
         .status {
-            font-size: 0.9rem;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #e0e0e0;
+            color: #27ae60;
+            font-weight: 500;
             display: flex;
             align-items: center;
         }
         
         .status i {
-            margin-right: 5px;
+            margin-right: 8px;
+        }
+        
+        .to-schedule {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .to-schedule-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+        }
+        
+        .to-schedule-title i {
+            margin-right: 10px;
+            color: #e74c3c;
         }
         
         .new-service-btn {
-            display: block;
-            width: 100%;
-            padding: 16px;
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
             background: linear-gradient(135deg, #2ecc71, #27ae60);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin: 25px 0;
+            border-radius: 8px;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s ease;
+            transition: transform 0.2s;
+            margin-top: 15px;
         }
         
-        .new-service-btn:active {
-            transform: scale(0.98);
+        .new-service-btn:hover {
+            transform: translateY(-2px);
         }
         
         .new-service-btn i {
             margin-right: 8px;
         }
         
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: white;
-            display: flex;
-            justify-content: space-around;
-            padding: 12px;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-        }
-        
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 0.75rem;
-            color: #7f8c8d;
-            padding: 5px 12px;
-            border-radius: 10px;
-            transition: background-color 0.2s ease;
-        }
-        
-        .nav-item:active {
-            background-color: #f0f0f0;
-        }
-        
-        .nav-item.active {
-            color: #3498db;
-        }
-        
-        .nav-icon {
-            font-size: 1.3rem;
-            margin-bottom: 4px;
-        }
-        
-        @media (max-width: 380px) {
-            .details {
+        @media (max-width: 768px) {
+            .desktop-container {
+                border-radius: 0;
+                box-shadow: none;
+            }
+            
+            .desktop-content {
                 flex-direction: column;
-                gap: 8px;
             }
             
-            .license-plate {
-                font-size: 1.2rem;
-            }
-            
-            .nav-item {
-                padding: 5px 8px;
-            }
-            
-            .nav-icon {
-                font-size: 1.1rem;
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
             }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="app-title">Agenda de Serviços</div>
-        <div class="current-date">Segunda-feira, 14/08/2023</div>
-    </div>
-    
-    <div class="services-container">
-        <div class="service-card manha">
-            <div class="license-plate">
-                <i class="fas fa-car"></i>
-                AB-12-CD | PB | BMW X5
-            </div>
-            <div class="details">
-                <div class="time-badge">
-                    <i class="fas fa-sun"></i>
-                    Manhã
-                </div>
-                <div class="service-type">Para-brisas dianteiro</div>
-            </div>
-            <div class="vehicle-info">
-                <span>BMW X5</span>
-                <span>Preto</span>
-            </div>
-            <div class="divider"></div>
-            <div class="status">
-                <i class="fas fa-check-circle"></i>
-                Agendado
-            </div>
+    <div class="desktop-container">
+        <div class="desktop-header">
+            <div class="app-title">Agenda de Serviços</div>
+            <div class="current-date">Segunda-feira, 14/08/2023</div>
         </div>
         
-        <div class="service-card tarde">
-            <div class="license-plate">
-                <i class="fas fa-car"></i>
-                IJ-56-KL | OC | VW Golf
+        <div class="desktop-content">
+            <div class="sidebar">
+                <ul class="nav-menu">
+                    <li class="nav-item active">
+                        <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+                        <span>Agenda</span>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-icon"><i class="fas fa-tools"></i></span>
+                        <span>Serviços</span>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-icon"><i class="fas fa-plus-circle"></i></span>
+                        <span>Novo</span>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-icon"><i class="fas fa-print"></i></span>
+                        <span>Imprimir</span>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-icon"><i class="fas fa-cog"></i></span>
+                        <span>Definições</span>
+                    </li>
+                </ul>
             </div>
-            <div class="details">
-                <div class="time-badge">
-                    <i class="fas fa-cloud-sun"></i>
-                    Tarde
+            
+            <div class="main-content">
+                <div class="content-header">
+                    <h2>Serviços do Dia</h2>
                 </div>
-                <div class="service-type">Óculo traseiro</div>
+                
+                <div class="services-grid">
+                    <div class="service-card manha">
+                        <div class="license-plate">AB-12-CD | PB | BMW X5</div>
+                        <div class="time-badge manha">
+                            <i class="fas fa-sun"></i> Manhã
+                        </div>
+                        <div class="service-type">Para-brisas dianteiro</div>
+                        <div class="vehicle-info">BMW X5</div>
+                        <div class="vehicle-info">Preto</div>
+                        <div class="status">
+                            <i class="fas fa-check-circle"></i> Agendado
+                        </div>
+                    </div>
+                    
+                    <div class="service-card tarde">
+                        <div class="license-plate">IJ-56-KL | OC | VW Golf</div>
+                        <div class="time-badge tarde">
+                            <i class="fas fa-cloud-sun"></i> Tarde
+                        </div>
+                        <div class="service-type">Óculo traseiro</div>
+                        <div class="vehicle-info">VW Golf</div>
+                        <div class="vehicle-info">Laranja</div>
+                        <div class="status">
+                            <i class="fas fa-check-circle"></i> Agendado
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="to-schedule">
+                    <div class="to-schedule-title">
+                        <i class="fas fa-clock"></i> SERVIÇOS POR AGENDAR
+                    </div>
+                    <p>Nenhum serviço pendente de agendamento.</p>
+                    <button class="new-service-btn">
+                        <i class="fas fa-plus"></i> Novo Serviço
+                    </button>
+                </div>
             </div>
-            <div class="vehicle-info">
-                <span>VW Golf</span>
-                <span>Laranja</span>
-            </div>
-            <div class="divider"></div>
-            <div class="status">
-                <i class="fas fa-check-circle"></i>
-                Agendado
-            </div>
-        </div>
-        
-        <button class="new-service-btn">
-            <i class="fas fa-plus"></i>
-            Novo Serviço
-        </button>
-    </div>
-    
-    <div class="bottom-nav">
-        <div class="nav-item active">
-            <div class="nav-icon"><i class="fas fa-calendar-alt"></i></div>
-            <div>Agenda</div>
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon"><i class="fas fa-tools"></i></div>
-            <div>Serviços</div>
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon"><i class="fas fa-plus-circle"></i></div>
-            <div>Novo</div>
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon"><i class="fas fa-print"></i></div>
-            <div>Imprimir</div>
-        </div>
-        <div class="nav-item">
-            <div class="nav-icon"><i class="fas fa-cog"></i></div>
-            <div>Definições</div>
         </div>
     </div>
 
     <script>
-        // Script para demonstrar a interatividade dos botões
         document.addEventListener('DOMContentLoaded', function() {
             const navItems = document.querySelectorAll('.nav-item');
-            const serviceCards = document.querySelectorAll('.service-card');
-            const newServiceBtn = document.querySelector('.new-service-btn');
             
-            // Navegação
             navItems.forEach(item => {
                 item.addEventListener('click', function() {
                     navItems.forEach(i => i.classList.remove('active'));
                     this.classList.add('active');
                 });
-            });
-            
-            // Efeito de clique nos cartões
-            serviceCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    alert('Detalhes do serviço: ' + this.querySelector('.license-plate').textContent.trim());
-                });
-            });
-            
-            // Botão novo serviço
-            newServiceBtn.addEventListener('click', function() {
-                alert('Abrir tela para adicionar novo serviço');
             });
         });
     </script>
