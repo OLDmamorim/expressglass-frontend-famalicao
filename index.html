@@ -245,12 +245,15 @@
         .appointment-block {
             background: #fff;
             border-radius: 8px;
-            padding: 0.8rem;
+            padding: 0.6rem;
             margin-bottom: 0.5rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             border-left: 4px solid var(--gray-400);
             cursor: move;
             transition: all 0.2s ease;
+            max-width: 100%;
+            height: 90px;
+            overflow: hidden;
         }
 
         .appointment-block:hover {
@@ -260,27 +263,33 @@
 
         .appt-header {
             font-weight: 700;
-            margin-bottom: 0.4rem;
-            font-size: 0.95rem;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .appt-sub {
             color: var(--gray-600);
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .appt-status {
             display: flex;
-            gap: 0.8rem;
+            gap: 0.5rem;
             flex-wrap: wrap;
         }
 
         .appt-status label {
             display: flex;
             align-items: center;
-            gap: 0.3rem;
-            font-size: 0.8rem;
+            gap: 0.2rem;
+            font-size: 0.7rem;
             cursor: pointer;
         }
 
@@ -341,16 +350,20 @@
 
         .unscheduled-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 1rem;
         }
 
         .appointment.unscheduled {
             background: var(--gray-100);
             border-radius: 8px;
-            padding: 1.2rem;
+            padding: 0.8rem;
             border-left: 4px solid var(--primary);
             transition: all 0.2s ease;
+            height: 110px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .appointment.unscheduled:hover {
@@ -361,16 +374,15 @@
         .unscheduled-actions-inner {
             display: flex;
             justify-content: flex-end;
-            gap: 0.8rem;
-            margin-top: 1rem;
+            gap: 0.5rem;
         }
 
         .icon-btn {
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 1.1rem;
-            padding: 0.4rem;
+            font-size: 0.9rem;
+            padding: 0.3rem;
             border-radius: 4px;
             transition: all 0.2s ease;
         }
@@ -383,6 +395,95 @@
         .icon-btn.delete:hover {
             background-color: rgba(239, 68, 68, 0.1);
             color: var(--danger);
+        }
+
+        /* ========== VISTA MOBILE ========== */
+        .mobile-view {
+            display: none;
+            padding: 1rem;
+        }
+
+        .mobile-day-container {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+        }
+
+        .mobile-day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .mobile-day-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--gray-900);
+        }
+
+        .mobile-day-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .mobile-day-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .mobile-appointment {
+            background: var(--gray-100);
+            border-radius: 8px;
+            padding: 0.8rem;
+            border-left: 4px solid var(--primary);
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .mobile-appt-header {
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mobile-appt-details {
+            color: var(--gray-700);
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mobile-appt-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .mobile-add-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.8rem;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
         }
 
         /* ========== BOTTOM NAVIGATION BAR ========== */
@@ -417,111 +518,17 @@
             font-size: 1.2rem;
         }
 
-        /* ========== MODAIS ========== */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+        /* ========== CORES DOS STATUS ========== */
+        .status-NE {
+            border-left-color: var(--danger) !important;
         }
 
-        .modal.show {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .status-VE {
+            border-left-color: var(--warning) !important;
         }
 
-        .modal-content {
-            background: #fff;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.2rem;
-            border-bottom: 1px solid var(--gray-200);
-        }
-
-        .modal-header h3 {
-            margin: 0;
-            font-size: 1.2rem;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--gray-500);
-        }
-
-        .appointment-form {
-            padding: 1.2rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-
-        .form-group input, 
-        .form-group select, 
-        .form-group textarea {
-            width: 100%;
-            padding: 0.8rem;
-            border: 1px solid var(--gray-300);
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 0.8rem;
-            justify-content: flex-end;
-            margin-top: 1.5rem;
-        }
-
-        .btn {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .btn.primary {
-            background: var(--primary);
-            color: #fff;
-        }
-
-        .btn.secondary {
-            background: var(--gray-500);
-            color: #fff;
-        }
-
-        .btn.danger {
-            background: var(--danger);
-            color: #fff;
+        .status-ST {
+            border-left-color: var(--success) !important;
         }
 
         /* ========== RESPONSIVIDADE ========== */
@@ -557,16 +564,12 @@
                 grid-template-columns: 1fr;
             }
             
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
             .schedule-container {
-                padding: 1rem;
+                display: none;
             }
             
-            .schedule {
-                min-width: 700px;
+            .mobile-view {
+                display: block;
             }
         }
 
@@ -574,35 +577,10 @@
             .bottom-nav {
                 display: none;
             }
-        }
-
-        /* ========== UTILITIES ========== */
-        .hidden {
-            display: none !important;
-        }
-
-        .text-sm {
-            font-size: 0.9rem;
-        }
-
-        .text-xs {
-            font-size: 0.8rem;
-        }
-
-        .mb-1 {
-            margin-bottom: 0.5rem;
-        }
-
-        .mb-2 {
-            margin-bottom: 1rem;
-        }
-
-        .mt-1 {
-            margin-top: 0.5rem;
-        }
-
-        .mt-2 {
-            margin-top: 1rem;
+            
+            .mobile-view {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -644,29 +622,29 @@
         <!-- Navegação -->
         <div class="nav-bar">
             <div class="nav-group">
-                <button class="nav-button">
+                <button class="nav-button" id="prevWeek">
                     <i class="fas fa-chevron-left"></i>
                     <span>Anterior</span>
                 </button>
-                <button class="nav-button">
+                <button class="nav-button" id="todayWeek">
                     <i class="fas fa-calendar-day"></i>
                     <span>Hoje</span>
                 </button>
-                <button class="nav-button">
+                <button class="nav-button" id="nextWeek">
                     <span>Próxima</span>
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
-            <div class="week-range">14/08/2023 - 19/08/2023</div>
+            <div class="week-range" id="weekRange">14/08/2023 - 19/08/2023</div>
             <div class="nav-group">
-                <button class="nav-button">
+                <button class="nav-button" id="printPage">
                     <i class="fas fa-print"></i>
                     <span>Imprimir</span>
                 </button>
             </div>
         </div>
 
-        <!-- Calendário -->
+        <!-- Calendário (Desktop) -->
         <div class="schedule-container">
             <table class="schedule">
                 <thead>
@@ -703,7 +681,7 @@
                         <th>Manhã</th>
                         <td>
                             <div class="drop-zone">
-                                <div class="appointment-block" style="border-left-color: #10b981;">
+                                <div class="appointment-block status-ST">
                                     <div class="appt-header">AB-12-CD | PB | BMW X5</div>
                                     <div class="appt-sub">Para-brisas dianteiro</div>
                                     <div class="appt-status">
@@ -719,7 +697,7 @@
                         </td>
                         <td>
                             <div class="drop-zone">
-                                <div class="appointment-block" style="border-left-color: #f59e0b;">
+                                <div class="appointment-block status-NE">
                                     <div class="appt-header">EF-34-GH | LT | Audi A3</div>
                                     <div class="appt-sub">Vidro lateral direito</div>
                                     <div class="appt-status">
@@ -747,7 +725,7 @@
                         </td>
                         <td>
                             <div class="drop-zone">
-                                <div class="appointment-block" style="border-left-color: #ef4444;">
+                                <div class="appointment-block status-VE">
                                     <div class="appt-header">IJ-56-KL | OC | VW Golf</div>
                                     <div class="appt-sub">Óculo traseiro</div>
                                     <div class="appt-status">
@@ -763,7 +741,7 @@
                         </td>
                         <td>
                             <div class="drop-zone">
-                                <div class="appointment-block" style="border-left-color: #10b981;">
+                                <div class="appointment-block status-ST">
                                     <div class="appt-header">MN-78-OP | REP | Mercedes Classe A</div>
                                     <div class="appt-sub">Reparação de impacto</div>
                                     <div class="appt-status">
@@ -785,6 +763,48 @@
             </table>
         </div>
 
+        <!-- Vista Mobile -->
+        <section class="mobile-view">
+            <div class="mobile-day-container">
+                <div class="mobile-day-header">
+                    <div class="mobile-day-label" id="mobileDayLabel">Segunda-feira, 14/08/2023</div>
+                    <div class="mobile-day-buttons">
+                        <button class="nav-button small" id="prevDay">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-button small" id="nextDay">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mobile-day-list">
+                    <div class="mobile-appointment status-ST">
+                        <div class="mobile-appt-header">AB-12-CD | PB | BMW X5</div>
+                        <div class="mobile-appt-details">Manhã - Para-brisas dianteiro</div>
+                        <div class="mobile-appt-actions">
+                            <button class="icon-btn edit"><i class="fas fa-edit"></i></button>
+                            <button class="icon-btn delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="mobile-appointment status-VE">
+                        <div class="mobile-appt-header">IJ-56-KL | OC | VW Golf</div>
+                        <div class="mobile-appt-details">Tarde - Óculo traseiro</div>
+                        <div class="mobile-appt-actions">
+                            <button class="icon-btn edit"><i class="fas fa-edit"></i></button>
+                            <button class="icon-btn delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="mobile-add-btn">
+                    <i class="fas fa-plus"></i>
+                    <span>Novo Serviço</span>
+                </button>
+            </div>
+        </section>
+
         <!-- SERVIÇOS POR AGENDAR -->
         <section class="unscheduled-container">
             <h3><i class="fas fa-list"></i> SERVIÇOS POR AGENDAR</h3>
@@ -802,7 +822,7 @@
             </div>
             
             <div class="unscheduled-list">
-                <div class="appointment unscheduled">
+                <div class="appointment unscheduled status-ST">
                     <div class="appt-header">XY-12-34 | PB | Renault Clio</div>
                     <div class="appt-sub">Substituição de para-brisas</div>
                     <div class="appt-status">
@@ -816,7 +836,7 @@
                     </div>
                 </div>
                 
-                <div class="appointment unscheduled">
+                <div class="appointment unscheduled status-NE">
                     <div class="appt-header">AB-98-ZY | LT | Ford Focus</div>
                     <div class="appt-sub">Vidro lateral esquerdo</div>
                     <div class="appt-status">
@@ -830,7 +850,7 @@
                     </div>
                 </div>
                 
-                <div class="appointment unscheduled">
+                <div class="appointment unscheduled status-VE">
                     <div class="appt-header">CD-76-XW | POL | BMW Série 3</div>
                     <div class="appt-sub">Polimento de faróis</div>
                     <div class="appt-status">
@@ -872,9 +892,41 @@
     </div>
 
     <script>
-        // Script para melhorar a experiência mobile
+        // Script para funcionalidades
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Portal Expressglass carregado!');
+            
+            // Navegação mobile - dias
+            let currentMobileDate = new Date(2023, 7, 14); // 14 de Agosto de 2023
+            
+            function updateMobileDateDisplay() {
+                const options = { weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric' };
+                document.getElementById('mobileDayLabel').textContent = 
+                    currentMobileDate.toLocaleDateString('pt-PT', options);
+            }
+            
+            document.getElementById('prevDay').addEventListener('click', function() {
+                currentMobileDate.setDate(currentMobileDate.getDate() - 1);
+                updateMobileDateDisplay();
+            });
+            
+            document.getElementById('nextDay').addEventListener('click', function() {
+                currentMobileDate.setDate(currentMobileDate.getDate() + 1);
+                updateMobileDateDisplay();
+            });
+            
+            // Navegação semanas
+            document.getElementById('prevWeek').addEventListener('click', function() {
+                alert('Navegar para semana anterior');
+            });
+            
+            document.getElementById('nextWeek').addEventListener('click', function() {
+                alert('Navegar para próxima semana');
+            });
+            
+            document.getElementById('todayWeek').addEventListener('click', function() {
+                alert('Voltar para semana atual');
+            });
             
             // Alternar entre vistas na bottom nav
             const navItems = document.querySelectorAll('.nav-item');
@@ -882,10 +934,13 @@
                 item.addEventListener('click', function() {
                     navItems.forEach(i => i.classList.remove('active'));
                     this.classList.add('active');
+                    
+                    const text = this.querySelector('span').textContent;
+                    alert(`Aceder a: ${text}`);
                 });
             });
             
-            // Simular funcionalidade de arrastar (apenas visual)
+            // Simular funcionalidade de arrastar
             const appointmentBlocks = document.querySelectorAll('.appointment-block');
             appointmentBlocks.forEach(block => {
                 block.setAttribute('draggable', true);
@@ -927,12 +982,24 @@
                         parent.querySelectorAll('input').forEach(cb => {
                             if (cb !== this) cb.checked = false;
                         });
+                        
+                        // Atualizar a cor do cartão conforme o status
+                        const appointment = this.closest('.appointment-block, .appointment');
+                        appointment.classList.remove('status-NE', 'status-VE', 'status-ST');
+                        
+                        if (this.parentElement.textContent.includes('N/E')) {
+                            appointment.classList.add('status-NE');
+                        } else if (this.parentElement.textContent.includes('V/E')) {
+                            appointment.classList.add('status-VE');
+                        } else if (this.parentElement.textContent.includes('ST')) {
+                            appointment.classList.add('status-ST');
+                        }
                     }
                 });
             });
             
             // Botões de ação
-            const addButtons = document.querySelectorAll('.action-btn.primary');
+            const addButtons = document.querySelectorAll('.action-btn.primary, .mobile-add-btn');
             addButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     alert('Formulário de novo serviço seria aberto aqui!');
@@ -943,8 +1010,8 @@
             const editButtons = document.querySelectorAll('.icon-btn.edit');
             editButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    const appointment = this.closest('.appointment');
-                    const title = appointment.querySelector('.appt-header').textContent;
+                    const appointment = this.closest('.appointment, .mobile-appointment');
+                    const title = appointment.querySelector('.appt-header, .mobile-appt-header').textContent;
                     alert(`Editando: ${title}`);
                 });
             });
@@ -953,8 +1020,8 @@
             const deleteButtons = document.querySelectorAll('.icon-btn.delete');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    const appointment = this.closest('.appointment');
-                    const title = appointment.querySelector('.appt-header').textContent;
+                    const appointment = this.closest('.appointment, .mobile-appointment');
+                    const title = appointment.querySelector('.appt-header, .mobile-appt-header').textContent;
                     if (confirm(`Tem certeza que deseja excluir: ${title}?`)) {
                         appointment.style.opacity = '0';
                         setTimeout(() => {
