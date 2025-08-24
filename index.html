@@ -1,330 +1,60 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+
+<html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda de Serviços - Desktop</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f0f2f5;
-            color: #333;
-            padding: 20px;
-            min-height: 100vh;
-        }
-        
-        .desktop-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        .desktop-header {
-            background: linear-gradient(135deg, #2c3e50, #1a2530);
-            color: white;
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .app-title {
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
-        
-        .current-date {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-        
-        .desktop-content {
-            display: flex;
-            min-height: 500px;
-        }
-        
-        .sidebar {
-            width: 250px;
-            background: #f8f9fa;
-            padding: 20px;
-            border-right: 1px solid #e0e0e0;
-        }
-        
-        .nav-menu {
-            list-style: none;
-        }
-        
-        .nav-item {
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-        }
-        
-        .nav-item:hover {
-            background-color: #e9ecef;
-        }
-        
-        .nav-item.active {
-            background-color: #3498db;
-            color: white;
-        }
-        
-        .nav-icon {
-            margin-right: 10px;
-            font-size: 1.1rem;
-            width: 24px;
-            text-align: center;
-        }
-        
-        .main-content {
-            flex: 1;
-            padding: 25px;
-        }
-        
-        .content-header {
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        
-        .services-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        
-        .service-card {
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-            border-left: 5px solid #3498db;
-            background: white;
-        }
-        
-        .service-card.manha {
-            border-left-color: #3498db;
-        }
-        
-        .service-card.tarde {
-            border-left-color: #e67e22;
-        }
-        
-        .license-plate {
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 12px;
-            color: #2c3e50;
-        }
-        
-        .time-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-bottom: 10px;
-        }
-        
-        .time-badge.manha {
-            background-color: #ebf5fb;
-            color: #3498db;
-        }
-        
-        .time-badge.tarde {
-            background-color: #fef5e7;
-            color: #e67e22;
-        }
-        
-        .service-type {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
-        
-        .vehicle-info {
-            color: #7f8c8d;
-            margin-bottom: 5px;
-            font-size: 0.95rem;
-        }
-        
-        .status {
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px dashed #e0e0e0;
-            color: #27ae60;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-        }
-        
-        .status i {
-            margin-right: 8px;
-        }
-        
-        .to-schedule {
-            margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-        
-        .to-schedule-title {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-        }
-        
-        .to-schedule-title i {
-            margin-right: 10px;
-            color: #e74c3c;
-        }
-        
-        .new-service-btn {
-            display: inline-flex;
-            align-items: center;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-            margin-top: 15px;
-        }
-        
-        .new-service-btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .new-service-btn i {
-            margin-right: 8px;
-        }
-        
-        @media (max-width: 768px) {
-            .desktop-container {
-                border-radius: 0;
-                box-shadow: none;
-            }
-            
-            .desktop-content {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                border-right: none;
-                border-bottom: 1px solid #e0e0e0;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
+  <title>Agendamentos Famalicão</title>
+  <link rel="stylesheet" href="style.css"/>
+  <meta name="theme-color" content="#2563eb">
+
+  <!-- Ocultar secções de impressão no ecrã -->
+
+  <style>
+    .print-unscheduled-section, .print-tomorrow-section { display: none; }
+    @media print {
+      .print-unscheduled-section, .print-tomorrow-section { display: block; }
+      .no-print { display: none !important; }
+    }
+
+    /* NOVO: estado vazio da caixa "Serviços por Agendar" */
+    .unscheduled-list .drop-zone.empty{
+      min-height: 100px;
+      border: 2px dashed #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      text-align: center;
+      padding: 12px;
+    }
+    .unscheduled-empty-msg small{ color:#94a3b8; display:block; margin-top:4px; }
+  </style>
+
 </head>
 <body>
-    <div class="desktop-container">
-        <div class="desktop-header">
-            <div class="app-title">Agenda de Serviços</div>
-            <div class="current-date">Segunda-feira, 14/08/2023</div>
+  <div class="page">
+    <header class="page-header">
+      <h1>AGENDAMENTOS FAMALICÃO</h1>
+      <p class="subtitle">Agendamento serviços Expressglass</p>
+      <div class="header-actions">
+        <div id="connectionStatus" class="connection-status" title="Status da conexão">
+          <span id="statusIcon">🌐</span>
+          <span id="statusText">Online</span>
         </div>
-        
-        <div class="desktop-content">
-            <div class="sidebar">
-                <ul class="nav-menu">
-                    <li class="nav-item active">
-                        <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
-                        <span>Agenda</span>
-                    </li>
-                    <li class="nav-item">
-                        <span class="nav-icon"><i class="fas fa-tools"></i></span>
-                        <span>Serviços</span>
-                    </li>
-                    <li class="nav-item">
-                        <span class="nav-icon"><i class="fas fa-plus-circle"></i></span>
-                        <span>Novo</span>
-                    </li>
-                    <li class="nav-item">
-                        <span class="nav-icon"><i class="fas fa-print"></i></span>
-                        <span>Imprimir</span>
-                    </li>
-                    <li class="nav-item">
-                        <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        <span>Definições</span>
-                    </li>
-                </ul>
-            </div>
-            
-            <div class="main-content">
-                <div class="content-header">
-                    <h2>Serviços do Dia</h2>
-                </div>
-                
-                <div class="services-grid">
-                    <div class="service-card manha">
-                        <div class="license-plate">AB-12-CD | PB | BMW X5</div>
-                        <div class="time-badge manha">
-                            <i class="fas fa-sun"></i> Manhã
-                        </div>
-                        <div class="service-type">Para-brisas dianteiro</div>
-                        <div class="vehicle-info">BMW X5</div>
-                        <div class="vehicle-info">Preto</div>
-                        <div class="status">
-                            <i class="fas fa-check-circle"></i> Agendado
-                        </div>
-                    </div>
-                    
-                    <div class="service-card tarde">
-                        <div class="license-plate">IJ-56-KL | OC | VW Golf</div>
-                        <div class="time-badge tarde">
-                            <i class="fas fa-cloud-sun"></i> Tarde
-                        </div>
-                        <div class="service-type">Óculo traseiro</div>
-                        <div class="vehicle-info">VW Golf</div>
-                        <div class="vehicle-info">Laranja</div>
-                        <div class="status">
-                            <i class="fas fa-check-circle"></i> Agendado
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="to-schedule">
-                    <div class="to-schedule-title">
-                        <i class="fas fa-clock"></i> SERVIÇOS POR AGENDAR
-                    </div>
-                    <p>Nenhum serviço pendente de agendamento.</p>
-                    <button class="new-service-btn">
-                        <i class="fas fa-plus"></i> Novo Serviço
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+        <button id="backupBtn" class="header-btn" title="Backup de dados">💾</button>
+        <button id="statsBtn" class="header-btn" title="Estatísticas">📊</button>
+        <button id="searchBtn" class="header-btn" title="Pesquisar">🔍</button>
+      </div>
+    </header>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const navItems = document.querySelectorAll('.nav-item');
-            
-            navItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    navItems.forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-        });
-    </script>
+  </div>
+
+  <!-- cache-buster + defer -->
+
+  <script src="script.js?v=5" defer></script>
+
 </body>
 </html>
