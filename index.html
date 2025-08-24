@@ -2,402 +2,304 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Agendamentos Famalicão — Expressglass</title>
-  <meta name="theme-color" content="#0ea5e9">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
+  <title>Agendamentos Famalicão</title>
+  <link rel="stylesheet" href="style.css"/>
+  <meta name="theme-color" content="#2563eb">
+
+  <!-- Ocultar secções de impressão no ecrã -->
   <style>
-/* ====== Reset + Base ====== */
-:root{
-  --bg:#0b1220; --panel:#0f172a; --muted:#94a3b8; --text:#e2e8f0;
-  --brand:#0ea5e9; --brand-700:#0284c7; --ok:#10b981; --danger:#ef4444;
-  --card:#0b1324; --border:#1f2a44; --ring:rgba(14,165,233,.35);
-  --status-ne:#1d2a3a; --status-ne-b:#38bdf8;
-  --status-ve:#1b2d24; --status-ve-b:#34d399;
-  --status-st:#2b2430; --status-st-b:#c084fc;
-}
-*{box-sizing:border-box} html{font-size:16px}
-body{margin:0;background:linear-gradient(180deg,#0b1020,#0a0f1a);color:var(--text);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Cantarell,'Helvetica Neue',Arial,'Noto Sans',sans-serif;
-  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
-.container{width:min(1100px,94vw);margin-inline:auto}
-h1{font-size:clamp(1.6rem,3.2vw,2.8rem);margin:0 0 .25rem;letter-spacing:.02em;line-height:1.1}
-h2{font-size:clamp(1.15rem,2.4vw,1.6rem);margin:0 0 .75rem}
-h3{font-size:1rem;margin:1rem 0 .5rem}.subtitle{color:var(--muted);margin:0}
-.nowrap{white-space:nowrap}.small{font-size:.9rem}.muted{color:var(--muted)}.mt{margin-top:1rem}
-.site-header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 0 .6rem;border-bottom:1px solid var(--border)}
-.status-wrap{display:flex;align-items:center;gap:.5rem}
-.dot{width:.65rem;height:.65rem;border-radius:999px;display:inline-block;background:gray;box-shadow:0 0 0 .2rem transparent;transition:.2s}
-.dot.online{background:var(--ok);box-shadow:0 0 0 .25rem rgba(16,185,129,.25)}
-.toolbar{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.8rem 0 1rem}
-.toolbar .left{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
-.toolbar .right{display:flex;align-items:center;gap:.6rem}
-.search{display:flex;align-items:center;gap:.4rem}
-.search input{background:var(--panel);border:1px solid var(--border);border-radius:.6rem;padding:.55rem .8rem;min-width:min(62vw,420px);color:var(--text)}
-.week-nav{display:flex;gap:.4rem;flex-wrap:wrap}
-.btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);
-  padding:.5rem .8rem;border-radius:.6rem;cursor:pointer;transition:.15s transform ease,.2s background}
-.btn:hover{background:#111a31}.btn:active{transform:translateY(1px)}
-.btn.primary{background:linear-gradient(180deg,#0ea5e9,#0284c7);border-color:#0b6b9b}
-.btn.outline{background:transparent}.btn.danger{border-color:#5b1a1a;background:#2b1111}
-.btn.icon{padding:.5rem .6rem;line-height:1}.btn-row{display:flex;gap:.5rem;flex-wrap:wrap}
-.section{padding:1.2rem 0;border-top:1px solid var(--border)}
-.section-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
-.section .controls{display:flex;gap:.5rem;align-items:center}
-.pager{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0}
-.card-list{display:grid;grid-template-columns:1fr;gap:.6rem}
-@media (min-width:700px){.card-list{grid-template-columns:1fr 1fr}}
-@media (min-width:980px){.card-list{grid-template-columns:1fr 1fr 1fr}}
-.card{border:1px solid var(--border);border-radius:1rem;overflow:hidden;background:var(--card)}
-.card .card-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.6rem .8rem;border-bottom:1px dashed var(--border)}
-.card .badge{font-size:.75rem;padding:.25rem .5rem;border-radius:.5rem;border:1px solid var(--border);background:rgba(255,255,255,.03)}
-.card .card-body{padding:.7rem .8rem .8rem}.card .actions{display:flex;gap:.4rem;flex-wrap:wrap}
-.card.status-NE{background:var(--status-ne);border-color:var(--status-ne-b)}
-.card.status-VE{background:var(--status-ve);border-color:var(--status-ve-b)}
-.card.status-ST{background:var(--status-st);border-color:var(--status-st-b)}
-.empty{border:1px dashed var(--border);border-radius:.8rem;padding:1rem .8rem;text-align:center;color:var(--muted)}
-.empty-text{margin:.2rem 0}
-.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:.8rem}
-.table{width:100%;border-collapse:separate;border-spacing:0}
-.table th,.table td{padding:.65rem .7rem;text-align:left;border-bottom:1px solid var(--border)}
-.table thead th{position:sticky;top:0;background:#0c1428;z-index:1}
-.table tbody tr:hover{background:#0e1931}
-.form .grid{display:grid;gap:.75rem;grid-template-columns:1fr}
-@media (min-width:680px){.form .grid{grid-template-columns:repeat(2,1fr)}}
-.field label{display:block;font-weight:600;margin-bottom:.35rem}
-.field input,.field select,.field textarea{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);
-  padding:.55rem .7rem;border-radius:.6rem;outline:none;box-shadow:0 0 0 0 transparent;transition:.15s}
-.field input:focus,.field select:focus,.field textarea:focus{box-shadow:0 0 0 .2rem var(--ring);border-color:#0b6b9b}
-.field.col-2{grid-column:1/-1}.form-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
-.stats{display:flex;gap:.8rem;flex-wrap:wrap}
-.stat{background:var(--panel);border:1px solid var(--border);padding:1rem;border-radius:.8rem;min-width:110px;text-align:center}
-.stat span{font-size:1.35rem;font-weight:700;display:block}
-.footer{padding:1.3rem 0 2.3rem}
-@media print {
-  @page{ size:A4 landscape; margin:10mm }
-  body{ background:white; color:black }
-  .site-header, .toolbar, .form, .btn, .pager, .controls, .footer, .section h3, #inputImport { display:none !important }
-  .section{ padding:.4rem 0; border:0 }
-  .table-wrap{ border:0 }
-  .table thead th{ background:#eee !important; color:#000 !important }
-}
+    .print-unscheduled-section, .print-tomorrow-section { display: none; }
+    @media print {
+      .print-unscheduled-section, .print-tomorrow-section { display: block; }
+      .no-print { display: none !important; }
+    }
+
+    /* NOVO: estado vazio da caixa "Serviços por Agendar" */
+    .unscheduled-list .drop-zone.empty{
+      min-height: 100px;
+      border: 2px dashed #e5e7eb;
+      border-radius: 12px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      text-align: center;
+      padding: 12px;
+    }
+    .unscheduled-empty-msg small{ color:#94a3b8; display:block; margin-top:4px; }
   </style>
 </head>
 <body>
-  <header class="site-header container">
-    <div class="title-wrap">
-      <h1>AGENDAMENTOS <span class="nowrap">FAMALICÃO</span></h1>
-      <p class="subtitle">Agendamento de serviços Expressglass</p>
-    </div>
-    <div class="status-wrap">
-      <span id="onlineDot" class="dot"></span>
-      <span id="onlineText">Offline</span>
-    </div>
-  </header>
-
-  <nav class="toolbar container">
-    <div class="left">
-      <button class="btn icon" id="btnStats" title="Estatísticas" aria-label="Estatísticas">📊</button>
-      <button class="btn icon" id="btnExportQuick" title="Exportar rápido" aria-label="Exportar">🗂️</button>
-      <div class="search">
-        <input id="search" type="search" placeholder="Pesquisar por matrícula, carro ou serviço…" />
-        <button class="btn icon" id="btnClearSearch" title="Limpar pesquisa" aria-label="Limpar pesquisa">✕</button>
-      </div>
-      <div class="week-nav">
-        <button class="btn" id="btnPrev">&lt; Anterior</button>
-        <button class="btn" id="btnNext">Próxima &gt;</button>
-        <button class="btn" id="btnToday">Hoje</button>
-      </div>
-    </div>
-    <div class="right">
-      <button class="btn outline" id="btnPrint">🖨️ Imprimir</button>
-    </div>
-  </nav>
-
-  <main class="container">
-    <section class="section">
-      <div class="section-head">
-        <h2>SERVIÇOS POR AGENDAR</h2>
-        <div class="controls">
-          <button class="btn primary" id="btnNovoServicoTop">+ Novo Serviço</button>
-          <select id="filtroEstado">
-            <option value="TODOS">Todos os estados</option>
-            <option value="NE">NE — Não Executado</option>
-            <option value="VE">VE — Executado</option>
-            <option value="ST">ST — Standby</option>
-          </select>
+  <div class="page">
+    <header class="page-header">
+      <h1>AGENDAMENTOS FAMALICÃO</h1>
+      <p class="subtitle">Agendamento serviços Expressglass</p>
+      <div class="header-actions">
+        <div id="connectionStatus" class="connection-status" title="Status da conexão">
+          <span id="statusIcon">🌐</span>
+          <span id="statusText">Online</span>
         </div>
+        <button id="backupBtn" class="header-btn" title="Backup de dados">💾</button>
+        <button id="statsBtn" class="header-btn" title="Estatísticas">📊</button>
+        <button id="searchBtn" class="header-btn" title="Pesquisar">🔍</button>
       </div>
+    </header>
 
-      <div class="pager">
-        <button class="btn" id="btnPrevDay">◀ Anterior</button>
-        <button class="btn" id="btnHojeList">Hoje</button>
-        <button class="btn" id="btnNextDay">Seguinte ▶</button>
-        <button class="btn" id="btnNovoServicoInline">+ Novo Serviço</button>
-      </div>
+    <!-- Barra de pesquisa -->
+    <div id="searchBar" class="search-bar hidden">
+      <input type="text" id="searchInput" placeholder="Pesquisar por matrícula, carro ou localidade..." />
+      <button id="clearSearch" class="search-clear" type="button">✕</button>
+    </div>
 
-      <div id="listaPorAgendar" class="card-list empty">
-        <p class="empty-text">Sem serviços para este dia.</p>
+    <!-- Navegação de semana -->
+    <div class="nav-bar">
+      <div class="nav-left">
+        <button id="prevWeek" class="nav-button" type="button">&lt; Anterior</button>
+        <button id="nextWeek" class="nav-button" type="button">Próxima &gt;</button>
+        <button id="todayWeek" class="nav-button" type="button">📅 Hoje</button>
       </div>
+      <div class="week-range" id="weekRange">—</div>
+      <div class="nav-right">
+        <button id="printPage" class="nav-button" type="button">🖨 Imprimir</button>
+      </div>
+    </div>
+
+    <!-- Calendário -->
+    <div class="schedule-container print-page-1">
+      <table id="schedule" class="schedule"></table>
+    </div>
+
+    <!-- SERVIÇOS POR AGENDAR -->
+    <section class="unscheduled-container">
+      <h3>SERVIÇOS POR AGENDAR</h3>
+      <div class="unscheduled-actions">
+        <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
+
+        <select id="filterStatus" class="filter-select">
+          <option value="">Todos os estados</option>
+          <option value="NE">N/E - Não Executado</option>
+          <option value="VE">V/E - Vidro Encomendado</option>
+          <option value="ST">ST - Serviço Terminado</option>
+        </select>
+      </div>
+      <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
     </section>
 
-    <section class="section">
-      <div class="section-head">
-        <h2>SERVIÇOS A REALIZAR</h2>
-        <div class="controls">
-          <button class="btn" id="btnExportar">📝 Exportar</button>
+    <!-- Fallback para garantir o clique -->
+    <script>
+      document.getElementById('addServiceBtn')?.addEventListener('click', function(){
+        try { window.openAppointmentModal && window.openAppointmentModal(); }
+        catch(e){ alert('Não consegui abrir o formulário.\n'+e.message); }
+      });
+    </script>
+
+    <!-- Vista diária (mobile) -->
+    <section id="mobileDayView" class="mobile-day-container">
+      <div class="mobile-day-header">
+        <div id="mobileDayLabel" class="mobile-day-label">—</div>
+        <div class="mobile-day-buttons">
+          <button id="prevDay" class="nav-button small full" type="button">◀ Anterior</button>
+          <button id="todayDay" class="nav-button small full" type="button">Hoje</button>
+          <button id="nextDay" class="nav-button small full" type="button">Seguinte ▶</button>
         </div>
       </div>
-      <p class="muted small">Todos os serviços desde hoje em diante</p>
-      <div class="table-wrap">
-        <table class="table" id="tabelaARealizar" aria-label="Serviços a realizar">
+      <div id="mobileDayList" class="mobile-day-list"></div>
+      <button id="addServiceMobile" class="mobile-add-btn" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
+    </section>
+
+    <!-- Tabela de serviços -->
+    <section class="services-table-container print-page-2">
+      <h3 id="servicesTableTitle">SERVIÇOS A REALIZAR</h3>
+      <div class="services-summary">
+        <span id="servicesSummary">Todos os serviços desde hoje em diante</span>
+        <button id="exportServices" class="export-btn" type="button">📄 Exportar</button>
+      </div>
+      <div class="table-wrapper">
+        <table id="servicesTable" class="services-table">
           <thead>
             <tr>
-              <th>Data</th><th>Período</th><th>Matrícula</th><th>Carro</th><th>Serviço</th>
-              <th>Observações</th><th>Estado</th><th>Dias</th><th>Ações</th>
+              <th>Data</th>
+              <th>Período</th>
+              <th>Matrícula</th>
+              <th>Carro</th>
+              <th>Serviço</th>
+              <th>Observações</th>
+              <th>Estado</th>
+              <th>Dias</th>
+              <th class="no-print">Ações</th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody id="servicesTableBody"></tbody>
         </table>
       </div>
     </section>
 
-    <section class="section">
-      <h2>Novo Agendamento</h2>
-      <form id="formAgendamento" class="form">
-        <div class="grid">
-          <div class="field"><label>Data</label><input type="date" id="data" required /></div>
-          <div class="field">
-            <label>Período</label>
-            <select id="periodo" required><option>Manhã</option><option>Tarde</option></select>
-          </div>
-          <div class="field">
-            <label>Matrícula <span class="muted">(Formato: XX-XX-XX)</span></label>
-            <input type="text" id="matricula" placeholder="XX-XX-XX" required />
-          </div>
-          <div class="field"><label>Modelo do Carro</label><input type="text" id="carro" placeholder="Ex.: BMW X3" /></div>
-          <div class="field">
-            <label>Tipo de Serviço</label>
-            <select id="tipo" required>
-              <option>Substituição</option><option>Reparação</option><option>Calibração</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Status do Vidro</label>
-            <select id="status" required>
-              <option value="NE">NE — Não Executado</option>
-              <option value="VE">VE — Executado</option>
-              <option value="ST">ST — Standby</option>
-            </select>
-          </div>
-          <div class="field col-2"><label>Observações</label><textarea id="obs" rows="2" placeholder="Informar"></textarea></div>
-          <div class="field col-2"><label>Outros dados (opcional)</label><textarea id="extra" rows="2" placeholder="Informar"></textarea></div>
+    <!-- Modal Agendamento -->
+    <div id="appointmentModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle">Novo Agendamento</h3>
+          <button id="closeModal" class="close-btn" type="button">✕</button>
         </div>
-        <div class="form-actions">
-          <button type="button" class="btn" id="btnCancelar">Cancelar</button>
-          <button type="button" class="btn danger" id="btnEliminar">Eliminar</button>
-          <button type="submit" class="btn primary" id="btnGuardar">Guardar</button>
-        </div>
-      </form>
-    </section>
 
-    <section class="section">
-      <h2>Backup de Dados</h2>
-      <h3 class="mt">📤 Exportar Dados</h3>
-      <p class="muted">Faça backup dos seus agendamentos</p>
-      <div class="btn-row">
-        <button class="btn" id="btnExportJSON">Exportar JSON</button>
-        <button class="btn" id="btnExportCSV">Exportar CSV</button>
+        <form id="appointmentForm" class="appointment-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="appointmentDate">Data</label>
+              <input type="date" id="appointmentDate" />
+            </div>
+            <div class="form-group">
+              <label for="appointmentPeriod">Período</label>
+              <select id="appointmentPeriod">
+                <option value="">—</option>
+                <option value="Manhã">Manhã</option>
+                <option value="Tarde">Tarde</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="appointmentPlate">Matrícula *</label>
+              <input type="text" id="appointmentPlate" placeholder="XX-XX-XX" maxlength="8" required />
+              <small class="form-hint">Formato: XX-XX-XX</small>
+            </div>
+            <div class="form-group">
+              <label for="appointmentCar">Modelo do Carro *</label>
+              <input type="text" id="appointmentCar" placeholder="Ex: BMW X3" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="appointmentService">Tipo de Serviço *</label>
+              <select id="appointmentService" required>
+                <option value="">Selecione o tipo de serviço</option>
+                <option value="PB">PB - Para-brisas</option>
+                <option value="LT">LT - Lateral</option>
+                <option value="OC">OC - Óculo</option>
+                <option value="REP">REP - Reparação</option>
+                <option value="POL">POL - Polimento</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="appointmentStatus">Status do Vidro *</label>
+              <select id="appointmentStatus" required>
+                <option value="NE">N/E - Não Executado</option>
+                <option value="VE">V/E - Vidro Encomendado</option>
+                <option value="ST">ST - Serviço Terminado</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="appointmentNotes">Observações</label>
+            <textarea id="appointmentNotes" placeholder="Informações adicionais" rows="3"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="appointmentExtra">Outros dados (opcional)</label>
+            <textarea id="appointmentExtra" placeholder="Informações adicionais" rows="2"></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="cancelForm" class="btn secondary">Cancelar</button>
+            <button type="button" id="deleteAppointment" class="btn danger hidden">Eliminar</button>
+            <button type="submit" class="btn primary">Guardar</button>
+          </div>
+        </form>
       </div>
+    </div>
 
-      <h3 class="mt">📥 Importar Dados</h3>
-      <p class="muted">Restaurar dados de um backup anterior</p>
-      <input type="file" id="inputImport" accept=".json,.csv" />
-    </section>
-
-    <section class="section">
-      <h2>📈 Estatísticas</h2>
-      <div id="stats" class="stats">
-        <div class="stat"><span id="statTotal">0</span><label>Total</label></div>
-        <div class="stat"><span id="statNE">0</span><label>NE</label></div>
-        <div class="stat"><span id="statVE">0</span><label>VE</label></div>
-        <div class="stat"><span id="statST">0</span><label>ST</label></div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="container footer">
-    <small class="muted">Expressglass • v1.1 (hotfix inline) • Mobile & Desktop • Impressão A4 Paisagem</small>
-  </footer>
-
-  <script>
-/* ===== Config (localStorage por defeito) ===== */
-const USE_API = false;
-const API_BASE = '/.netlify/functions/appointments';
-
-/* ===== Utils ===== */
-const $ = (s,c=document)=>c.querySelector(s);
-const fmtDate = d => new Date(d).toLocaleDateString('pt-PT');
-const uid = ()=> Math.random().toString(36).slice(2)+Date.now().toString(36);
-
-/* ===== Estado ===== */
-let estado = {
-  diaAtivo:new Date(), pesquisa:'', filtroEstado:'TODOS', selecionadoId:null, itens:[]
-};
-
-/* ===== Persistência ===== */
-const storeKey='eg_agendamentos_v1';
-const api={
-  async list(){ if(!USE_API){ return JSON.parse(localStorage.getItem(storeKey)||'[]'); }
-    const r=await fetch(API_BASE); return await r.json(); },
-  async saveAll(items){ if(!USE_API){ localStorage.setItem(storeKey,JSON.stringify(items)); return {ok:true}; }
-    const r=await fetch(API_BASE,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(items)}); return await r.json(); }
-};
-
-/* ===== Online badge ===== */
-function updateOnline(){ const d=$('#onlineDot'), t=$('#onlineText');
-  if(navigator.onLine){ d.classList.add('online'); t.textContent='Online'; }
-  else { d.classList.remove('online'); t.textContent='Offline'; } }
-addEventListener('online',updateOnline); addEventListener('offline',updateOnline);
-
-/* ===== Renders ===== */
-function renderPorAgendar(){
-  const cont=$('#listaPorAgendar'); cont.innerHTML='';
-  const dia=new Date(estado.diaAtivo), s=new Date(dia), e=new Date(dia); s.setHours(0,0,0,0); e.setHours(23,59,59,999);
-  let lista=estado.itens.filter(x=>new Date(x.data)>=s && new Date(x.data)<=e);
-  if(estado.pesquisa){ const q=estado.pesquisa.toLowerCase();
-    lista=lista.filter(x=>(x.matricula+x.carro+x.tipo+(x.obs||'')).toLowerCase().includes(q)); }
-  if(estado.filtroEstado!=='TODOS'){ lista=lista.filter(x=>x.status===estado.filtroEstado); }
-  if(lista.length===0){ cont.classList.add('empty'); cont.innerHTML='<p class="empty-text">Sem serviços para este dia.</p>'; return; }
-  cont.classList.remove('empty');
-  for(const it of lista){
-    const el=document.createElement('article'); el.className='card status-'+it.status;
-    el.innerHTML=`
-      <div class="card-head"><strong>${fmtDate(it.data)} • ${it.periodo}</strong><span class="badge">${it.status}</span></div>
-      <div class="card-body">
-        <div><strong>${it.matricula}</strong> — ${it.carro||''}</div>
-        <div class="muted small">${it.tipo}</div>
-        ${it.obs?`<div class="small" style="margin-top:.3rem">${it.obs}</div>`:''}
-        <div class="actions" style="margin-top:.6rem">
-          <button class="btn small" data-act="editar" data-id="${it.id}">Editar</button>
-          <button class="btn danger small" data-act="apagar" data-id="${it.id}">Apagar</button>
+    <!-- Backup -->
+    <div id="backupModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Backup de Dados</h3>
+          <button class="close-btn" type="button" onclick="closeBackupModal()">✕</button>
         </div>
-      </div>`; cont.appendChild(el);
-  }
-}
-function renderTabela(){
-  const tb=$('#tabelaARealizar tbody'); tb.innerHTML='';
-  const hoje=new Date(); hoje.setHours(0,0,0,0);
-  const fut=estado.itens.filter(x=>new Date(x.data)>=hoje).sort((a,b)=>new Date(a.data)-new Date(b.data));
-  for(const it of fut){
-    const dias=Math.round((new Date(it.data)-hoje)/86400000);
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${fmtDate(it.data)}</td><td>${it.periodo}</td><td>${it.matricula}</td>
-      <td>${it.carro||''}</td><td>${it.tipo}</td><td>${it.obs||''}</td>
-      <td>${it.status}</td><td>${dias}</td>
-      <td><button class="btn small" data-act="editar" data-id="${it.id}">Editar</button>
-          <button class="btn danger small" data-act="apagar" data-id="${it.id}">Apagar</button></td>`;
-    tb.appendChild(tr);
-  }
-}
-function renderStats(){
-  const t=estado.itens.length, ne=estado.itens.filter(x=>x.status==='NE').length,
-        ve=estado.itens.filter(x=>x.status==='VE').length, st=estado.itens.filter(x=>x.status==='ST').length;
-  $('#statTotal').textContent=t; $('#statNE').textContent=ne; $('#statVE').textContent=ve; $('#statST').textContent=st;
-}
+        <div class="backup-content">
+          <div class="backup-section">
+            <h4>📤 Exportar Dados</h4>
+            <p>Faça backup dos seus agendamentos</p>
+            <div class="backup-actions">
+              <button id="exportJson" class="btn primary" type="button">💾 Exportar JSON</button>
+              <button id="exportCsv" class="btn secondary" type="button">📊 Exportar CSV</button>
+            </div>
+          </div>
+          <div class="backup-section">
+            <h4>📥 Importar Dados</h4>
+            <p>Restaurar dados de um backup anterior</p>
+            <input type="file" id="importFile" accept=".json" style="display: none;" />
+            <button id="importBtn" class="btn secondary" type="button">📁 Selecionar Ficheiro</button>
+            <div id="importStatus" class="import-status"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-/* ===== Form ===== */
-function limparForm(){ $('#formAgendamento').reset(); estado.selecionadoId=null; }
-function preencherForm(it){
-  $('#data').value=it.data.slice(0,10); $('#periodo').value=it.periodo; $('#matricula').value=it.matricula;
-  $('#carro').value=it.carro||''; $('#tipo').value=it.tipo; $('#status').value=it.status;
-  $('#obs').value=it.obs||''; $('#extra').value=it.extra||'';
-}
-function recolherForm(){
-  const d=$('#data').value;
-  return { id:estado.selecionadoId??uid(), data:d?new Date(d).toISOString():new Date().toISOString(),
-    periodo:$('#periodo').value||'Manhã', matricula:$('#matricula').value.toUpperCase(),
-    carro:$('#carro').value, tipo:$('#tipo').value, status:$('#status').value,
-    obs:$('#obs').value, extra:$('#extra').value };
-}
+    <!-- Estatísticas -->
+    <div id="statsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>📊 Estatísticas</h3>
+          <button class="close-btn" type="button" onclick="closeStatsModal()">✕</button>
+        </div>
+        <div id="statsContent" class="stats-content"></div>
+      </div>
+    </div>
 
-/* ===== Eventos ===== */
-function bind(){
-  $('#btnPrint').addEventListener('click',()=>window.print());
-  $('#btnPrev').addEventListener('click',()=>moverSemana(-1));
-  $('#btnNext').addEventListener('click',()=>moverSemana(1));
-  $('#btnToday').addEventListener('click',()=>{estado.diaAtivo=new Date();renderPorAgendar();});
-  $('#btnPrevDay').addEventListener('click',()=>moverDia(-1));
-  $('#btnNextDay').addEventListener('click',()=>moverDia(1));
-  $('#btnHojeList').addEventListener('click',()=>{estado.diaAtivo=new Date();renderPorAgendar();});
-  $('#search').addEventListener('input',e=>{estado.pesquisa=e.target.value;renderPorAgendar();renderTabela();});
-  $('#btnClearSearch').addEventListener('click',()=>{$('#search').value='';estado.pesquisa='';renderPorAgendar();renderTabela();});
-  $('#filtroEstado').addEventListener('change',e=>{estado.filtroEstado=e.target.value;renderPorAgendar();renderTabela();});
-  $('#btnNovoServicoTop').addEventListener('click',()=>toForm());
-  $('#btnNovoServicoInline').addEventListener('click',()=>toForm());
-  $('#formAgendamento').addEventListener('submit',async e=>{
-    e.preventDefault(); const novo=recolherForm();
-    const i=estado.itens.findIndex(x=>x.id===novo.id); if(i>=0) estado.itens[i]=novo; else estado.itens.push(novo);
-    await api.saveAll(estado.itens); limparForm(); renderTudo();
-  });
-  $('#btnCancelar').addEventListener('click',limparForm);
-  $('#btnEliminar').addEventListener('click',async ()=>{
-    if(!estado.selecionadoId) return;
-    estado.itens=estado.itens.filter(x=>x.id!==estado.selecionadoId);
-    await api.saveAll(estado.itens); limparForm(); renderTudo();
-  });
-  document.addEventListener('click',e=>{
-    const b=e.target.closest('button[data-act]'); if(!b) return;
-    const id=b.getAttribute('data-id'), act=b.getAttribute('data-act');
-    const it=estado.itens.find(x=>x.id===id); if(!it) return;
-    if(act==='editar'){ estado.selecionadoId=it.id; preencherForm(it); toForm(); }
-    if(act==='apagar' && confirm('Apagar este agendamento?')){ estado.itens=estado.itens.filter(x=>x.id!==id); api.saveAll(estado.itens).then(renderTudo); }
-  });
-  $('#btnExportJSON').addEventListener('click',()=>download('agendamentos.json',JSON.stringify(estado.itens,null,2),'application/json'));
-  $('#btnExportCSV').addEventListener('click',()=>download('agendamentos.csv',toCSV(estado.itens),'text/csv'));
-  $('#btnExportar').addEventListener('click',()=>download('agendamentos.csv',toCSV(estado.itens),'text/csv'));
-  $('#btnExportQuick').addEventListener('click',()=>download('agendamentos.csv',toCSV(estado.itens),'text/csv'));
-  $('#inputImport').addEventListener('change',importar);
-}
-function moverSemana(d){ const x=new Date(estado.diaAtivo); x.setDate(x.getDate()+d*7); estado.diaAtivo=x; renderPorAgendar(); }
-function moverDia(d){ const x=new Date(estado.diaAtivo); x.setDate(x.getDate()+d); estado.diaAtivo=x; renderPorAgendar(); }
-function toForm(){ document.getElementById('formAgendamento').scrollIntoView({behavior:'smooth',block:'start'}); }
+    <!-- Toasts -->
+    <div id="toastContainer" class="toast-container"></div>
 
-/* ===== Export/Import ===== */
-function download(name,content,type='text/plain'){ const blob=new Blob([content],{type});
-  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),1000); }
-function toCSV(items){
-  const cols=['id','data','periodo','matricula','carro','tipo','status','obs','extra'];
-  const head=cols.join(';'); const rows=items.map(it=>cols.map(c=>String(it[c]??'').replaceAll(';',',')).join(';'));
-  return [head,...rows].join('\n');
-}
-async function importar(e){
-  const f=e.target.files[0]; if(!f) return; const text=await f.text();
-  try{
-    if(f.name.endsWith('.json')){ const arr=JSON.parse(text); if(!Array.isArray(arr)) throw new Error('JSON inválido'); estado.itens=arr; }
-    else { const [head,...lines]=text.split(/\r?\n/).filter(Boolean); const cols=head.split(';');
-      estado.itens=lines.map(line=>{ const vals=line.split(';'); const o={}; cols.forEach((c,i)=>o[c]=vals[i]); return o; }); }
-    await api.saveAll(estado.itens); renderTudo(); alert('Importação concluída.');
-  }catch(err){ alert('Falha ao importar: '+err.message); } finally { e.target.value=''; }
-}
+    <!-- Impressão: por agendar -->
+    <div class="print-unscheduled-section">
+      <h2>SERVIÇOS POR AGENDAR</h2>
+      <table class="print-unscheduled-table">
+        <thead>
+          <tr>
+            <th>Matrícula</th>
+            <th>Modelo do Carro</th>
+            <th>Serviço</th>
+            <th>Estado</th>
+            <th>Observações</th>
+            <th>Outros Dados</th>
+          </tr>
+        </thead>
+        <tbody id="printUnscheduledTableBody"></tbody>
+      </table>
+    </div>
 
-/* ===== Boot ===== */
-async function boot(){
-  updateOnline(); bind();
-  estado.itens=await api.list();
-  if(estado.itens.length===0){
-    const b=new Date(); b.setHours(0,0,0,0);
-    estado.itens=[
-      {id:uid(),data:new Date(b).toISOString(),periodo:'Manhã',matricula:'AA-00-01',carro:'VW Golf',tipo:'Substituição',status:'NE',obs:'Cliente Fidelidade',extra:''},
-      {id:uid(),data:new Date(b.setDate(b.getDate()+1)).toISOString(),periodo:'Tarde',matricula:'22-CC-33',carro:'BMW X3',tipo:'Reparação',status:'ST',obs:'Aguardar vidro',extra:''},
-      {id:uid(),data:new Date(b.setDate(b.getDate()+1)).toISOString(),periodo:'Manhã',matricula:'00-AA-00',carro:'Peugeot 308',tipo:'Calibração',status:'VE',obs:'Concluído na loja',extra:''},
-    ];
-    await api.saveAll(estado.itens);
-  }
-  renderTudo();
-}
-function renderTudo(){ renderPorAgendar(); renderTabela(); renderStats(); }
-boot();
-  </script>
+    <!-- Impressão: amanhã -->
+    <div class="print-tomorrow-section">
+      <h2 id="printTomorrowTitle">SERVIÇOS DE AMANHÃ</h2>
+      <div class="print-tomorrow-date" id="printTomorrowDate"></div>
+      <table class="print-tomorrow-table">
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Matrícula</th>
+            <th>Modelo do Carro</th>
+            <th>Serviço</th>
+            <th>Estado</th>
+            <th>Observações</th>
+            <th>Outros Dados</th>
+          </tr>
+        </thead>
+        <tbody id="printTomorrowTableBody"></tbody>
+      </table>
+      <div class="print-tomorrow-empty" id="printTomorrowEmpty" style="display: none;">
+        <p>Não há serviços agendados para amanhã.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- cache-buster + defer -->
+  <script src="script.js?v=5" defer></script>
 </body>
 </html>
