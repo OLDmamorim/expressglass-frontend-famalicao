@@ -1,60 +1,42 @@
 <!DOCTYPE html>
-
 <html lang="pt">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
-  <title>Agendamentos Famalicão</title>
+  <title>Agendamentos — ExpressGlass</title>
+
+  <!-- O teu style.css já contém o bloco mobile dos cartões -->
   <link rel="stylesheet" href="style.css"/>
+
   <meta name="theme-color" content="#2563eb">
-
-  <!-- Ocultar secções de impressão no ecrã -->
-
-  <style>
-    .print-unscheduled-section, .print-tomorrow-section { display: none; }
-    @media print {
-      .print-unscheduled-section, .print-tomorrow-section { display: block; }
-      .no-print { display: none !important; }
-    }
-
-    /* NOVO: estado vazio da caixa "Serviços por Agendar" */
-    .unscheduled-list .drop-zone.empty{
-      min-height: 100px;
-      border: 2px dashed #e5e7eb;
-      border-radius: 12px;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #64748b;
-      text-align: center;
-      padding: 12px;
-    }
-    .unscheduled-empty-msg small{ color:#94a3b8; display:block; margin-top:4px; }
-  </style>
-
 </head>
 <body>
-  <div class="page">
-    <header class="page-header">
-      <h1>AGENDAMENTOS FAMALICÃO</h1>
-      <p class="subtitle">Agendamento serviços Expressglass</p>
-      <div class="header-actions">
-        <div id="connectionStatus" class="connection-status" title="Status da conexão">
-          <span id="statusIcon">🌐</span>
-          <span id="statusText">Online</span>
-        </div>
-        <button id="backupBtn" class="header-btn" title="Backup de dados">💾</button>
-        <button id="statsBtn" class="header-btn" title="Estatísticas">📊</button>
-        <button id="searchBtn" class="header-btn" title="Pesquisar">🔍</button>
-      </div>
-    </header>
+  <!-- HEADER -->
+  <header class="app-header" style="padding:16px 16px 8px">
+    <div style="font-weight:800;font-size:1.4rem;letter-spacing:.3px">AGENDAMENTOS 🔎</div>
+    <div id="rangeLabel" style="opacity:.75;margin-top:4px;font-size:.95rem"></div>
+  </header>
 
-  </div>
+  <!-- CONTROLOS (opcional; só funcionam se existir no DOM) -->
+  <nav class="toolbar" style="display:flex;gap:10px;padding:8px 16px 12px">
+    <button id="btnPrev" class="btn" style="padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff">◀ Anterior</button>
+    <button id="btnHoje" class="btn" style="padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff">Hoje</button>
+    <button id="btnNext" class="btn" style="padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;background:#fff">Seguinte ▶</button>
+  </nav>
 
-  <!-- cache-buster + defer -->
+  <!-- DATA DO DIA (label) -->
+  <section style="padding:0 16px 6px">
+    <h2 id="diaLabel" style="font-size:1.1rem;margin:0;opacity:.85"></h2>
+  </section>
 
-  <script src="script.js?v=5" defer></script>
+  <!-- LISTA DO DIA (ALVO DOS CARTÕES) -->
+  <main>
+    <div class="day-list" id="day-list"></div>
+  </main>
 
+  <!-- FAB “Novo Serviço” (aparece bem no mobile com o CSS do ponto 1) -->
+  <button id="btnNovo" class="fab-add">+ Novo Serviço</button>
+
+  <script src="script.js"></script>
 </body>
 </html>
