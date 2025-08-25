@@ -185,20 +185,37 @@
   <!-- Preenchimento das secções de impressão -->
   <script>
     (function () {
-      const fmtISO = (d) => { const x=new Date(d); x.setHours(0,0,0,0); return x.toISOString().slice(0,10); };
-      const todayISO = fmtISO(new Date());
-      const tmw = new Date(); tmw.setDate(tmw.getDate()+1); const tmwISO = fmtISO(tmw);
+      // ---------- helpers de data (LOCAL, sem UTC) ----------
+      const parseToDate = (val) => {
+        if (!val && val !== 0) return null;
+        if (val instanceof Date) return val;
+        if (typeof val === 'number') return new Date(val);
+        if (typeof val === 'string') {
+          if (/^\d{4}-\d{2}-\d{2}/.test(val)) return new Date(val + 'T00:00:00');
+          const m = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+          if (m) return new Date(+m[3], +m[2]-1, +m[1], 0, 0, 0, 0);
+        }
+        const d2 = new Date(val);
+        return isNaN(d2) ? null : d2;
+      };
+      const sameDay = (a, b) => a && b &&
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth()    === b.getMonth() &&
+        a.getDate()     === b.getDate();
+
+      const today = new Date(); today.setHours(0,0,0,0);
+      const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
 
       function getAllServices(){
-        if (Array.isArray(window.services)) return window.services;
-        if (Array.isArray(window.appointments)) return window.appointments;
-        if (Array.isArray(window.AGENDA)) return window.AGENDA;
+        if (Array.isArray(window.services))      return window.services;
+        if (Array.isArray(window.appointments))  return window.appointments;
+        if (Array.isArray(window.AGENDA))        return window.AGENDA;
         for (const k of ['services','appointments','agendamentos','agenda']) {
           try {
             const raw = localStorage.getItem(k);
             if (!raw) continue;
             const obj = JSON.parse(raw);
-            if (Array.isArray(obj)) return obj;
+            if (Array.isArray(obj))       return obj;
             if (obj && Array.isArray(obj.items)) return obj.items;
           } catch(_) {}
         }
@@ -211,18 +228,21 @@
         return def;
       }
 
-      function fillDay(prefix, isoDay){
+      function fillDay(prefix, targetDate){
         const body   = document.getElementById(prefix+'TableBody');
         const dateEl = document.getElementById(prefix+'Date');
         const empty  = document.getElementById(prefix+'Empty');
         if (!body) return;
 
         if (dateEl){
-          const [y,m,d]=isoDay.split('-'); const dt=new Date(+y, +m-1, +d);
-          dateEl.textContent = dt.toLocaleDateString('pt-PT', { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' });
+          dateEl.textContent = targetDate.toLocaleDateString('pt-PT', { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' });
         }
 
-        const rows = all.filter(s => fmtISO(getField(s,['date','data','dt','dia','when'])) === isoDay);
+        const rows = all.filter(s => {
+          const raw = getField(s,['date','data','dt','dia','when']);
+          const d = parseToDate(raw);
+          return d ? sameDay(d, targetDate) : false;
+        });
 
         body.innerHTML = '';
         if (!rows.length){ if (empty) empty.style.display='block'; return; }
@@ -251,8 +271,8 @@
       }
 
       // Preenche HOJE e AMANHÃ
-      fillDay('printToday', todayISO);
-      fillDay('printTomorrow', tmwISO);
+      fillDay('printToday', today);
+      fillDay('printTomorrow', tomorrow);
     })();
   </script>
 </body>
