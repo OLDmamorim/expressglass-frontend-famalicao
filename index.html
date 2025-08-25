@@ -307,32 +307,53 @@
         <tbody id="printUnscheduledTableBody"></tbody>
       </table>
     </div>
-
-    <!-- Impressão: amanhã -->
-    <div class="print-tomorrow-section">
-      <h2 id="printTomorrowTitle">SERVIÇOS DE AMANHÃ</h2>
-      <div class="print-tomorrow-date" id="printTomorrowDate"></div>
-      <table class="print-tomorrow-table">
-        <thead>
-          <tr>
-            <th>Período</th>
-            <th>Matrícula</th>
-            <th>Modelo do Carro</th>
-            <th>Serviço</th>
-            <th>Estado</th>
-            <th>Observações</th>
-            <th>Outros Dados</th>
-          </tr>
-        </thead>
-        <tbody id="printTomorrowTableBody"></tbody>
-      </table>
-      <div class="print-tomorrow-empty" id="printTomorrowEmpty" style="display: none;">
-        <p>Não há serviços agendados para amanhã.</p>
-      </div>
-    </div>
+  <!-- Impressão: hoje (folha 4) -->
+<div class="print-today-section print-page-break">
+  <h2 id="printTodayTitle">SERVIÇOS DE HOJE</h2>
+  <div class="print-today-date" id="printTodayDate"></div>
+  <table class="print-today-table">
+    <thead>
+      <tr>
+        <th>Período</th>
+        <th>Matrícula</th>
+        <th>Modelo do Carro</th>
+        <th>Serviço</th>
+        <th>Estado</th>
+        <th>Observações</th>
+        <th>Outros Dados</th>
+      </tr>
+    </thead>
+    <tbody id="printTodayTableBody"></tbody>
+  </table>
+  <div class="print-today-empty" id="printTodayEmpty" style="display: none;">
+    <p>Não há serviços agendados para hoje.</p>
   </div>
+</div>
 
-  <!-- script principal -->
+<!-- Impressão: amanhã (folha 5) -->
+<div class="print-tomorrow-section print-page-break">
+  <h2 id="printTomorrowTitle">SERVIÇOS DE AMANHÃ</h2>
+  <div class="print-tomorrow-date" id="printTomorrowDate"></div>
+  <table class="print-tomorrow-table">
+    <thead>
+      <tr>
+        <th>Período</th>
+        <th>Matrícula</th>
+        <th>Modelo do Carro</th>
+        <th>Serviço</th>
+        <th>Estado</th>
+        <th>Observações</th>
+        <th>Outros Dados</th>
+      </tr>
+    </thead>
+    <tbody id="printTomorrowTableBody"></tbody>
+  </table>
+  <div class="print-tomorrow-empty" id="printTomorrowEmpty" style="display: none;">
+    <p>Não há serviços agendados para amanhã.</p>
+  </div>
+</div>
+
+     <!-- script principal -->
   <script src="script.js?v=5" defer></script>
 </body>
 </html>
