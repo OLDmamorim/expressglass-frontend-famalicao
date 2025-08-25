@@ -30,6 +30,22 @@
     }
     .unscheduled-empty-msg small{ color:#94a3b8; display:block; margin-top:4px; }
   </style>
+  <style>
+  /* …o que já tens aí em cima… */
+
+  /* Desktop: esconder vista diária (para não aparecer aquela barra no fundo) */
+  @media (min-width: 769px){
+    #mobileDayView { display: none; }
+  }
+
+  /* Mobile: mostrar a vista diária e esconder o calendário/tabela “grandes” */
+  @media (max-width: 768px){
+    .schedule-container,
+    .services-table-container { display: none; }
+    #mobileDayView { display: block; }
+  }
+</style>
+
 </head>
 <body>
   <div class="page">
