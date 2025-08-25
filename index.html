@@ -54,6 +54,8 @@
       .schedule-container,
       .services-table-container { display: none; } /* mobile: esconder semanal/tabela */
       #mobileDayView { display: block; }
+      @media print{
+  .print-page-break { break-before: page; page-break-before: always; }
     }
   </style>
 </head>
