@@ -7,15 +7,16 @@
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
 
-  <!-- Ocultar secções de impressão no ecrã -->
+  <!-- CSS inline -->
   <style>
+    /* --- Impressão --- */
     .print-unscheduled-section, .print-tomorrow-section { display: none; }
     @media print {
       .print-unscheduled-section, .print-tomorrow-section { display: block; }
       .no-print { display: none !important; }
     }
 
-    /* NOVO: estado vazio da caixa "Serviços por Agendar" */
+    /* --- Estado vazio da caixa "Serviços por Agendar" --- */
     .unscheduled-list .drop-zone.empty{
       min-height: 100px;
       border: 2px dashed #e5e7eb;
@@ -29,23 +30,32 @@
       padding: 12px;
     }
     .unscheduled-empty-msg small{ color:#94a3b8; display:block; margin-top:4px; }
+
+    /* --- Barra de navegação semanal --- */
+    .nav-bar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin:10px 0 12px;
+    }
+    .nav-left{ display:flex; align-items:center; gap:8px; }
+    .nav-button{
+      padding:6px 10px; border:1px solid #d1d5db; border-radius:8px;
+      background:#fff; font-weight:600; cursor:pointer;
+    }
+    .nav-button:hover{ filter:brightness(.97); }
+    .week-range{ font-weight:600; opacity:.8; }
+
+    /* --- Responsivo: esconder/mostrar vistas --- */
+    /* Desktop: esconder vista diária (para não aparecer a barra no fundo) */
+    @media (min-width: 769px){
+      #mobileDayView { display: none; }
+    }
+    /* Mobile: mostrar a vista diária e esconder o calendário/tabela grandes */
+    @media (max-width: 768px){
+      .schedule-container,
+      .services-table-container { display: none; }
+      #mobileDayView { display: block; }
+    }
   </style>
-  <style>
-  /* …o que já tens aí em cima… */
-
-  /* Desktop: esconder vista diária (para não aparecer aquela barra no fundo) */
-  @media (min-width: 769px){
-    #mobileDayView { display: none; }
-  }
-
-  /* Mobile: mostrar a vista diária e esconder o calendário/tabela “grandes” */
-  @media (max-width: 768px){
-    .schedule-container,
-    .services-table-container { display: none; }
-    #mobileDayView { display: block; }
-  }
-</style>
-
 </head>
 <body>
   <div class="page">
@@ -63,18 +73,15 @@
       </div>
     </header>
 
-<!-- Navegação de semana -->
-<div class="nav-bar no-print">
-  <div class="nav-left">
-    <button id="prevWeek" class="nav-button" type="button">◄ Anterior</button>
-    <button id="todayWeek" class="nav-button" type="button">Hoje</button>
-    <button id="nextWeek" class="nav-button" type="button">Seguinte ►</button>
-  </div>
-  <div id="weekRange" class="week-range">—</div>
-</div>
-
-<!-- Barra de pesquisa -->
-<div id="searchBar" class="search-bar hidden">
+    <!-- Navegação de semana -->
+    <div class="nav-bar no-print">
+      <div class="nav-left">
+        <button id="prevWeek" class="nav-button" type="button">◄ Anterior</button>
+        <button id="todayWeek" class="nav-button" type="button">Hoje</button>
+        <button id="nextWeek" class="nav-button" type="button">Seguinte ►</button>
+      </div>
+      <div id="weekRange" class="week-range">—</div>
+    </div>
 
     <!-- Barra de pesquisa -->
     <div id="searchBar" class="search-bar hidden">
@@ -82,7 +89,7 @@
       <button id="clearSearch" class="search-clear" type="button">✕</button>
     </div>
 
-       <!-- Calendário -->
+    <!-- Calendário -->
     <div class="schedule-container print-page-1">
       <table id="schedule" class="schedule"></table>
     </div>
@@ -239,83 +246,4 @@
           <h3>Backup de Dados</h3>
           <button class="close-btn" type="button" onclick="closeBackupModal()">✕</button>
         </div>
-        <div class="backup-content">
-          <div class="backup-section">
-            <h4>📤 Exportar Dados</h4>
-            <p>Faça backup dos seus agendamentos</p>
-            <div class="backup-actions">
-              <button id="exportJson" class="btn primary" type="button">💾 Exportar JSON</button>
-              <button id="exportCsv" class="btn secondary" type="button">📊 Exportar CSV</button>
-            </div>
-          </div>
-          <div class="backup-section">
-            <h4>📥 Importar Dados</h4>
-            <p>Restaurar dados de um backup anterior</p>
-            <input type="file" id="importFile" accept=".json" style="display: none;" />
-            <button id="importBtn" class="btn secondary" type="button">📁 Selecionar Ficheiro</button>
-            <div id="importStatus" class="import-status"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Estatísticas -->
-    <div id="statsModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>📊 Estatísticas</h3>
-          <button class="close-btn" type="button" onclick="closeStatsModal()">✕</button>
-        </div>
-        <div id="statsContent" class="stats-content"></div>
-      </div>
-    </div>
-
-    <!-- Toasts -->
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Impressão: por agendar -->
-    <div class="print-unscheduled-section">
-      <h2>SERVIÇOS POR AGENDAR</h2>
-      <table class="print-unscheduled-table">
-        <thead>
-          <tr>
-            <th>Matrícula</th>
-            <th>Modelo do Carro</th>
-            <th>Serviço</th>
-            <th>Estado</th>
-            <th>Observações</th>
-            <th>Outros Dados</th>
-          </tr>
-        </thead>
-        <tbody id="printUnscheduledTableBody"></tbody>
-      </table>
-    </div>
-
-    <!-- Impressão: amanhã -->
-    <div class="print-tomorrow-section">
-      <h2 id="printTomorrowTitle">SERVIÇOS DE AMANHÃ</h2>
-      <div class="print-tomorrow-date" id="printTomorrowDate"></div>
-      <table class="print-tomorrow-table">
-        <thead>
-          <tr>
-            <th>Período</th>
-            <th>Matrícula</th>
-            <th>Modelo do Carro</th>
-            <th>Serviço</th>
-            <th>Estado</th>
-            <th>Observações</th>
-            <th>Outros Dados</th>
-          </tr>
-        </thead>
-        <tbody id="printTomorrowTableBody"></tbody>
-      </table>
-      <div class="print-tomorrow-empty" id="printTomorrowEmpty" style="display: none;">
-        <p>Não há serviços agendados para amanhã.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- cache-buster + defer -->
-  <script src="script.js?v=5" defer></script>
-</body>
-</html>
+        <div class="ba
