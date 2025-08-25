@@ -9,7 +9,9 @@
 
   <!-- CSS inline -->
   <style>
+    
     /* --- Impressão --- */
+    .nav-right { display:flex; align-items:center; gap:8px; }
     .print-unscheduled-section, .print-tomorrow-section { display: none; }
     @media print {
       .print-unscheduled-section, .print-tomorrow-section { display: block; }
@@ -55,6 +57,10 @@
     }
   </style>
 </head>
+  <script>
+  document.getElementById('printPage')?.addEventListener('click', () => window.print());
+</script>
+
 <body>
   <div class="page">
     <header class="page-header">
@@ -79,6 +85,10 @@
         <button id="nextWeek" class="nav-button" type="button">Seguinte ►</button>
       </div>
       <div id="weekRange" class="week-range">—</div>
+       <div class="nav-right">
+    <button id="printPage" class="nav-button no-print" type="button">🖨 Imprimir</button>
+  </div>
+</div>
     </div>
 
     <!-- Barra de pesquisa -->
