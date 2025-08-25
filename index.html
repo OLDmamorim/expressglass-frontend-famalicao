@@ -57,6 +57,15 @@
       @media print{
   .print-page-break { break-before: page; page-break-before: always; }
     }
+      
+      @media print{
+  /* força página nova depois de uma secção */
+  .print-break-after { break-after: page; page-break-after: always; }
+
+  /* evita partir títulos/tabelas ao meio */
+  .print-section { break-inside: avoid; page-break-inside: avoid; }
+}
+
   </style>
 </head>
   <script>
