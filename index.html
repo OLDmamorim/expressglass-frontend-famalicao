@@ -44,7 +44,7 @@
     @media print{
       .no-print{ display:none !important; }
       .print-unscheduled-section, .print-today-section, .print-tomorrow-section{ display:block; }
-      .print-break-before{ break-before:page; page-break-before:always; }
+      .print-break-before{ break-before:page; page-break-before:always; } /* HOJE/AMANHÃ iniciam página */
       .print-title{ break-after:avoid; page-break-after:avoid; }
       table{ page-break-inside:auto; }
       thead{ display:table-header-group; }
@@ -69,7 +69,7 @@
       </div>
     </header>
 
-    <!-- Navegação -->
+    <!-- Navegação de semana (topo) -->
     <div class="nav-bar no-print">
       <div class="nav-left">
         <button id="prevWeek" class="nav-button" type="button">◄ Anterior</button>
@@ -82,12 +82,18 @@
       </div>
     </div>
 
+    <!-- Barra de pesquisa -->
+    <div id="searchBar" class="search-bar hidden">
+      <input type="text" id="searchInput" placeholder="Pesquisar por matrícula, carro ou localidade..." />
+      <button id="clearSearch" class="search-clear" type="button">✕</button>
+    </div>
+
     <!-- Calendário -->
     <div class="schedule-container print-page-1">
       <table id="schedule" class="schedule"></table>
     </div>
 
-    <!-- Serviços por agendar (app) -->
+    <!-- APP: Serviços por agendar -->
     <section class="unscheduled-container">
       <h3>SERVIÇOS POR AGENDAR</h3>
       <div class="unscheduled-actions">
@@ -102,7 +108,21 @@
       <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
     </section>
 
-    <!-- Serviços a realizar (app) -->
+    <!-- APP: Vista diária (mobile) -->
+    <section id="mobileDayView" class="mobile-day-container">
+      <div class="mobile-day-header">
+        <div id="mobileDayLabel" class="mobile-day-label">—</div>
+        <div class="mobile-day-buttons">
+          <button id="prevDay" class="nav-button small full" type="button">◀ Anterior</button>
+          <button id="todayDay" class="nav-button small full" type="button">Hoje</button>
+          <button id="nextDay" class="nav-button small full" type="button">Seguinte ▶</button>
+        </div>
+      </div>
+      <div id="mobileDayList" class="mobile-day-list"></div>
+      <button id="addServiceMobile" class="mobile-add-btn" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
+    </section>
+
+    <!-- APP: Tabela de serviços -->
     <section class="services-table-container print-page-2">
       <h3 id="servicesTableTitle">SERVIÇOS A REALIZAR</h3>
       <div class="services-summary">
@@ -113,8 +133,14 @@
         <table id="servicesTable" class="services-table">
           <thead>
             <tr>
-              <th>Data</th><th>Período</th><th>Matrícula</th><th>Carro</th>
-              <th>Serviço</th><th>Observações</th><th>Estado</th><th>Dias</th>
+              <th>Data</th>
+              <th>Período</th>
+              <th>Matrícula</th>
+              <th>Carro</th>
+              <th>Serviço</th>
+              <th>Observações</th>
+              <th>Estado</th>
+              <th>Dias</th>
               <th class="no-print">Ações</th>
             </tr>
           </thead>
@@ -123,29 +149,38 @@
       </div>
     </section>
 
-    <!-- (PRINT) Serviços por agendar – Folha 3 -->
+    <!-- PRINT: Serviços por agendar – Folha 3 -->
     <div class="print-unscheduled-section">
       <h2 class="print-title">SERVIÇOS POR AGENDAR</h2>
       <table class="print-unscheduled-table">
         <thead>
           <tr>
-            <th>Matrícula</th><th>Modelo do Carro</th><th>Serviço</th>
-            <th>Estado</th><th>Observações</th><th>Outros Dados</th>
+            <th>Matrícula</th>
+            <th>Modelo do Carro</th>
+            <th>Serviço</th>
+            <th>Estado</th>
+            <th>Observações</th>
+            <th>Outros Dados</th>
           </tr>
         </thead>
         <tbody id="printUnscheduledTableBody"></tbody>
       </table>
     </div>
 
-    <!-- (PRINT) HOJE – Folha 4 -->
+    <!-- PRINT: HOJE – Folha 4 -->
     <div class="print-today-section print-break-before">
       <h2 id="printTodayTitle" class="print-title">SERVIÇOS DE HOJE</h2>
       <div class="print-today-date" id="printTodayDate"></div>
       <table class="print-today-table">
         <thead>
           <tr>
-            <th>Período</th><th>Matrícula</th><th>Modelo do Carro</th>
-            <th>Serviço</th><th>Estado</th><th>Observações</th><th>Outros Dados</th>
+            <th>Período</th>
+            <th>Matrícula</th>
+            <th>Modelo do Carro</th>
+            <th>Serviço</th>
+            <th>Estado</th>
+            <th>Observações</th>
+            <th>Outros Dados</th>
           </tr>
         </thead>
         <tbody id="printTodayTableBody"></tbody>
@@ -155,15 +190,20 @@
       </div>
     </div>
 
-    <!-- (PRINT) AMANHÃ – Folha 5 -->
+    <!-- PRINT: AMANHÃ – Folha 5 -->
     <div class="print-tomorrow-section print-break-before">
       <h2 id="printTomorrowTitle" class="print-title">SERVIÇOS DE AMANHÃ</h2>
       <div class="print-tomorrow-date" id="printTomorrowDate"></div>
       <table class="print-tomorrow-table">
         <thead>
           <tr>
-            <th>Período</th><th>Matrícula</th><th>Modelo do Carro</th>
-            <th>Serviço</th><th>Estado</th><th>Observações</th><th>Outros Dados</th>
+            <th>Período</th>
+            <th>Matrícula</th>
+            <th>Modelo do Carro</th>
+            <th>Serviço</th>
+            <th>Estado</th>
+            <th>Observações</th>
+            <th>Outros Dados</th>
           </tr>
         </thead>
         <tbody id="printTomorrowTableBody"></tbody>
@@ -179,101 +219,98 @@
     document.getElementById('printPage')?.addEventListener('click', () => window.print());
   </script>
 
-  <!-- script principal -->
+  <!-- script principal da app (constrói calendário e a tabela principal) -->
   <script src="script.js?v=5" defer></script>
 
-  <!-- Preenchimento das secções de impressão -->
+  <!-- Preencher HOJE/AMANHÃ a partir da TABELA principal já renderizada -->
   <script>
-    (function () {
-      // ---------- helpers de data (LOCAL, sem UTC) ----------
-      const parseToDate = (val) => {
-        if (!val && val !== 0) return null;
-        if (val instanceof Date) return val;
-        if (typeof val === 'number') return new Date(val);
-        if (typeof val === 'string') {
-          if (/^\d{4}-\d{2}-\d{2}/.test(val)) return new Date(val + 'T00:00:00');
-          const m = val.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-          if (m) return new Date(+m[3], +m[2]-1, +m[1], 0, 0, 0, 0);
-        }
-        const d2 = new Date(val);
-        return isNaN(d2) ? null : d2;
-      };
-      const sameDay = (a, b) => a && b &&
-        a.getFullYear() === b.getFullYear() &&
-        a.getMonth()    === b.getMonth() &&
-        a.getDate()     === b.getDate();
+  (function(){
+    // -------- helpers de datas ----------
+    function parsePtOrIso(str) {
+      if (!str) return null;
+      str = String(str).trim();
+      // dd/mm/yyyy
+      const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (m) return new Date(+m[3], +m[2]-1, +m[1], 0,0,0,0);
+      // yyyy-mm-dd
+      const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (iso) return new Date(+iso[1], +iso[2]-1, +iso[3], 0,0,0,0);
+      // fallback
+      const d = new Date(str);
+      return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    function sameDay(a,b){ return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+    function startOfToday(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
+    function startOfTomorrow(){ const d=startOfToday(); d.setDate(d.getDate()+1); return d; }
 
-      const today = new Date(); today.setHours(0,0,0,0);
-      const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+    const today = startOfToday();
+    const tomorrow = startOfTomorrow();
 
-      function getAllServices(){
-        if (Array.isArray(window.services))      return window.services;
-        if (Array.isArray(window.appointments))  return window.appointments;
-        if (Array.isArray(window.AGENDA))        return window.AGENDA;
-        for (const k of ['services','appointments','agendamentos','agenda']) {
-          try {
-            const raw = localStorage.getItem(k);
-            if (!raw) continue;
-            const obj = JSON.parse(raw);
-            if (Array.isArray(obj))       return obj;
-            if (obj && Array.isArray(obj.items)) return obj.items;
-          } catch(_) {}
-        }
-        return [];
-      }
-      const all = getAllServices();
-
-      function getField(o, names, def=''){
-        for (const n of names) if (o && o[n] != null && o[n] !== '') return o[n];
-        return def;
-      }
-
-      function fillDay(prefix, targetDate){
-        const body   = document.getElementById(prefix+'TableBody');
-        const dateEl = document.getElementById(prefix+'Date');
-        const empty  = document.getElementById(prefix+'Empty');
-        if (!body) return;
-
-        if (dateEl){
-          dateEl.textContent = targetDate.toLocaleDateString('pt-PT', { weekday:'long', day:'2-digit', month:'2-digit', year:'numeric' });
-        }
-
-        const rows = all.filter(s => {
-          const raw = getField(s,['date','data','dt','dia','when']);
-          const d = parseToDate(raw);
-          return d ? sameDay(d, targetDate) : false;
+    // -------- ler da TABELA "SERVIÇOS A REALIZAR" (já renderizada) ----------
+    function readServicesFromMainTable(){
+      const tbody = document.querySelector('#servicesTableBody');
+      if (!tbody) return [];
+      const rows = [];
+      tbody.querySelectorAll('tr').forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        if (tds.length < 7) return; // precisa pelo menos até "Estado"
+        rows.push({
+          date: parsePtOrIso(tds[0].textContent),
+          period: (tds[1].textContent||'').trim(),
+          plate:  (tds[2].textContent||'').trim(),
+          car:    (tds[3].textContent||'').trim(),
+          service:(tds[4].textContent||'').trim(),
+          notes:  (tds[5].textContent||'').trim(),
+          status: (tds[6].textContent||'').trim(),
         });
+      });
+      return rows;
+    }
 
-        body.innerHTML = '';
-        if (!rows.length){ if (empty) empty.style.display='block'; return; }
-        if (empty) empty.style.display='none';
+    function fillPrintTable(targetPrefix, targetDate, rows){
+      const body   = document.getElementById(targetPrefix+'TableBody');
+      const dateEl = document.getElementById(targetPrefix+'Date');
+      const empty  = document.getElementById(targetPrefix+'Empty');
+      if (!body) return;
 
-        rows.forEach(s => {
-          const tr = document.createElement('tr');
-          const period = getField(s,['period','periodo','período','slot']);
-          const plate  = getField(s,['plate','matricula','matrícula','reg']);
-          const car    = getField(s,['car','modelo','modeloCarro','vehicle','carModel']);
-          const svc    = getField(s,['service','servico','serviço','type','tipo']);
-          const status = getField(s,['status','estado']);
-          const notes  = getField(s,['notes','obs','observacoes','observações']);
-          const extra  = getField(s,['extra','outros','outrosDados']);
-          tr.innerHTML = `
-            <td>${period}</td>
-            <td>${plate}</td>
-            <td>${car}</td>
-            <td>${svc}</td>
-            <td>${status}</td>
-            <td>${notes}</td>
-            <td>${extra}</td>
-          `;
-          body.appendChild(tr);
+      // Cabeçalho com data em PT
+      if (dateEl){
+        dateEl.textContent = targetDate.toLocaleDateString('pt-PT', {
+          weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'
         });
       }
 
-      // Preenche HOJE e AMANHÃ
-      fillDay('printToday', today);
-      fillDay('printTomorrow', tomorrow);
-    })();
+      const dayRows = rows.filter(r => r.date && sameDay(r.date, targetDate));
+
+      body.innerHTML = '';
+      if (!dayRows.length){
+        if (empty) empty.style.display = 'block';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+
+      dayRows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.period}</td>
+          <td>${r.plate}</td>
+          <td>${r.car}</td>
+          <td>${r.service}</td>
+          <td>${r.status}</td>
+          <td>${r.notes}</td>
+          <td></td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    // Quando a página (e a tabela principal) terminar de renderizar:
+    window.addEventListener('load', () => {
+      const all = readServicesFromMainTable();
+      fillPrintTable('printToday', today, all);
+      fillPrintTable('printTomorrow', tomorrow, all);
+    });
+  })();
   </script>
 </body>
 </html>
