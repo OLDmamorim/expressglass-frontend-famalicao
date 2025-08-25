@@ -1,250 +1,39 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
-  <title>Agendamentos Famalicão</title>
-  <link rel="stylesheet" href="style.css"/>
-  <meta name="theme-color" content="#2563eb">
+<script>
+  // Helpers genéricos para modais deste projeto
+  function showModalById(id) {
+    const el = document.getElementById(id);
+    if (!el) { console.warn('Modal não encontrado:', id); return; }
+    el.classList.add('open');
+    el.style.display = 'block';           // força visibilidade mesmo sem CSS
+    document.body.style.overflow = 'hidden';
+  }
 
-  <style>
-    /* --- Impressão --- */
-    .print-unscheduled-section, .print-tomorrow-section { display: none; }
-    @media print {
-      .print-unscheduled-section, .print-tomorrow-section { display: block; }
-      .no-print { display: none !important; }
-    }
+  function hideModalById(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('open');
+    el.style.display = 'none';
+    document.body.style.overflow = '';
+  }
 
-    /* --- Estado vazio "Serviços por Agendar" --- */
-    .unscheduled-list .drop-zone.empty{
-      min-height: 100px;
-      border: 2px dashed #e5e7eb;
-      border-radius: 12px;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #64748b;
-      text-align: center;
-      padding: 12px;
-    }
-    .unscheduled-empty-msg small{ color:#94a3b8; display:block; margin-top:4px; }
+  // === SHIMS (caso o script.js chame estes nomes) ===
+  // Agendamento
+  window.openAppointmentModal  = () => showModalById('appointmentModal');
+  window.closeAppointmentModal = () => hideModalById('appointmentModal');
 
-    /* --- Barra de navegação semanal (topo) --- */
-    .nav-bar{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:12px; margin:10px 0 12px;
-    }
-    .nav-left{ display:flex; align-items:center; gap:8px; }
-    .nav-button{
-      padding:6px 10px; border:1px solid #d1d5db; border-radius:8px;
-      background:#fff; font-weight:600; cursor:pointer;
-    }
-    .nav-button:hover{ filter:brightness(.97); }
-    .week-range{ font-weight:600; opacity:.8; }
+  // Backup
+  window.openBackupModal  = () => showModalById('backupModal');
+  window.closeBackupModal = () => hideModalById('backupModal');
 
-    /* --- Responsivo: esconder/mostrar vistas --- */
-    @media (min-width: 769px){
-      #mobileDayView { display: none; }       /* desktop: esconder vista diária */
-    }
-    @media (max-width: 768px){
-      .schedule-container,
-      .services-table-container { display: none; } /* mobile: esconder semanal/tabela */
-      #mobileDayView { display: block; }
-    }
+  // Estatísticas
+  window.openStatsModal  = () => showModalById('statsModal');
+  window.closeStatsModal = () => hideModalById('statsModal');
 
-    /* --- Esconder shims (ids antigos) --- */
-    .legacy-hidden { display:none !important; }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <header class="page-header">
-      <h1>AGENDAMENTOS FAMALICÃO</h1>
-      <p class="subtitle">Agendamento serviços Expressglass</p>
-      <div class="header-actions">
-        <div id="connectionStatus" class="connection-status" title="Status da conexão">
-          <span id="statusIcon">🌐</span>
-          <span id="statusText">Online</span>
-        </div>
-        <button id="backupBtn" class="header-btn" title="Backup de dados">💾</button>
-        <button id="statsBtn" class="header-btn" title="Estatísticas">📊</button>
-        <button id="searchBtn" class="header-btn" title="Pesquisar">🔍</button>
-      </div>
-    </header>
+  // Liga X dos cabeçalhos (se existirem)
+  document.getElementById('closeModal')?.addEventListener('click', () => hideModalById('appointmentModal'));
 
-    <!-- Navegação de semana (topo) -->
-    <div class="nav-bar no-print">
-      <div class="nav-left">
-        <button id="prevWeek" class="nav-button" type="button">◄ Anterior</button>
-        <button id="todayWeek" class="nav-button" type="button">Hoje</button>
-        <button id="nextWeek" class="nav-button" type="button">Seguinte ►</button>
-      </div>
-      <div id="weekRange" class="week-range">—</div>
-    </div>
-
-    <!-- SHIM: ids antigos esperados pelo script.js (escondidos) -->
-    <div class="legacy-hidden">
-      <button id="prev">◄</button>
-      <button id="today">Hoje</button>
-      <button id="next">►</button>
-      <div id="week-range"></div>
-    </div>
-
-    <!-- Barra de pesquisa -->
-    <div id="searchBar" class="search-bar hidden">
-      <input type="text" id="searchInput" placeholder="Pesquisar por matrícula, carro ou localidade..." />
-      <button id="clearSearch" class="search-clear" type="button">✕</button>
-    </div>
-
-    <!-- Calendário semanal -->
-    <div class="schedule-container print-page-1">
-      <table id="schedule" class="schedule"></table>
-    </div>
-
-    <!-- SERVIÇOS POR AGENDAR -->
-    <section class="unscheduled-container">
-      <h3>SERVIÇOS POR AGENDAR</h3>
-      <div class="unscheduled-actions">
-        <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
-
-        <select id="filterStatus" class="filter-select">
-          <option value="">Todos os estados</option>
-          <option value="NE">N/E - Não Executado</option>
-          <option value="VE">V/E - Vidro Encomendado</option>
-          <option value="ST">ST - Serviço Terminado</option>
-        </select>
-      </div>
-      <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
-    </section>
-
-    <!-- Fallback para garantir o clique -->
-    <script>
-      document.getElementById('addServiceBtn')?.addEventListener('click', function(){
-        try { window.openAppointmentModal && window.openAppointmentModal(); }
-        catch(e){ alert('Não consegui abrir o formulário.\n'+e.message); }
-      });
-    </script>
-
-    <!-- Vista diária (mobile) -->
-    <section id="mobileDayView" class="mobile-day-container">
-      <div class="mobile-day-header">
-        <div id="mobileDayLabel" class="mobile-day-label">—</div>
-        <div class="mobile-day-buttons">
-          <button id="prevDay" class="nav-button small full" type="button">◀ Anterior</button>
-          <button id="todayDay" class="nav-button small full" type="button">Hoje</button>
-          <button id="nextDay" class="nav-button small full" type="button">Seguinte ▶</button>
-        </div>
-      </div>
-      <div id="mobileDayList" class="mobile-day-list"></div>
-      <button id="addServiceMobile" class="mobile-add-btn" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
-    </section>
-
-    <!-- Tabela de serviços -->
-    <section class="services-table-container print-page-2">
-      <h3 id="servicesTableTitle">SERVIÇOS A REALIZAR</h3>
-      <div class="services-summary">
-        <span id="servicesSummary">Todos os serviços desde hoje em diante</span>
-        <button id="exportServices" class="export-btn" type="button">📄 Exportar</button>
-      </div>
-      <div class="table-wrapper">
-        <table id="servicesTable" class="services-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Período</th>
-              <th>Matrícula</th>
-              <th>Carro</th>
-              <th>Serviço</th>
-              <th>Observações</th>
-              <th>Estado</th>
-              <th>Dias</th>
-              <th class="no-print">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="servicesTableBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Modais e restantes secções... (sem alterações) -->
-
-    <!-- Toasts -->
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Impressão: por agendar -->
-    <div class="print-unscheduled-section">
-      <h2>SERVIÇOS POR AGENDAR</h2>
-      <table class="print-unscheduled-table">
-        <thead>
-          <tr>
-            <th>Matrícula</th>
-            <th>Modelo do Carro</th>
-            <th>Serviço</th>
-            <th>Estado</th>
-            <th>Observações</th>
-            <th>Outros Dados</th>
-          </tr>
-        </thead>
-        <tbody id="printUnscheduledTableBody"></tbody>
-      </table>
-    </div>
-
-    <!-- Impressão: amanhã -->
-    <div class="print-tomorrow-section">
-      <h2 id="printTomorrowTitle">SERVIÇOS DE AMANHÃ</h2>
-      <div class="print-tomorrow-date" id="printTomorrowDate"></div>
-      <table class="print-tomorrow-table">
-        <thead>
-          <tr>
-            <th>Período</th>
-            <th>Matrícula</th>
-            <th>Modelo do Carro</th>
-            <th>Serviço</th>
-            <th>Estado</th>
-            <th>Observações</th>
-            <th>Outros Dados</th>
-          </tr>
-        </thead>
-        <tbody id="printTomorrowTableBody"></tbody>
-      </table>
-      <div class="print-tomorrow-empty" id="printTomorrowEmpty" style="display: none;">
-        <p>Não há serviços agendados para amanhã.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Ligações dos botões de semana (IDs novos) -->
-  <script>
-    const prevW = document.getElementById('prevWeek');
-    const todayW = document.getElementById('todayWeek');
-    const nextW = document.getElementById('nextWeek');
-
-    prevW?.addEventListener('click', () => {
-      if (typeof changeWeek === 'function') changeWeek(-1);
-      else if (typeof previousWeek === 'function') previousWeek();
-    });
-    todayW?.addEventListener('click', () => {
-      if (typeof changeWeek === 'function') changeWeek(0);
-      else if (typeof goToToday === 'function') goToToday();
-    });
-    nextW?.addEventListener('click', () => {
-      if (typeof changeWeek === 'function') changeWeek(1);
-      else if (typeof nextWeek === 'function') nextWeek();
-    });
-  </script>
-
-  <!-- script principal -->
-  <script src="script.js?v=5" defer></script>
-
-  <!-- Força render após o script principal (caso ele tenha abortado antes) -->
-  <script>
-    window.addEventListener('load', () => {
-      try { if (typeof init === 'function') { init(); return; } } catch(e){}
-      try { if (typeof renderApp === 'function') { renderApp(); return; } } catch(e){}
-      try { if (typeof renderWeek === 'function') { renderWeek(); return; } } catch(e){}
-      try { if (typeof buildScheduleTable === 'function') { buildScheduleTable(); return; } } catch(e){}
-    });
-  </script>
-</body>
-</html>
+  // Fecha ao clicar fora (se quiseres)
+  document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', (e) => { if (e.target === m) hideModalById(m.id); });
+  });
+</script>
