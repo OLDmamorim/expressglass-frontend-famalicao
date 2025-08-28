@@ -1051,3 +1051,79 @@ select#appointmentStatus{
 
 /* (opcional) pills em linha mais compactos */
 .appt-status{ display:flex; gap:12px; margin-top:10px; }
+
+/* ===== Estados compactos (NE / VE / ST) ===== */
+
+/* linha dos estados mais junta */
+.appt-status{
+  display:flex;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  row-gap: 6px;
+  margin-top: 8px;
+}
+
+/* pill mais pequena */
+.state-pill{
+  padding: 4px 10px;                 /* antes 6x12 */
+  gap: 8px;                          /* menos espaço entre box e texto */
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12px;                   /* texto menor */
+  line-height: 1.1;
+}
+
+/* pill marcada (mantém o sombreado) */
+.state-pill.is-checked{
+  background: rgba(0,0,0,.20);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.25),
+    inset 0 -10px 18px rgba(0,0,0,.18);
+  transform: translateY(-1px);
+}
+
+/* checkbox mais pequenos e centrados */
+.state-box{
+  -webkit-appearance:none; appearance:none;
+  width: 18px;                       /* antes 22 */
+  height: 18px;
+  border-radius: 6px;
+  background:#fff;
+  border: 2px solid #9ca3af;
+  display:grid; place-content:center;
+  box-shadow: 0 1px 0 rgba(0,0,0,.06), inset 0 0 0 1px rgba(255,255,255,.6);
+  transition: border-color .12s ease, transform .08s ease;
+}
+
+/* visto PRETO proporcional ao novo tamanho */
+.state-box::after{
+  content:"";
+  width: 8px;                        /* antes 10 */
+  height: 5px;                       /* antes 6  */
+  border: 2.5px solid transparent;   /* antes 3  */
+  border-left-color:#111827;
+  border-bottom-color:#111827;
+  transform: rotate(-45deg) scale(0);
+  transform-origin:center;
+  transition: transform .12s ease;
+}
+.state-box:checked{ border-color:#111827; }
+.state-box:checked::after{ transform: rotate(-45deg) scale(1); }
+
+/* garante que não “sai” do cartão */
+.appointment,
+.appointment-block{
+  overflow:hidden;                   /* corta qualquer bleed */
+  padding-bottom: 42px !important;   /* espaço justo para os botões */
+}
+
+/* botões editar/apagar mantêm-se no canto sem empurrar nada */
+.card-actions{ bottom: 8px; left: 8px; gap: 8px; }
+.card-actions button,
+.card-actions .action{
+  height: 32px;                      /* um bocadinho mais baixos */
+  min-width: 40px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+}
