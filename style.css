@@ -788,3 +788,26 @@ select#appointmentStatus{
 .appointment-block .btn-delete svg {
   width: 14px; height: 14px;
 }
+/* ===== Limpar o ecrã: esconder o que não interessa no desktop ===== */
+
+/* 1) Vista diária (mobile) — esconder no desktop */
+.mobile-day-container { display: none !important; }
+@media (max-width: 767px){
+  .mobile-day-container { display: block !important; }
+}
+
+/* 2) Secções de impressão — esconder no ecrã, mostrar só no print */
+.print-unscheduled-section,
+.print-today-section,
+.print-tomorrow-section {
+  display: none !important;
+}
+
+@media print{
+  .print-unscheduled-section,
+  .print-today-section,
+  .print-tomorrow-section {
+    display: block !important;
+    break-before: page;
+  }
+}
