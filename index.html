@@ -154,6 +154,78 @@
     </div>
   </div>
 
+  <!-- Toasts -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- MODAL: Novo/Editar Agendamento -->
+  <div id="appointmentModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Novo Agendamento</h3>
+        <button id="closeModal" class="close-btn" type="button" aria-label="Fechar">✕</button>
+      </div>
+      <form id="appointmentForm" class="appointment-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="appointmentDate">Data</label>
+            <input id="appointmentDate" name="date" type="text" placeholder="dd/mm/aaaa" />
+            <small class="form-hint">Aceita 28/08/2025 ou 2025-08-28</small>
+          </div>
+          <div class="form-group">
+            <label for="appointmentPeriod">Período</label>
+            <select id="appointmentPeriod" name="period">
+              <option value="">—</option>
+              <option value="Manhã">Manhã</option>
+              <option value="Tarde">Tarde</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="appointmentPlate">Matrícula</label>
+            <input id="appointmentPlate" name="plate" type="text" oninput="this.value=this.value.toUpperCase()" placeholder="AA-00-AA" />
+          </div>
+          <div class="form-group">
+            <label for="appointmentCar">Carro</label>
+            <input id="appointmentCar" name="car" type="text" placeholder="Modelo / Marca" />
+          </div>
+
+          <div class="form-group">
+            <label for="appointmentService">Serviço</label>
+            <select id="appointmentService" name="service">
+              <option value="PB">PB</option>
+              <option value="LT">LT</option>
+              <option value="OC">OC</option>
+              <option value="REP">REP</option>
+              <option value="POL">POL</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="appointmentStatus">Estado</label>
+            <select id="appointmentStatus" name="status">
+              <option value="NE">NE — Não Exec.</option>
+              <option value="VE">VE — Vidro Encomendado</option>
+              <option value="ST">ST — Terminado</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="appointmentNotes">Observações</label>
+            <textarea id="appointmentNotes" name="notes" rows="2" placeholder="Notas internas…"></textarea>
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="appointmentExtra">Outros dados</label>
+            <textarea id="appointmentExtra" name="extra" rows="2" placeholder="Contacto, morada, etc."></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button id="deleteAppointment" class="btn danger hidden" type="button">Eliminar</button>
+          <button id="cancelForm" class="btn secondary" type="button">Cancelar</button>
+          <button class="btn primary" type="submit">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- script principal -->
   <script src="script.js?v=6" defer></script>
 </body>
