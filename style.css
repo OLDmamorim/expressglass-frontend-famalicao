@@ -522,3 +522,100 @@ select#appointmentStatus{
     grid-template-columns: 1fr;
   }
 }
+/* ================================
+   POR AGENDAR — MODO COMPACTO
+   ================================ */
+
+/* grid com colunas de largura fixa no desktop */
+@media (min-width: 768px){
+  .unscheduled-list{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 280px); /* colunas fixas */
+    gap: 12px;
+    justify-content: flex-start; /* não estica para ocupar a linha */
+  }
+}
+/* mobile continua 1 coluna fluida */
+@media (max-width: 767px){
+  .unscheduled-list{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* cartão compacto */
+.unscheduled-list .appointment,
+.unscheduled-list .appointment-block{
+  width: 100%;
+  max-width: 280px;                /* garante que não cresce */
+  border-radius: 14px;
+  padding: 10px 12px 34px;         /* menos espaço e rodapé pequeno */
+  box-shadow: 0 8px 18px rgba(0,0,0,.10);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.unscheduled-list .appointment:hover,
+.unscheduled-list .appointment-block:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(0,0,0,.14);
+}
+
+/* títulos e subtítulos menores */
+.unscheduled-list .appt-header{
+  font-size: 16px !important;
+  font-weight: 800;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+.unscheduled-list .appt-sub{
+  font-size: 12px !important;
+  line-height: 1.25;
+  opacity: .95;
+}
+
+/* chips de estado mais pequenos */
+.unscheduled-list .appt-status{ gap:8px; margin-top:8px; }
+.unscheduled-list .appt-status label{
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+.unscheduled-list .appt-status input{ transform: translateY(1px); }
+
+/* ações no rodapé mais discretas */
+.unscheduled-list .card-actions{
+  left: 8px; bottom: 6px; gap:6px;
+}
+.unscheduled-list .card-actions button,
+.unscheduled-list .card-actions .action{
+  font-size: 12px; padding: 4px 6px; border-radius: 8px;
+}
+
+/* “recorte” do canto também menor */
+.unscheduled-list .appointment::after,
+.unscheduled-list .appointment-block::after{
+  right: 8px; width: 14px; height: 14px; border-radius: 6px;
+}
+
+/* cores por estado (mantém as que já tinhas) – deixo aqui por segurança */
+.unscheduled-list .appointment.status-NE,
+.unscheduled-list .appointment-block.status-NE,
+.unscheduled-list .appointment[data-status="NE"],
+.unscheduled-list .appointment-block[data-status="NE"]{
+  background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
+  color:#fff;
+}
+.unscheduled-list .appointment.status-VE,
+.unscheduled-list .appointment-block.status-VE,
+.unscheduled-list .appointment[data-status="VE"],
+.unscheduled-list .appointment-block[data-status="VE"]{
+  background: linear-gradient(180deg, #a78bfa 0%, #8b5cf6 100%);
+  color:#fff;
+}
+.unscheduled-list .appointment.status-ST,
+.unscheduled-list .appointment-block.status-ST,
+.unscheduled-list .appointment[data-status="ST"],
+.unscheduled-list .appointment-block[data-status="ST"]{
+  background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+  color:#fff;
+}
