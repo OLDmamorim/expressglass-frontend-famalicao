@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
 
-  <!-- CSS inline MINÍMO para garantir que o modal aparece, mesmo sem style.css -->
+  <!-- CSS inline mínimo para garantir modal visível mesmo sem style.css -->
   <style>
     .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center; }
     .modal.show{ display:flex; }
@@ -19,16 +19,24 @@
     .toast{ background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:12px 16px; margin-bottom:8px; box-shadow:0 4px 6px -1px rgba(0,0,0,.1); display:flex; gap:8px; min-width:300px; }
   </style>
 
-  <!-- Funções de abrir/fechar modal definidas ANTES do script.js -->
+  <!-- Funções base (modal + máscara de matrícula) definidas ANTES do script.js -->
   <script>
     function openAppointmentModal(){
       const m=document.getElementById('appointmentModal');
       if(m){ m.classList.add('show'); }
-      else { console.warn('Modal não encontrado'); }
     }
     function closeAppointmentModal(){
       const m=document.getElementById('appointmentModal');
       if(m){ m.classList.remove('show'); }
+    }
+    // Fallback para máscara AA-00-AA caso o script.js ainda não tenha carregado
+    if(!window.formatPlate){
+      window.formatPlate = function(input){
+        let v = (input.value || '').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+        if(v.length>2) v = v.slice(0,2) + '-' + v.slice(2);
+        if(v.length>5) v = v.slice(0,5) + '-' + v.slice(5,7);
+        input.value = v;
+      };
     }
     window.openAppointmentModal = window.openAppointmentModal || openAppointmentModal;
     window.closeAppointmentModal = window.closeAppointmentModal || closeAppointmentModal;
@@ -171,7 +179,7 @@
         <thead>
           <tr>
             <th>Período</th><th>Matrícula</th><th>Modelo do Carro</th>
-            <th>Servico</th><th>Estado</th><th>Observações</th><th>Outros Dados</th>
+            <th>Serviço</th><th>Estado</th><th>Observações</th><th>Outros Dados</th>
           </tr>
         </thead>
         <tbody id="printTomorrowTableBody"></tbody>
@@ -195,9 +203,9 @@
       <form id="appointmentForm" class="appointment-form">
         <div class="form-row">
           <div class="form-group">
-            <label for="appointmentDate">Data</label>
-            <input id="appointmentDate" name="date" type="text" placeholder="dd/mm/aaaa" />
-            <small class="form-hint">Aceita 28/08/2025 ou 2025-08-28</small>
+            <label for="appointmentDate">Data (opcional)</label>
+            <input id="appointmentDate" name="date" type="date" />
+            <small class="form-hint">Se não escolher, o serviço fica em “Por agendar”.</small>
           </div>
           <div class="form-group">
             <label for="appointmentPeriod">Período</label>
@@ -209,12 +217,15 @@
           </div>
           <div class="form-group">
             <label for="appointmentPlate">Matrícula</label>
-            <input id="appointmentPlate" name="plate" type="text" placeholder="AA-00-AA" oninput="this.value=this.value.toUpperCase()" />
+            <input id="appointmentPlate" name="plate" type="text"
+                   placeholder="AA-00-AA" maxlength="8"
+                   oninput="formatPlate(this)" />
           </div>
           <div class="form-group">
             <label for="appointmentCar">Carro</label>
             <input id="appointmentCar" name="car" type="text" placeholder="Modelo / Marca" />
           </div>
+
           <div class="form-group">
             <label for="appointmentService">Serviço</label>
             <select id="appointmentService" name="service">
@@ -233,6 +244,7 @@
               <option value="ST">ST — Terminado</option>
             </select>
           </div>
+
           <div class="form-group" style="grid-column: 1 / -1;">
             <label for="appointmentNotes">Observações</label>
             <textarea id="appointmentNotes" name="notes" rows="2" placeholder="Notas internas…"></textarea>
@@ -242,6 +254,7 @@
             <textarea id="appointmentExtra" name="extra" rows="2" placeholder="Contacto, morada, etc."></textarea>
           </div>
         </div>
+
         <div class="form-actions">
           <button id="deleteAppointment" class="btn danger hidden" type="button">Eliminar</button>
           <button id="cancelForm" class="btn secondary" type="button" onclick="closeAppointmentModal()">Cancelar</button>
@@ -263,7 +276,6 @@
       document.getElementById('addServiceMobile')?.addEventListener('click', open);
       document.getElementById('closeModal')?.addEventListener('click', close);
       document.getElementById('cancelForm')?.addEventListener('click', close);
-      // Sinal de vida:
       console.debug('Fallback modal wiring ativo');
     })();
   </script>
