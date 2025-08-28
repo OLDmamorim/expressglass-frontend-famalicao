@@ -32,7 +32,7 @@
       const m=document.getElementById('appointmentModal');
       if(m){ m.classList.remove('show'); }
     }
-    // Fallback para máscara AA-00-AA caso o script.js ainda não tenha carregado
+    // Fallback para máscara AA-00-AA
     if(!window.formatPlate){
       window.formatPlate = function(input){
         let v = (input.value || '').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
@@ -89,7 +89,6 @@
     <section class="unscheduled-container">
       <h3>SERVIÇOS POR AGENDAR</h3>
       <div class="unscheduled-actions">
-        <!-- onclick direto + fallback JS garantem abertura -->
         <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
         <select id="filterStatus" class="filter-select">
           <option value="">Todos os estados</option>
@@ -280,7 +279,7 @@
       document.getElementById('closeModal')?.addEventListener('click', close);
       document.getElementById('cancelForm')?.addEventListener('click', close);
 
-      // ===== Fallback de GUARDAR =====
+      // ===== Fallback de GUARDAR (corrigido p/ data opcional) =====
       const form = document.getElementById('appointmentForm');
       const API = 'https://expressglass-backend-famalicao.netlify.app/api/appointments';
 
@@ -293,24 +292,22 @@
       }
       function toast(msg,type){
         const c=document.getElementById('toastContainer'); 
-        if(!c){ alert(msg); return; }
         const t=document.createElement('div');
         t.className='toast '+(type||'info');
         t.innerHTML = '<span>'+msg+'</span>';
-        c.appendChild(t);
-        setTimeout(()=>t.remove(),3000);
+        (c||document.body).appendChild(t);
+        setTimeout(()=>t.remove(),3500);
       }
 
       form?.addEventListener('submit', async (e)=>{
-        // Se o script.js já registou o seu handler, não duplicamos
-        // (deteta-se por um flag global simples)
-        if(window.__saveHandled){ return; }
-
+        if(window.__saveHandled){ return; } // se o script.js já registou o handler
         e.preventDefault();
+
+        const rawDate   = document.getElementById('appointmentDate').value || '';
+        const rawPeriod = document.getElementById('appointmentPeriod').value || '';
+
         const payload = {
           id: Date.now(),
-          date: document.getElementById('appointmentDate').value || '',
-          period: normalizePeriod(document.getElementById('appointmentPeriod').value),
           plate: (document.getElementById('appointmentPlate').value||'').toUpperCase(),
           car: document.getElementById('appointmentCar').value,
           service: document.getElementById('appointmentService').value,
@@ -319,6 +316,14 @@
           extra: document.getElementById('appointmentExtra').value,
           sortIndex: 1
         };
+
+        if(rawDate){
+          payload.date = rawDate;                               // yyyy-mm-dd
+          payload.period = normalizePeriod(rawPeriod) || 'Manhã';
+        }else{
+          // Sem data -> não enviar "date" e deixar period vazio => vai para "Por agendar"
+          payload.period = '';
+        }
 
         try{
           const r = await fetch(API, {
@@ -332,7 +337,6 @@
           }
           toast('Agendamento criado!','success');
           close();
-          // Força refresh para ver no calendário/listas
           location.reload();
         }catch(err){
           console.error(err);
@@ -340,7 +344,7 @@
         }
       });
 
-      console.debug('Fallback modal + save ativo');
+      console.debug('Fallback modal + save (data opcional) ativo');
     })();
   </script>
 </body>
