@@ -383,3 +383,142 @@ input#appointmentPlate{
 select#appointmentStatus{
   font-weight:700;
 }
+/* ================================
+   UNSCHEDULED = estilo igual ao SM Braga
+   ================================ */
+
+/* grid mais compacto e responsivo */
+.unscheduled-container {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 6px 16px rgba(2,6,23,.06);
+}
+.unscheduled-container h3 { margin: 4px 0 12px; }
+
+.unscheduled-actions { 
+  display:flex; gap:10px; align-items:center; justify-content:space-between; 
+  margin-bottom: 10px;
+}
+
+.unscheduled-list{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap:14px;
+  align-items:start;
+}
+
+/* cartão base */
+.unscheduled-list .appointment,
+.unscheduled-list .appointment-block{
+  position: relative;
+  border-radius: 16px;
+  padding: 12px 14px 38px;             /* espaço para ações no rodapé */
+  box-shadow: 0 10px 24px rgba(0,0,0,.10);
+  border: none;
+  color: #fff;
+  transition: transform .15s ease, box-shadow .15s ease;
+  overflow: hidden;
+}
+.unscheduled-list .appointment:hover,
+.unscheduled-list .appointment-block:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0,0,0,.16);
+}
+
+/* título e subtítulo */
+.unscheduled-list .appointment .appt-header,
+.unscheduled-list .appointment-block .appt-header{
+  font-weight: 800; font-size: 18px; margin-bottom: 4px; color:#fff;
+}
+.unscheduled-list .appointment .appt-sub,
+.unscheduled-list .appointment-block .appt-sub{
+  font-size: 13px; opacity: .95; color:#fff;
+}
+
+/* chips de estado, alinhados como em Braga */
+.unscheduled-list .appt-status{
+  display:flex; gap:10px; margin-top:10px;
+}
+.unscheduled-list .appt-status label{
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.18);
+  color:#fff; font-weight:700; font-size:12px;
+}
+.unscheduled-list .appt-status input{ accent-color:#fff; }
+
+/* ações no rodapé (editar/apagar/drag) */
+.unscheduled-list .card-actions{
+  position:absolute; left:10px; bottom:8px;
+  display:flex; gap:8px; align-items:center;
+}
+.unscheduled-list .card-actions button,
+.unscheduled-list .card-actions .action{
+  background: rgba(255,255,255,.2);
+  border:1px solid rgba(255,255,255,.35);
+  color:#fff; padding:6px 8px; border-radius:8px;
+  cursor:pointer; font-size:13px; line-height:1;
+  transition: all .15s ease;
+}
+.unscheduled-list .card-actions button:hover,
+.unscheduled-list .card-actions .action:hover{
+  background: rgba(255,255,255,.3);
+  transform: translateY(-1px);
+}
+
+/* canto arredondado “recorte” como Braga */
+.unscheduled-list .appointment::after,
+.unscheduled-list .appointment-block::after{
+  content:""; position:absolute; right:8px; top:50%;
+  width:18px; height:18px; border-radius:8px;
+  background: rgba(255,255,255,.35);
+  transform: translateY(-50%);
+}
+
+/* CORES por estado – aceita classe .status-NE/.status-VE/.status-ST
+   ou atributo data-status="NE|VE|ST" (mais robusto) */
+.unscheduled-list .appointment.status-NE,
+.unscheduled-list .appointment-block.status-NE,
+.unscheduled-list .appointment[data-status="NE"],
+.unscheduled-list .appointment-block[data-status="NE"]{
+  background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
+}
+.unscheduled-list .appointment.status-VE,
+.unscheduled-list .appointment-block.status-VE,
+.unscheduled-list .appointment[data-status="VE"],
+.unscheduled-list .appointment-block[data-status="VE"]{
+  background: linear-gradient(180deg, #a78bfa 0%, #8b5cf6 100%);
+}
+.unscheduled-list .appointment.status-ST,
+.unscheduled-list .appointment-block.status-ST,
+.unscheduled-list .appointment[data-status="ST"],
+.unscheduled-list .appointment-block[data-status="ST"]{
+  background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+}
+
+/* badge do “lápis/caixote” no canto direito (se existir) */
+.unscheduled-list .appointment .badge-right,
+.unscheduled-list .appointment-block .badge-right{
+  position:absolute; right:10px; bottom:8px;
+  background: rgba(255,255,255,.22);
+  border:1px solid rgba(255,255,255,.35);
+  color:#fff; padding:6px 8px; border-radius:8px;
+  font-size:13px;
+}
+
+/* highlight de pesquisa legível sobre fundos fortes */
+.unscheduled-list .appointment.highlight,
+.unscheduled-list .appointment-block.highlight{
+  outline:2px solid rgba(255,255,255,.9);
+  box-shadow:0 0 0 3px rgba(255,255,255,.35), 0 12px 28px rgba(0,0,0,.2);
+}
+
+/* mobile: 1 coluna mais larga */
+@media (max-width: 640px){
+  .unscheduled-list{
+    grid-template-columns: 1fr;
+  }
+}
