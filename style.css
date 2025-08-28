@@ -619,3 +619,57 @@ select#appointmentStatus{
   background: linear-gradient(180deg, #34d399 0%, #10b981 100%);
   color:#fff;
 }
+/* ================================
+   AÇÕES (Editar / Apagar) NOS CARTÕES
+   ================================ */
+
+/* container das ações sempre no canto inferior esquerdo */
+.card-actions {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 5;
+}
+
+/* estilo base dos botões */
+.card-actions button,
+.card-actions .action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  background: rgba(255,255,255,.22);
+  border: 1px solid rgba(255,255,255,.35);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+
+  padding: 5px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+/* hover bonito */
+.card-actions button:hover,
+.card-actions .action:hover {
+  background: rgba(255,255,255,.35);
+  transform: translateY(-1px);
+}
+
+/* ícones pequenos e alinhados */
+.card-actions svg,
+.card-actions i {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* garante que existe espaço no rodapé do cartão */
+.appointment,
+.appointment-block {
+  padding-bottom: 44px !important;
+}
