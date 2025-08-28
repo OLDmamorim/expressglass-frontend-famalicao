@@ -1002,3 +1002,52 @@ select#appointmentStatus{
   outline: 3px solid rgba(59,130,246,.35);
   outline-offset: 2px;
 }
+/* ===== Checkbox dos ESTADOS: quadrado branco + visto PRETO ===== */
+.state-box{
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: #ffffff;                 /* sempre branco */
+  border: 2px solid #9ca3af;           /* cinza */
+  display: grid; place-content: center;
+  box-shadow: 0 1px 0 rgba(0,0,0,.06), inset 0 0 0 1px rgba(255,255,255,.6);
+  transition: border-color .12s ease, box-shadow .12s ease, transform .08s ease;
+}
+.state-box::after{
+  content:"";
+  width: 10px; height: 6px;
+  border: 3px solid transparent;
+  border-left-color: #111827;          /* PRETO */
+  border-bottom-color: #111827;
+  transform: rotate(-45deg) scale(0);
+  transform-origin:center;
+  transition: transform .12s ease;
+}
+.state-box:checked{ border-color:#111827; }
+.state-box:checked::after{ transform: rotate(-45deg) scale(1); }
+.state-box:focus-visible{
+  outline: 3px solid rgba(59,130,246,.35);
+  outline-offset: 2px;
+}
+
+/* ===== Pill do ESTADO: sombreado quando marcado, texto branco ===== */
+.state-pill{
+  display:inline-flex; align-items:center; gap:10px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.28);
+  color:#fff; font-weight:800; letter-spacing:.3px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.15);
+  transition: background .15s ease, box-shadow .15s ease, transform .1s ease;
+}
+.state-pill.is-checked{
+  background: rgba(0,0,0,.22); /* “sombra” por cima do gradiente */
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.25),
+    inset 0 -12px 24px rgba(0,0,0,.22);
+  transform: translateY(-1px);
+}
+
+/* (opcional) pills em linha mais compactos */
+.appt-status{ display:flex; gap:12px; margin-top:10px; }
