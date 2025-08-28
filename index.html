@@ -51,7 +51,7 @@
     <section class="unscheduled-container">
       <h3>SERVIÇOS POR AGENDAR</h3>
       <div class="unscheduled-actions">
-        <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
+        <button id="addServiceBtn" class="action-btn primary" type="button">+ Novo Serviço</button>
         <select id="filterStatus" class="filter-select">
           <option value="">Todos os estados</option>
           <option value="NE">N/E - Não Executado</option>
@@ -73,7 +73,7 @@
         </div>
       </div>
       <div id="mobileDayList" class="mobile-day-list"></div>
-      <button id="addServiceMobile" class="mobile-add-btn" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
+      <button id="addServiceMobile" class="mobile-add-btn" type="button">+ Novo Serviço</button>
     </section>
 
     <!-- APP: Tabela de serviços -->
@@ -169,7 +169,6 @@
           <div class="form-group">
             <label for="appointmentDate">Data</label>
             <input id="appointmentDate" name="date" type="text" placeholder="dd/mm/aaaa" />
-            <small class="form-hint">Aceita 28/08/2025 ou 2025-08-28</small>
           </div>
           <div class="form-group">
             <label for="appointmentPeriod">Período</label>
@@ -181,13 +180,12 @@
           </div>
           <div class="form-group">
             <label for="appointmentPlate">Matrícula</label>
-            <input id="appointmentPlate" name="plate" type="text" oninput="this.value=this.value.toUpperCase()" placeholder="AA-00-AA" />
+            <input id="appointmentPlate" name="plate" type="text" placeholder="AA-00-AA" />
           </div>
           <div class="form-group">
             <label for="appointmentCar">Carro</label>
             <input id="appointmentCar" name="car" type="text" placeholder="Modelo / Marca" />
           </div>
-
           <div class="form-group">
             <label for="appointmentService">Serviço</label>
             <select id="appointmentService" name="service">
@@ -201,22 +199,20 @@
           <div class="form-group">
             <label for="appointmentStatus">Estado</label>
             <select id="appointmentStatus" name="status">
-              <option value="NE">NE — Não Exec.</option>
-              <option value="VE">VE — Vidro Encomendado</option>
-              <option value="ST">ST — Terminado</option>
+              <option value="NE">NE</option>
+              <option value="VE">VE</option>
+              <option value="ST">ST</option>
             </select>
           </div>
-
           <div class="form-group" style="grid-column: 1 / -1;">
             <label for="appointmentNotes">Observações</label>
-            <textarea id="appointmentNotes" name="notes" rows="2" placeholder="Notas internas…"></textarea>
+            <textarea id="appointmentNotes" name="notes" rows="2"></textarea>
           </div>
           <div class="form-group" style="grid-column: 1 / -1;">
             <label for="appointmentExtra">Outros dados</label>
-            <textarea id="appointmentExtra" name="extra" rows="2" placeholder="Contacto, morada, etc."></textarea>
+            <textarea id="appointmentExtra" name="extra" rows="2"></textarea>
           </div>
         </div>
-
         <div class="form-actions">
           <button id="deleteAppointment" class="btn danger hidden" type="button">Eliminar</button>
           <button id="cancelForm" class="btn secondary" type="button">Cancelar</button>
@@ -228,5 +224,23 @@
 
   <!-- script principal -->
   <script src="script.js?v=6" defer></script>
+
+  <!-- fallback: garantir abertura do modal -->
+  <script>
+    (function () {
+      const modal = document.getElementById('appointmentModal');
+      const open = () => modal?.classList.add('show');
+      const close = () => modal?.classList.remove('show');
+
+      // fallback global
+      window.openAppointmentModal = window.openAppointmentModal || open;
+
+      // ligações diretas
+      document.getElementById('addServiceBtn')?.addEventListener('click', open);
+      document.getElementById('addServiceMobile')?.addEventListener('click', open);
+      document.getElementById('closeModal')?.addEventListener('click', close);
+      document.getElementById('cancelForm')?.addEventListener('click', close);
+    })();
+  </script>
 </body>
 </html>
