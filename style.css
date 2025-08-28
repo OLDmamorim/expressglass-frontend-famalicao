@@ -811,3 +811,125 @@ select#appointmentStatus{
     break-before: page;
   }
 }
+/* ================================
+   1) CHECKBOX DOS ESTADOS — ✔️ VISÍVEL
+   ================================ */
+
+/* apanha os checkboxes das linhas de estado tanto no calendário como por agendar */
+.appt-status input[type="checkbox"],
+.appointment .appt-status input[type="checkbox"],
+.appointment-block .appt-status input[type="checkbox"],
+.appointment .status input[type="checkbox"],
+.appointment-block .status input[type="checkbox"]{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  border: 2px solid #9ca3af;          /* cinza */
+  background: #ffffff;                 /* SEMI: branco para o tick sobressair */
+  display: grid;
+  place-content: center;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04), inset 0 0 0 1px rgba(255,255,255,.5);
+  transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
+}
+
+/* o “visto” desenhado em CSS (independente do SO/navegador) */
+.appt-status input[type="checkbox"]::after,
+.appointment .appt-status input[type="checkbox"]::after,
+.appointment-block .appt-status input[type="checkbox"]::after,
+.appointment .status input[type="checkbox"]::after,
+.appointment-block .status input[type="checkbox"]::after{
+  content: "";
+  width: 10px;
+  height: 6px;
+  border: 3px solid transparent;
+  border-left-color: #10b981;   /* verde do visto */
+  border-bottom-color: #10b981;
+  transform: rotate(-45deg) scale(0);
+  transform-origin: center;
+  transition: transform .12s ease;
+}
+
+/* quando marcado: borda verde e V aparece */
+.appt-status input[type="checkbox"]:checked,
+.appointment .appt-status input[type="checkbox"]:checked,
+.appointment-block .appt-status input[type="checkbox"]:checked,
+.appointment .status input[type="checkbox"]:checked,
+.appointment-block .status input[type="checkbox"]:checked{
+  border-color: #10b981;
+  background: #ffffff;
+}
+.appt-status input[type="checkbox"]:checked::after,
+.appointment .appt-status input[type="checkbox"]:checked::after,
+.appointment-block .appt-status input[type="checkbox"]:checked::after,
+.appointment .status input[type="checkbox"]:checked::after,
+.appointment-block .status input[type="checkbox"]:checked::after{
+  transform: rotate(-45deg) scale(1);
+}
+
+/* foco acessível */
+.appt-status input[type="checkbox"]:focus-visible{
+  outline: 3px solid rgba(59,130,246,.35);
+  outline-offset: 2px;
+}
+
+/* ================================
+   2) BOTÕES EDITAR / APAGAR — QUADRADOS CLAROS
+   ================================ */
+
+/* posição já tinha — garantimos o look */
+.appointment, .appointment-block { position: relative; padding-bottom: 48px !important; }
+
+.card-actions,
+.appointment .card-actions,
+.appointment-block .card-actions{
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 5;
+}
+
+/* apanhar nomes mais comuns para os botões (independente de classes) */
+.card-actions button,
+.card-actions .action,
+.appointment [title="Editar"], .appointment [aria-label="Editar"],
+.appointment [title="Apagar"], .appointment [aria-label="Apagar"],
+.appointment-block [title="Editar"], .appointment-block [aria-label="Editar"],
+.appointment-block [title="Apagar"], .appointment-block [aria-label="Apagar"]{
+  min-width: 44px;
+  height: 36px;
+  padding: 6px 10px;
+  border-radius: 10px;
+
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  color: #0f172a !important;          /* texto/emoji escuro */
+  box-shadow: 0 2px 0 rgba(2,6,23,.05), inset 0 0 0 1px rgba(255,255,255,.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+
+/* hover */
+.card-actions button:hover,
+.card-actions .action:hover,
+.appointment [title="Editar"]:hover, .appointment [aria-label="Editar"]:hover,
+.appointment [title="Apagar"]:hover, .appointment [aria-label="Apagar"]:hover,
+.appointment-block [title="Editar"]:hover, .appointment-block [aria-label="Editar"]:hover,
+.appointment-block [title="Apagar"]:hover, .appointment-block [aria-label="Apagar"]:hover{
+  background: #eef2ff;                 /* ligeiro azulado */
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(2,6,23,.12);
+}
+
+/* ícones/emoji não “apagam” em fundos coloridos */
+.card-actions i, .card-actions svg{ width:16px; height:16px; }
