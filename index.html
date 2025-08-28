@@ -6,65 +6,6 @@
   <title>Agendamentos Famalicão</title>
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
-
-  <style>
-    /* --- Barra topo --- */
-    .nav-bar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:10px 0 12px; }
-    .nav-left, .nav-right{ display:flex; align-items:center; gap:8px; }
-    .nav-button{ padding:6px 10px; border:1px solid #d1d5db; border-radius:8px; background:#fff; font-weight:600; cursor:pointer; }
-    .nav-button:hover{ filter:brightness(.97); }
-    .week-range{ font-weight:600; opacity:.8; }
-
-    /* --- Estado vazio "Serviços por Agendar" --- */
-    .unscheduled-list .drop-zone.empty{
-      min-height:100px; border:2px dashed #e5e7eb; border-radius:12px; background:#fff;
-      display:flex; align-items:center; justify-content:center; color:#64748b; text-align:center; padding:12px;
-    }
-    .unscheduled-empty-msg small{ color:#94a3b8; display:block; margin-top:4px; }
-
-    /* --- Responsivo --- */
-    @media (min-width: 769px){ #mobileDayView{ display:none; } }
-    @media (max-width: 768px){
-      .schedule-container, .services-table-container{ display:none; }
-      #mobileDayView{ display:block; }
-    }
-
-    /* --- Impressão (base) --- */
-    .print-unscheduled-section, .print-today-section, .print-tomorrow-section{ display:none; }
-    .print-today-table, .print-tomorrow-table, .print-unscheduled-table{ width:100%; border-collapse:collapse; }
-    .print-today-table th, .print-today-table td,
-    .print-tomorrow-table th, .print-tomorrow-table td,
-    .print-unscheduled-table th, .print-unscheduled-table td{
-      border:1px solid #111; padding:4px 6px; font-size:12px;
-    }
-
-    @media print{
-      .no-print{ display:none !important; }
-      .print-unscheduled-section, .print-today-section, .print-tomorrow-section{ display:block; }
-      .print-break-before{ break-before:page; page-break-before:always; }
-      .print-title{ break-after:avoid; page-break-after:avoid; }
-      table{ page-break-inside:auto; }
-      thead{ display:table-header-group; }
-      tfoot{ display:table-footer-group; }
-      tr, th, td{ break-inside:avoid; page-break-inside:avoid; }
-
-      /* === Forçar layout da TABELA DE HOJE (contra CSS externos) === */
-      .print-today-table{
-        width:100% !important;
-        border-collapse:collapse !important;
-        table-layout:fixed !important;
-      }
-      .print-today-table th,
-      .print-today-table td{
-        border:1px solid #000 !important;
-        padding:4px 6px !important;
-        font-size:12px !important;
-        vertical-align:top !important;
-        white-space:normal !important;
-      }
-      .print-today-table thead{ display:table-header-group !important; }
-    }
-  </style>
 </head>
 <body>
   <div class="page">
@@ -162,7 +103,7 @@
       </div>
     </section>
 
-    <!-- PRINT: Por agendar (folha 3) -->
+    <!-- PRINT: Por agendar -->
     <div class="print-unscheduled-section print-break-before">
       <h2 class="print-title">SERVIÇOS POR AGENDAR</h2>
       <table class="print-unscheduled-table">
@@ -176,7 +117,7 @@
       </table>
     </div>
 
-    <!-- PRINT: Hoje (folha 4) -->
+    <!-- PRINT: Hoje -->
     <div class="print-today-section print-break-before">
       <h2 id="printTodayTitle" class="print-title">SERVIÇOS DE HOJE</h2>
       <div class="print-today-date" id="printTodayDate"></div>
@@ -194,7 +135,7 @@
       </div>
     </div>
 
-    <!-- PRINT: Amanhã (folha 5) -->
+    <!-- PRINT: Amanhã -->
     <div class="print-tomorrow-section print-break-before">
       <h2 id="printTomorrowTitle" class="print-title">SERVIÇOS DE AMANHÃ</h2>
       <div class="print-tomorrow-date" id="printTomorrowDate"></div>
@@ -214,109 +155,6 @@
   </div>
 
   <!-- script principal -->
-  <script src="script.js?v=5" defer></script>
-
-  <!-- Impressão: gerar HOJE/AMANHÃ a partir da tabela principal -->
-  <script>
-  (function(){
-    function parsePtOrIso(str) {
-      if (!str) return null;
-      str = String(str).trim();
-      const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);  // dd/mm/yyyy
-      if (m) return new Date(+m[3], +m[2]-1, +m[1], 0,0,0,0);
-      const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);  // yyyy-mm-dd
-      if (iso) return new Date(+iso[1], +iso[2]-1, +iso[3], 0,0,0,0);
-      const d = new Date(str);                             // fallback
-      return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    }
-    function sameDay(a,b){ return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
-    function startOfToday(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
-    const TODAY = startOfToday();
-    const TOMORROW = new Date(TODAY); TOMORROW.setDate(TOMORROW.getDate()+1);
-
-    function readServicesFromMainTable(){
-      const tbody = document.querySelector('#servicesTableBody');
-      if (!tbody) return [];
-      const rows = [];
-      tbody.querySelectorAll('tr').forEach(tr => {
-        const tds = tr.querySelectorAll('td');
-        if (tds.length < 7) return; // Data, Período, Matrícula, Carro, Serviço, Observações, Estado, ...
-        rows.push({
-          date:    parsePtOrIso(tds[0].textContent),
-          period:  (tds[1].textContent||'').trim(),
-          plate:   (tds[2].textContent||'').trim(),
-          car:     (tds[3].textContent||'').trim(),
-          service: (tds[4].textContent||'').trim(),
-          notes:   (tds[5].textContent||'').trim(),
-          status:  (tds[6].textContent||'').trim(),
-        });
-      });
-      return rows;
-    }
-
-    function fillPrintTable(prefix, targetDate, rows){
-      const body   = document.getElementById(prefix+'TableBody');
-      const dateEl = document.getElementById(prefix+'Date');
-      const empty  = document.getElementById(prefix+'Empty');
-      if (!body) return;
-
-      if (dateEl){
-        dateEl.textContent = targetDate.toLocaleDateString('pt-PT', {
-          weekday:'long', day:'2-digit', month:'2-digit', year:'numeric'
-        });
-      }
-
-      const dayRows = rows.filter(r => r.date && sameDay(r.date, targetDate));
-
-      body.innerHTML = '';
-      if (!dayRows.length){
-        if (empty) empty.style.display = 'block';
-        return;
-      }
-      if (empty) empty.style.display = 'none';
-
-      const safe = v => (v && String(v).trim()) ? v : '&nbsp;';
-
-      dayRows.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${safe(r.period)}</td>
-          <td>${safe(r.plate)}</td>
-          <td>${safe(r.car)}</td>
-          <td>${safe(r.service)}</td>
-          <td>${safe(r.status)}</td>
-          <td>${safe(r.notes)}</td>
-          <td>&nbsp;</td>
-        `;
-        body.appendChild(tr);
-      });
-    }
-
-    function refreshPrintSections(){
-      const all = readServicesFromMainTable();
-      fillPrintTable('printToday', TODAY, all);
-      fillPrintTable('printTomorrow', TOMORROW, all);
-    }
-
-    // 1) quando a página termina de carregar
-    window.addEventListener('load', refreshPrintSections);
-
-    // 2) quando a tabela principal muda (linhas inseridas/alteradas)
-    const tblBody = document.querySelector('#servicesTableBody');
-    if (tblBody) {
-      const obs = new MutationObserver(() => refreshPrintSections());
-      obs.observe(tblBody, { childList: true, subtree: false });
-    }
-
-    // 3) imediatamente antes de imprimir
-    window.addEventListener('beforeprint', refreshPrintSections);
-
-    // 4) também ao clicar no botão de imprimir da UI
-    document.getElementById('printPage')?.addEventListener('click', () => {
-      refreshPrintSections();
-      window.print();
-    });
-  })();
-  </script>
+  <script src="script.js?v=6" defer></script>
 </body>
 </html>
