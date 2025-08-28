@@ -76,8 +76,8 @@ let editingId = null;
 let searchQuery = '';
 let statusFilter = '';
 
-const STATUS_BG = { NE:'rgba(239,68,68,.12)', VE:'rgba(245,158,11,.14)', ST:'rgba(16,185,129,.14)' };
-const STATUS_BORDER = { NE:'#ef4444', VE:'#f59e0b', ST:'#10b981' };
+/* Paleta: usamos classes CSS (status-NE/VE/ST) — sem estilos inline */
+const STATUS_BG = { NE:'NE', VE:'VE', ST:'ST' };
 
 /* ===========================
    LOAD
@@ -192,10 +192,10 @@ function renderSchedule(){
       appointments.filter(a=>a.date && a.date===iso && a.period===period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0))
     );
     const blocks=items.map(a=>{
-      const bg=STATUS_BG[a.status]||'rgba(0,0,0,0.06)'; const border=STATUS_BORDER[a.status]||'#9ca3af';
-      return `<div class="appointment-block" data-id="${a.id}" draggable="true"
-                style="background:${bg}; border-left:6px solid ${border}">
-                <div class="appt-header">${(a.plate||'')} | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
+      return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
+                <div class="appt-header">
+                  <strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}
+                </div>
                 <div class="appt-sub">${a.notes||''}</div>
                 <div class="appt-status">
                   <label><input type="checkbox" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
@@ -219,7 +219,7 @@ function renderSchedule(){
   highlightSearchResults();
 }
 
-/* ====== ALTERADO: mostra placeholder quando está vazio ====== */
+/* Unscheduled */
 function renderUnscheduled(){
   const container=document.getElementById('unscheduledList'); if(!container) return;
 
@@ -240,10 +240,10 @@ function renderUnscheduled(){
   }
 
   const blocks=uns.map(a=>{
-    const bg=STATUS_BG[a.status]||'rgba(0,0,0,0.06)'; const border=STATUS_BORDER[a.status]||'#9ca3af';
-    return `<div class="appointment-block unscheduled" data-id="${a.id}" draggable="true"
-              style="background:${bg}; border-left:6px solid ${border}">
-              <div class="appt-header">${(a.plate||'')} | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
+    return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
+              <div class="appt-header">
+                <strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}
+              </div>
               <div class="appt-sub">${a.notes||''}</div>
               <div class="appt-status">
                 <label><input type="checkbox" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
@@ -272,8 +272,7 @@ function renderMobileDay(){
   );
   const container=document.getElementById('mobileDayList'); if(!container) return;
   container.innerHTML = dayItems.map(a=>{
-    const bg=STATUS_BG[a.status]||'rgba(0,0,0,0.06)'; const border=STATUS_BORDER[a.status]||'#9ca3af';
-    return `<div class="appointment-block" style="background:${bg}; border-left:6px solid ${border}; margin-bottom:10px;">
+    return `<div class="appointment-block status-${a.status}" style="margin-bottom:10px;" data-id="${a.id}">
               <div class="appt-header">${a.period} - ${(a.plate||'')} | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
               <div class="appt-sub">${a.notes||''}</div>
             </div>`;
