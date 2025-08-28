@@ -673,3 +673,118 @@ select#appointmentStatus{
 .appointment-block {
   padding-bottom: 44px !important;
 }
+/* ============ EDITAR / APAGAR — fixo no canto inferior esquerdo ============ */
+
+/* garantir que o cartão é o contexto de posicionamento */
+.appointment,
+.appointment-block { 
+  position: relative;
+  padding-bottom: 46px !important; /* espaço para os botões */
+}
+
+/* Alvos robustos para "Editar" */
+.appointment .edit-btn,
+.appointment .btn-edit,
+.appointment .action-edit,
+.appointment [data-action="edit"],
+.appointment [title="Editar"],
+.appointment [aria-label="Editar"],
+.appointment-block .edit-btn,
+.appointment-block .btn-edit,
+.appointment-block .action-edit,
+.appointment-block [data-action="edit"],
+.appointment-block [title="Editar"],
+.appointment-block [aria-label="Editar"]{
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  z-index: 5;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  background: rgba(255,255,255,.22);
+  border: 1px solid rgba(255,255,255,.35);
+  color: #fff !important;
+  font-size: 12px; font-weight: 600;
+  padding: 5px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+/* Alvos robustos para "Apagar" */
+.appointment .delete-btn,
+.appointment .btn-delete,
+.appointment .action-delete,
+.appointment [data-action="delete"],
+.appointment [title="Apagar"],
+.appointment [aria-label="Apagar"],
+.appointment-block .delete-btn,
+.appointment-block .btn-delete,
+.appointment-block .action-delete,
+.appointment-block [data-action="delete"],
+.appointment-block [title="Apagar"],
+.appointment-block [aria-label="Apagar"]{
+  position: absolute;
+  left: 64px;               /* aparece logo a seguir ao Editar */
+  bottom: 8px;
+  z-index: 5;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  background: rgba(255,255,255,.22);
+  border: 1px solid rgba(255,255,255,.35);
+  color: #fff !important;
+  font-size: 12px; font-weight: 600;
+  padding: 5px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+
+/* hovers consistentes */
+.appointment .edit-btn:hover,
+.appointment .btn-edit:hover,
+.appointment .action-edit:hover,
+.appointment [data-action="edit"]:hover,
+.appointment [title="Editar"]:hover,
+.appointment [aria-label="Editar"]:hover,
+.appointment .delete-btn:hover,
+.appointment .btn-delete:hover,
+.appointment .action-delete:hover,
+.appointment [data-action="delete"]:hover,
+.appointment [title="Apagar"]:hover,
+.appointment [aria-label="Apagar"]:hover,
+.appointment-block .edit-btn:hover,
+.appointment-block .btn-edit:hover,
+.appointment-block .action-edit:hover,
+.appointment-block [data-action="edit"]:hover,
+.appointment-block [title="Editar"]:hover,
+.appointment-block [aria-label="Editar"]:hover,
+.appointment-block .delete-btn:hover,
+.appointment-block .btn-delete:hover,
+.appointment-block .action-delete:hover,
+.appointment-block [data-action="delete"]:hover,
+.appointment-block [title="Apagar"]:hover,
+.appointment-block [aria-label="Apagar"]:hover{
+  background: rgba(255,255,255,.35);
+  transform: translateY(-1px);
+}
+
+/* se os ícones forem <svg>/<i>, mantém tamanho */
+.appointment .edit-btn svg,
+.appointment .delete-btn svg,
+.appointment .btn-edit svg,
+.appointment .btn-delete svg,
+.appointment-block .edit-btn svg,
+.appointment-block .delete-btn svg,
+.appointment-block .btn-edit svg,
+.appointment-block .btn-delete svg {
+  width: 14px; height: 14px;
+}
