@@ -223,3 +223,60 @@ table.schedule td:first-child{border-left:none}
   .print-today-table th,
   .print-tomorrow-table th { background:#f0f0f0; font-weight:bold; text-align:center; }
 }
+/* ===== OVERRIDES — Cartões iguais ao SM Braga (DESKTOP) ===== */
+.schedule-container .appointment-block{
+  border-radius: 22px !important;
+  padding: 14px 16px !important;
+  margin-bottom: 12px !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.14) !important;
+  border-left: 0 !important;           /* sem barra lateral, fundo cheio */
+  color: #fff !important;               /* texto branco como em Braga */
+  transform: translateZ(0);             /* suaviza em mobile/desktop */
+}
+.schedule-container .appointment-block:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0,0,0,.18);
+}
+.schedule-container .appointment-block .appt-header{
+  font-weight: 800;
+  letter-spacing: .2px;
+  margin-bottom: 4px;
+  color: #fff !important;
+}
+.schedule-container .appointment-block .appt-sub{
+  font-size: 12px;
+  opacity: .95;
+  color: #fff !important;
+}
+
+/* Cores fortes por ESTADO (fundo inteiro) */
+.schedule-container .appointment-block.status-NE{
+  background: #ef4444 !important;   /* vermelho */
+}
+.schedule-container .appointment-block.status-VE{
+  background: #8b5cf6 !important;   /* roxo */
+}
+.schedule-container .appointment-block.status-ST{
+  background: #10b981 !important;   /* verde */
+}
+
+/* Checkboxes de estado: estilo “chip” translúcido sobre o cartão */
+.schedule-container .appointment-block .appt-status{
+  display:flex; gap:10px; margin-top:8px; font-size:12px; font-weight:700;
+}
+.schedule-container .appointment-block .appt-status label{
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 2px 8px; border-radius: 999px;
+  background: rgba(255,255,255,.18);
+  color:#fff !important;
+}
+.schedule-container .appointment-block .appt-status input{
+  accent-color: #fff;     /* visto sobre fundos fortes */
+  transform: translateY(1px);
+}
+
+/* Realce de pesquisa mantém legibilidade sobre fundos fortes */
+.schedule-container .appointment-block.highlight{
+  outline: 2px solid rgba(255,255,255,.85) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.35), 0 12px 28px rgba(0,0,0,.2) !important;
+}
