@@ -6,6 +6,33 @@
   <title>Agendamentos Famalicão</title>
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
+
+  <!-- CSS inline MINÍMO para garantir que o modal aparece, mesmo sem style.css -->
+  <style>
+    .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center; }
+    .modal.show{ display:flex; }
+    .modal-content{ background:#fff; border-radius:12px; max-width:600px; width:90%; max-height:90vh; overflow:auto; box-shadow:0 20px 25px -5px rgba(0,0,0,.1); }
+    .modal-header{ display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid #e5e7eb; }
+    .appointment-form{ padding:24px; }
+    .close-btn{ background:none; border:none; font-size:20px; cursor:pointer; color:#6b7280; padding:4px; border-radius:4px; }
+    .toast-container{ position:fixed; top:20px; right:20px; z-index:10000; }
+    .toast{ background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:12px 16px; margin-bottom:8px; box-shadow:0 4px 6px -1px rgba(0,0,0,.1); display:flex; gap:8px; min-width:300px; }
+  </style>
+
+  <!-- Funções de abrir/fechar modal definidas ANTES do script.js -->
+  <script>
+    function openAppointmentModal(){
+      const m=document.getElementById('appointmentModal');
+      if(m){ m.classList.add('show'); }
+      else { console.warn('Modal não encontrado'); }
+    }
+    function closeAppointmentModal(){
+      const m=document.getElementById('appointmentModal');
+      if(m){ m.classList.remove('show'); }
+    }
+    window.openAppointmentModal = window.openAppointmentModal || openAppointmentModal;
+    window.closeAppointmentModal = window.closeAppointmentModal || closeAppointmentModal;
+  </script>
 </head>
 <body>
   <div class="page">
@@ -51,7 +78,8 @@
     <section class="unscheduled-container">
       <h3>SERVIÇOS POR AGENDAR</h3>
       <div class="unscheduled-actions">
-        <button id="addServiceBtn" class="action-btn primary" type="button">+ Novo Serviço</button>
+        <!-- onclick direto + fallback JS garantem abertura -->
+        <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
         <select id="filterStatus" class="filter-select">
           <option value="">Todos os estados</option>
           <option value="NE">N/E - Não Executado</option>
@@ -73,7 +101,7 @@
         </div>
       </div>
       <div id="mobileDayList" class="mobile-day-list"></div>
-      <button id="addServiceMobile" class="mobile-add-btn" type="button">+ Novo Serviço</button>
+      <button id="addServiceMobile" class="mobile-add-btn" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
     </section>
 
     <!-- APP: Tabela de serviços -->
@@ -143,7 +171,7 @@
         <thead>
           <tr>
             <th>Período</th><th>Matrícula</th><th>Modelo do Carro</th>
-            <th>Serviço</th><th>Estado</th><th>Observações</th><th>Outros Dados</th>
+            <th>Servico</th><th>Estado</th><th>Observações</th><th>Outros Dados</th>
           </tr>
         </thead>
         <tbody id="printTomorrowTableBody"></tbody>
@@ -162,13 +190,14 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3 id="modalTitle">Novo Agendamento</h3>
-        <button id="closeModal" class="close-btn" type="button" aria-label="Fechar">✕</button>
+        <button id="closeModal" class="close-btn" type="button" aria-label="Fechar" onclick="closeAppointmentModal()">✕</button>
       </div>
       <form id="appointmentForm" class="appointment-form">
         <div class="form-row">
           <div class="form-group">
             <label for="appointmentDate">Data</label>
             <input id="appointmentDate" name="date" type="text" placeholder="dd/mm/aaaa" />
+            <small class="form-hint">Aceita 28/08/2025 ou 2025-08-28</small>
           </div>
           <div class="form-group">
             <label for="appointmentPeriod">Período</label>
@@ -180,7 +209,7 @@
           </div>
           <div class="form-group">
             <label for="appointmentPlate">Matrícula</label>
-            <input id="appointmentPlate" name="plate" type="text" placeholder="AA-00-AA" />
+            <input id="appointmentPlate" name="plate" type="text" placeholder="AA-00-AA" oninput="this.value=this.value.toUpperCase()" />
           </div>
           <div class="form-group">
             <label for="appointmentCar">Carro</label>
@@ -199,23 +228,23 @@
           <div class="form-group">
             <label for="appointmentStatus">Estado</label>
             <select id="appointmentStatus" name="status">
-              <option value="NE">NE</option>
-              <option value="VE">VE</option>
-              <option value="ST">ST</option>
+              <option value="NE">NE — Não Exec.</option>
+              <option value="VE">VE — Vidro Encomendado</option>
+              <option value="ST">ST — Terminado</option>
             </select>
           </div>
           <div class="form-group" style="grid-column: 1 / -1;">
             <label for="appointmentNotes">Observações</label>
-            <textarea id="appointmentNotes" name="notes" rows="2"></textarea>
+            <textarea id="appointmentNotes" name="notes" rows="2" placeholder="Notas internas…"></textarea>
           </div>
           <div class="form-group" style="grid-column: 1 / -1;">
             <label for="appointmentExtra">Outros dados</label>
-            <textarea id="appointmentExtra" name="extra" rows="2"></textarea>
+            <textarea id="appointmentExtra" name="extra" rows="2" placeholder="Contacto, morada, etc."></textarea>
           </div>
         </div>
         <div class="form-actions">
           <button id="deleteAppointment" class="btn danger hidden" type="button">Eliminar</button>
-          <button id="cancelForm" class="btn secondary" type="button">Cancelar</button>
+          <button id="cancelForm" class="btn secondary" type="button" onclick="closeAppointmentModal()">Cancelar</button>
           <button class="btn primary" type="submit">Guardar</button>
         </div>
       </form>
@@ -225,21 +254,17 @@
   <!-- script principal -->
   <script src="script.js?v=6" defer></script>
 
-  <!-- fallback: garantir abertura do modal -->
+  <!-- Fallbacks adicionais: se algo falhar no script, isto abre o modal -->
   <script>
     (function () {
-      const modal = document.getElementById('appointmentModal');
-      const open = () => modal?.classList.add('show');
-      const close = () => modal?.classList.remove('show');
-
-      // fallback global
-      window.openAppointmentModal = window.openAppointmentModal || open;
-
-      // ligações diretas
+      const open = () => openAppointmentModal();
+      const close = () => closeAppointmentModal();
       document.getElementById('addServiceBtn')?.addEventListener('click', open);
       document.getElementById('addServiceMobile')?.addEventListener('click', open);
       document.getElementById('closeModal')?.addEventListener('click', close);
       document.getElementById('cancelForm')?.addEventListener('click', close);
+      // Sinal de vida:
+      console.debug('Fallback modal wiring ativo');
     })();
   </script>
 </body>
