@@ -489,3 +489,39 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await load();
   renderAll();
 });
+
+// === PILLs dos estados (NE / VE / ST) — robusto ===
+function wireStatePills(root = document) {
+  // apanhar checkboxes de estado no calendário e "por agendar"
+  const boxes = root.querySelectorAll(
+    '#schedule input[type="checkbox"], #unscheduledList input[type="checkbox"]'
+  );
+
+  boxes.forEach(cb => {
+    // contentor visual da pill: label > ... > input  OU  div.immediate parent
+    const pill = cb.closest('label') || cb.parentElement;
+    if (!pill) return;
+    pill.classList.add('state-pill');
+    cb.classList.add('state-box');
+    pill.classList.toggle('is-checked', cb.checked);
+
+    // atualizar visual quando muda
+    cb.addEventListener('change', () => {
+      pill.classList.toggle('is-checked', cb.checked);
+    });
+  });
+}
+
+// correr agora e sempre que re-renderizares a UI
+document.addEventListener('DOMContentLoaded', () => wireStatePills());
+
+// Se tiveres uma função global que re-renderiza (ex.: renderAll),
+// garante que chamamos o wireStatePills no fim:
+if (typeof window.renderAll === 'function') {
+  const _renderAll = window.renderAll;
+  window.renderAll = function () {
+    const res = _renderAll.apply(this, arguments);
+    wireStatePills(document);
+    return res;
+  };
+}
