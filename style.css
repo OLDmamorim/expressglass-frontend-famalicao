@@ -933,3 +933,72 @@ select#appointmentStatus{
 
 /* ícones/emoji não “apagam” em fundos coloridos */
 .card-actions i, .card-actions svg{ width:16px; height:16px; }
+/* ================================
+   ESTADOS (N/E, V/E, ST)
+   — pill com sombreado quando marcado
+   — checkbox branco com visto PRETO
+   ================================ */
+
+/* linha dos estados */
+.appt-status{
+  display:flex; gap:12px; margin-top:10px;
+}
+
+/* pill base */
+.appt-status label{
+  display:inline-flex; align-items:center; gap:10px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.18);                 /* translúcido por cima do cartão */
+  border: 1px solid rgba(255,255,255,.28);
+  color:#ffffff; font-weight:800; letter-spacing:.3px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.15);
+  transition: background .15s ease, box-shadow .15s ease, transform .1s ease;
+}
+
+/* quando o checkbox dentro do label está checked → pill mais escura (sombreado) */
+.appt-status label:has(input[type="checkbox"]:checked){
+  background: rgba(0, 0, 0, .22);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.25),
+    inset 0 -12px 24px rgba(0,0,0,.22);
+  transform: translateY(-1px);
+}
+
+/* CHECKBOX — quadrado branco com visto preto */
+.appt-status input[type="checkbox"]{
+  -webkit-appearance: none; appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: #ffffff;                 /* sempre branco */
+  border: 2px solid #9ca3af;           /* cinza */
+  display:grid; place-content:center;
+  box-shadow: 0 1px 0 rgba(0,0,0,.06), inset 0 0 0 1px rgba(255,255,255,.6);
+  transition: border-color .12s ease, box-shadow .12s ease, transform .08s ease;
+}
+
+/* visto desenhado em preto */
+.appt-status input[type="checkbox"]::after{
+  content:"";
+  width: 10px; height: 6px;
+  border: 3px solid transparent;
+  border-left-color: #111827;          /* PRETO */
+  border-bottom-color: #111827;
+  transform: rotate(-45deg) scale(0);
+  transform-origin:center;
+  transition: transform .12s ease;
+}
+
+/* marcado → borda mais escura e visto aparece */
+.appt-status input[type="checkbox"]:checked{
+  border-color:#111827;                 /* preto */
+}
+.appt-status input[type="checkbox"]:checked::after{
+  transform: rotate(-45deg) scale(1);
+}
+
+/* foco acessível */
+.appt-status input[type="checkbox"]:focus-visible{
+  outline: 3px solid rgba(59,130,246,.35);
+  outline-offset: 2px;
+}
