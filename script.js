@@ -357,44 +357,7 @@ function renderUnscheduled(){
   highlightSearchResults();
 }
 
-/* Vidros para encomendar (on-page) */
-function renderToOrderTable(){
-  const tbody = document.getElementById('toOrderTableBody'); if(!tbody) return;
-  const start = new Date(); start.setHours(0,0,0,0);
-  const end   = addDays(start, 3); end.setHours(23,59,59,999);
-
-  const rows = appointments
-    .filter(a => a.status === 'NE' && a.date)
-    .filter(a => {
-      const d = new Date(a.date);
-      return d >= start && d <= end;
-    })
-    .sort((a,b) => {
-      const ad=new Date(a.date), bd=new Date(b.date);
-      if (ad - bd !== 0) return ad - bd;
-      if (a.period !== b.period) return a.period === 'Manhã' ? -1 : 1;
-      return ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id));
-    });
-
-  if (rows.length === 0){
-    tbody.innerHTML = `<tr><td colspan="7" style="padding:12px;color:#6b7280;">Sem vidros para encomendar no intervalo.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = rows.map(a=>{
-    const d = new Date(a.date).toLocaleDateString('pt-PT');
-    return `<tr>
-      <td>${d}</td>
-      <td>${a.period||''}</td>
-      <td>${a.plate||''}</td>
-      <td>${a.car||''}</td>
-      <td>${a.service||''}</td>
-      <td>${a.notes||''}</td>
-      <td>${a.extra||''}</td>
-    </tr>`;
-  }).join('');
-}
-
+/* Mobile day */
 function renderMobileDay(){
   const label=document.getElementById('mobileDayLabel');
   if(label){
@@ -418,6 +381,7 @@ function renderMobileDay(){
   highlightSearchResults();
 }
 
+/* Services table (futuro) */
 function renderServicesTable(){
   const tbody=document.getElementById('servicesTableBody'); if(!tbody) return;
   const today=new Date();
@@ -449,12 +413,151 @@ function renderServicesTable(){
   const sum=document.getElementById('servicesSummary'); if(sum) sum.textContent = `${future.length} serviços pendentes`;
 }
 
-function renderAll(){ 
-  renderSchedule(); 
-  renderUnscheduled(); 
-  renderToOrderTable();      // <- nova tabela on-page
-  renderMobileDay(); 
-  renderServicesTable(); 
+/* ========= On-page: Vidros para encomendar (Hoje + 3) ========= */
+function getToOrderRows(){
+  const start = new Date(); start.setHours(0,0,0,0);
+  const end   = addDays(start, 3);
+  const inRange = (ds)=>{
+    if(!ds) return false;
+    const d = new Date(ds);
+    const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate()); // dia local
+    return dd >= start && dd <= end;
+  };
+  return appointments
+    .filter(a=> a.status === 'NE' && a.date && inRange(a.date))
+    .sort((a,b)=> new Date(a.date)-new Date(b.date) ||
+                  (a.period===b.period ? 0 : (a.period==='Manhã'?-1:1)) ||
+                  ((a.sortIndex??1e9)-(b.sortIndex??1e9)) ||
+                  String(a.id).localeCompare(String(b.id)));
+}
+
+function renderToOrderTable(){
+  const tbody = document.getElementById('toOrderTableBody');
+  if(!tbody) return;
+  const rows = getToOrderRows();
+  tbody.innerHTML = rows.map(a=>{
+    const dt = new Date(a.date);
+    return `<tr>
+      <td>${dt.toLocaleDateString('pt-PT')}</td>
+      <td>${a.period||''}</td>
+      <td>${a.plate||''}</td>
+      <td>${a.car||''}</td>
+      <td>${a.service||''}</td>
+      <td>${a.notes||''}</td>
+      <td>${a.extra||''}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ========= PRINT helpers ========= */
+// helper robusto: compara string de data com um Date pelo dia LOCAL
+function isSameLocalDay(dateStr, refDate){
+  if (!dateStr) return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr === localISO(refDate);
+  }
+  const a = new Date(dateStr);
+  const b = new Date(refDate);
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth()    === b.getMonth() &&
+    a.getDate()     === b.getDate()
+  );
+}
+
+function updatePrintTodayTable(){
+  const title=document.getElementById('printTodayTitle');
+  const dateEl=document.getElementById('printTodayDate');
+  const tbody=document.getElementById('printTodayTableBody');
+  const empty=document.getElementById('printTodayEmpty');
+  if(!tbody) return;
+
+  const today = new Date();
+
+  if(title) title.textContent='SERVIÇOS DE HOJE';
+  if(dateEl) dateEl.textContent=today.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+
+  const rows=appointments
+    .filter(a=> isSameLocalDay(a.date, today))
+    .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) :
+          ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)));
+
+  if(rows.length===0){
+    if(empty) empty.style.display='block';
+    tbody.innerHTML='';
+    return;
+  }
+  if(empty) empty.style.display='none';
+
+  tbody.innerHTML = rows.map(a=>
+    `<tr>
+      <td>${a.period||''}</td>
+      <td>${a.plate||''}</td>
+      <td>${a.car||''}</td>
+      <td>${a.service||''}</td>
+      <td>${a.status||''}</td>
+      <td>${a.notes||''}</td>
+      <td>${a.extra||''}</td>
+    </tr>`
+  ).join('');
+}
+
+function updatePrintTomorrowTable(){
+  const title=document.getElementById('printTomorrowTitle');
+  const dateEl=document.getElementById('printTomorrowDate');
+  const tbody=document.getElementById('printTomorrowTableBody');
+  const empty=document.getElementById('printTomorrowEmpty'); if(!tbody) return;
+  const tomorrow=addDays(new Date(),1); const iso=localISO(tomorrow);
+  if(title) title.textContent='SERVIÇOS DE AMANHÃ';
+  if(dateEl) dateEl.textContent=tomorrow.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+  const rows=appointments.filter(a=>a.date===iso).sort((a,b)=>
+    (a.period!==b.period ? (a.period==='Manhã'?-1:1) :
+    ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)))
+  );
+  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
+  if(empty) empty.style.display='none';
+  tbody.innerHTML = rows.map(a=>`<tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
+}
+
+/* Folha de impressão: Vidros para encomendar */
+function updatePrintToOrderTable(){
+  const title=document.getElementById('printToOrderTitle');
+  const rangeEl=document.getElementById('printToOrderRange');
+  const tbody=document.getElementById('printToOrderTableBody');
+  if(!tbody) return;
+
+  const start = new Date(); start.setHours(0,0,0,0);
+  const end   = addDays(start, 3);
+
+  if(title) title.textContent = 'VIDROS PARA ENCOMENDAR';
+  if(rangeEl) rangeEl.textContent =
+    `${start.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit'})} → ${end.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit'})}`;
+
+  const rows = getToOrderRows();
+  tbody.innerHTML = rows.map(a=>{
+    const dt = new Date(a.date);
+    return `<tr>
+      <td>${dt.toLocaleDateString('pt-PT')}</td>
+      <td>${a.period||''}</td>
+      <td>${a.plate||''}</td>
+      <td>${a.car||''}</td>
+      <td>${a.service||''}</td>
+      <td>${a.status||''}</td>
+      <td>${a.notes||''}</td>
+      <td>${a.extra||''}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ===========================
+   Render All
+=========================== */
+function renderAll(){
+  renderSchedule();
+  renderUnscheduled();
+  renderMobileDay();
+  renderServicesTable();
+  renderToOrderTable(); // on-page “Vidros para encomendar”
 }
 
 /* ===========================
@@ -526,7 +629,7 @@ async function saveAppointment(){
     return;
   }
 
-  // entra no FIM do balde
+  // garante que entra no FIM do balde
   appointment.sortIndex = nextSortIndexFor(appointment.date, appointment.period);
 
   const submitBtn = document.querySelector('#appointmentForm .btn.primary');
@@ -621,138 +724,6 @@ function attachStatusListeners() {
 }
 
 /* ===========================
-   PRINT helpers
-=========================== */
-// helper robusto: compara string de data com um Date pelo dia LOCAL
-function isSameLocalDay(dateStr, refDate){
-  if (!dateStr) return false;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    return dateStr === localISO(refDate);
-  }
-  const a = new Date(dateStr);
-  const b = new Date(refDate);
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth()    === b.getMonth() &&
-    a.getDate()     === b.getDate()
-  );
-}
-
-function updatePrintTodayTable(){
-  const title=document.getElementById('printTodayTitle');
-  const dateEl=document.getElementById('printTodayDate');
-  const tbody=document.getElementById('printTodayTableBody');
-  const empty=document.getElementById('printTodayEmpty');
-  if(!tbody) return;
-
-  const today = new Date();
-
-  if(title) title.textContent='SERVIÇOS DE HOJE';
-  if(dateEl) dateEl.textContent=today.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
-
-  const rows=appointments
-    .filter(a=> isSameLocalDay(a.date, today))
-    .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) :
-          ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)));
-
-  if(rows.length===0){
-    if(empty) empty.style.display='block';
-    tbody.innerHTML='';
-    return;
-  }
-  if(empty) empty.style.display='none';
-
-  tbody.innerHTML = rows.map(a=>
-    `<tr>
-      <td>${a.period||''}</td>
-      <td>${a.plate||''}</td>
-      <td>${a.car||''}</td>
-      <td>${a.service||''}</td>
-      <td>${a.status||''}</td>
-      <td>${a.notes||''}</td>
-      <td>${a.extra||''}</td>
-    </tr>`
-  ).join('');
-}
-
-function updatePrintTomorrowTable(){
-  const title=document.getElementById('printTomorrowTitle');
-  const dateEl=document.getElementById('printTomorrowDate');
-  const tbody=document.getElementById('printTomorrowTableBody');
-  const empty=document.getElementById('printTomorrowEmpty'); if(!tbody) return;
-  const tomorrow=addDays(new Date(),1); const iso=localISO(tomorrow);
-  if(title) title.textContent='SERVIÇOS DE AMANHÃ';
-  if(dateEl) dateEl.textContent=tomorrow.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
-  const rows=appointments.filter(a=>a.date===iso).sort((a,b)=>
-    (a.period!==b.period ? (a.period==='Manhã'?-1:1) :
-    ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)))
-  );
-  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
-  if(empty) empty.style.display='none';
-  tbody.innerHTML = rows.map(a=>`<tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
-}
-
-/* PRINT: Vidros para encomendar (hoje + 3 dias) */
-function updatePrintToOrderTable(){
-  const title   = document.getElementById('printToOrderTitle');
-  const dateEl  = document.getElementById('printToOrderDateRange');
-  const tbody   = document.getElementById('printToOrderTableBody');
-  const empty   = document.getElementById('printToOrderEmpty');
-  if(!tbody) return;
-
-  const start = new Date(); start.setHours(0,0,0,0);
-  const end   = addDays(start, 3); end.setHours(23,59,59,999);
-
-  if (title) title.textContent = 'VIDROS PARA ENCOMENDAR';
-  if (dateEl) {
-    const rangeTxt = `${start.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})} – ${end.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'})}`;
-    dateEl.textContent = `De ${rangeTxt}`;
-  }
-
-  const rows = appointments
-    .filter(a => a.status === 'NE' && a.date)
-    .filter(a => {
-      const d = new Date(a.date);
-      return d >= start && d <= end;
-    })
-    .sort((a,b) => {
-      const ad = new Date(a.date), bd = new Date(b.date);
-      if (ad - bd !== 0) return ad - bd;
-      if (a.period !== b.period) return a.period === 'Manhã' ? -1 : 1;
-      return ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id));
-    });
-
-  if (rows.length === 0){
-    if (empty) empty.style.display = 'block';
-    tbody.innerHTML = '';
-    return;
-  }
-  if (empty) empty.style.display = 'none';
-
-  tbody.innerHTML = rows.map(a => {
-    const d = new Date(a.date).toLocaleDateString('pt-PT', { day:'2-digit', month:'2-digit' });
-    return `<tr>
-      <td>${a.period||''} <small>(${d})</small></td>
-      <td>${a.plate||''}</td>
-      <td>${a.car||''}</td>
-      <td>${a.service||''}</td>
-      <td>${a.status||''}</td>
-      <td>${a.notes||''}</td>
-      <td>${a.extra||''}</td>
-    </tr>`;
-  }).join('');
-}
-
-/* ===========================
-   STUBS
-=========================== */
-function closeBackupModal(){ const m=document.getElementById('backupModal'); if(m) m.classList.remove('show'); }
-function showStats(){ const m=document.getElementById('statsModal'); if(m) m.classList.add('show'); }
-function importFromJson(file){ const s=document.getElementById('importStatus'); if(s) s.textContent=`Ficheiro: ${file.name}`; }
-function exportToJson(){ showToast('Export JSON pronto (stub).','info'); }
-function exportToCsv(){ showToast('Export CSV pronto (stub).','info'); }
-
-/* ===========================
    BOOT
 =========================== */
 document.addEventListener('DOMContentLoaded', async ()=>{
@@ -766,25 +737,16 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay=new Date(); renderMobileDay(); });
   document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,1); renderMobileDay(); });
 
-  // Impressão — HOJE + AMANHÃ + VIDROS
+  // Imprimir (preenche 3 folhas e imprime; resto controlado por @media print)
   document.getElementById('printPage')?.addEventListener('click', ()=>{
     updatePrintTodayTable();
     updatePrintTomorrowTable();
     updatePrintToOrderTable();
 
-    const hideSel = '.schedule-container, .unscheduled-container, .toorder-container, .services-table-container, .mobile-day-container, .search-bar, .nav-bar, .page-header, .no-print';
-    document.querySelectorAll(hideSel).forEach(el=> el.style.display='none');
-
-    const t  = document.querySelector('.print-today-section');
-    const tm = document.querySelector('.print-tomorrow-section');
-    const to = document.querySelector('.print-toorder-section');
-    if (t)  t.style.display  = 'block';
-    if (tm) tm.style.display = 'block';
-    if (to) to.style.display = 'block';
-
-    window.print();
-
-    setTimeout(()=>{ location.reload(); }, 300);
+    setTimeout(()=> {
+      window.print();
+      setTimeout(()=> location.reload(), 300);
+    }, 50);
   });
 
   // Pesquisa
