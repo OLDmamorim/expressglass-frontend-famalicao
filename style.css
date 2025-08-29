@@ -146,3 +146,36 @@ table.schedule td{min-height:120px; border-left:1px solid #e5e7eb; border-bottom
 @media (max-width: 480px){
   :root { --card-w: 160px; }
 }
+/* 0) Mesma largura para TODOS os cartões (calendário e por agendar) */
+:root { --card-w: 170px; }                 /* afina aqui se quiseres +/- largo */
+
+.schedule-container .appointment-block,
+.unscheduled-list .appointment-block { 
+  width: var(--card-w) !important;
+  max-width: var(--card-w) !important;
+}
+
+/* 1) Esconder completamente a VISTA DIÁRIA (mobile) no ecrã */
+#mobileDayView,
+.mobile-day-container,
+#mobileDayList {
+  display: none !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+/* 2) Grid dos “Serviços por agendar” com as mesmas colunas dos cartões */
+.unscheduled-list{
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, var(--card-w)) !important;
+  gap: 12px !important;
+  justify-content: flex-start !important;
+}
+
+.unscheduled-list .appointment-block{
+  padding: 14px 16px 46px !important;      /* igual aos do calendário */
+  border-radius: 16px !important;
+  box-shadow: 0 8px 18px rgba(0,0,0,.10) !important;
+}
