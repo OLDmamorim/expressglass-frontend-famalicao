@@ -278,3 +278,116 @@ table.schedule td:first-child{ border-left:none; }
 #appointmentNotes, #appointmentExtra{
   grid-column: 1 / -1;
 }
+/* =========================
+   MODAL — Expressglass clean
+   ========================= */
+.modal {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 9999;
+  align-items: center; justify-content: center;
+  padding: 24px;
+}
+.modal.show { display: flex; }
+
+.modal-content {
+  width: min(720px, 95vw);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(2,6,23,.25);
+  border: none;
+  overflow: hidden;
+  animation: fadeIn .25s ease;
+}
+@keyframes fadeIn { from {opacity:0; transform:translateY(-10px);} to{opacity:1;transform:translateY(0);} }
+
+/* Header */
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  background: linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%);
+  color: #fff;
+}
+.modal-header h3 {
+  margin: 0; font-size: 18px; font-weight: 800;
+}
+.close-btn {
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.25);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.close-btn:hover { background: rgba(255,255,255,.3); }
+
+/* Formulário */
+.appointment-form {
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.form-group {
+  display: flex; flex-direction: column;
+}
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 14px;
+  color: #111827;
+}
+.form-hint {
+  font-size: 12px; color: #6b7280; margin-top: 4px;
+}
+
+/* Inputs bonitos */
+.appointment-form input,
+.appointment-form select,
+.appointment-form textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  outline: none;
+  background: #fff;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.appointment-form textarea { min-height: 80px; resize: vertical; }
+.appointment-form input:focus,
+.appointment-form select:focus,
+.appointment-form textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+}
+
+/* Campos largos ocupam linha inteira */
+#appointmentNotes, #appointmentExtra {
+  grid-column: 1 / -1;
+}
+
+/* Ações */
+.form-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  margin-top: 10px; padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+.btn {
+  border: none; border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.btn.primary { background: #2563eb; color: #fff; }
+.btn.primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow:0 6px 14px rgba(37,99,235,.25); }
+.btn.secondary { background: #6b7280; color: #fff; }
+.btn.secondary:hover { background: #4b5563; }
+.btn.danger { background: #ef4444; color: #fff; }
+.btn.danger:hover { background: #dc2626; } 
