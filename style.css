@@ -555,3 +555,10 @@ table.schedule td:first-child{ border-left:none; }
     text-align: center;
   }
 }
+/* pequeno alinhamento para o botão abaixo da navegação */
+.nav-add-service {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 18px;
+}
