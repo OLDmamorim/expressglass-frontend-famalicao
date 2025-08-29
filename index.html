@@ -7,8 +7,9 @@
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
 
-  <!-- CSS inline mínimo para garantir modal/toasts mesmo sem style.css -->
+  <!-- CSS mínimo extra para garantir layout/print mesmo sem style.css atualizado -->
   <style>
+    /* modal/toast básicos */
     .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center; }
     .modal.show{ display:flex; }
     .modal-content{ background:#fff; border-radius:12px; max-width:600px; width:90%; max-height:90vh; overflow:auto; box-shadow:0 20px 25px -5px rgba(0,0,0,.1); }
@@ -20,6 +21,38 @@
     .toast.success{ border-left:4px solid #10b981; }
     .toast.error{ border-left:4px solid #ef4444; }
     .toast.info{ border-left:4px solid #3b82f6; }
+
+    /* nav + botões principais */
+    .nav-bar{display:flex; align-items:center; gap:12px; padding:10px 0;}
+    .nav-left{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+    .nav-right{margin-left:auto; display:flex; gap:8px; align-items:center;}
+    .week-range{font-weight:600; color:#374151;}
+    .nav-button{background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px; padding:8px 12px; cursor:pointer;}
+    .header-actions{display:flex; gap:8px; align-items:center;}
+    .header-btn{background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; cursor:pointer;}
+    .action-btn.primary{background:#2563eb; color:#fff; border:0; padding:8px 12px; border-radius:8px;}
+    .filter-select{border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px;}
+    .unscheduled-actions{display:flex; gap:10px; align-items:center; margin:8px 0 14px;}
+
+    /* tabelas “limpas” */
+    table{width:100%; border-collapse:separate; border-spacing:0;}
+    .services-table th, .services-table td,
+    .toorder-table th, .toorder-table td{
+      padding:10px 12px; border-bottom:1px solid #f1f5f9;
+    }
+    .services-table thead th, .toorder-table thead th{
+      background:#f8fafc; color:#374151; font-weight:600; text-align:left; border-bottom:1px solid #e5e7eb;
+    }
+    .toorder-table tbody tr:nth-child(odd){ background:#fcfcfd; }
+
+    /* impressão */
+    .print-title{font-size:18px; margin:0 0 8px; font-weight:700;}
+    .print-break-before{page-break-before:always;}
+    .print-today-section, .print-tomorrow-section, .print-toorder-section{display:none;}
+    @media print{
+      @page{ size:A4 landscape; margin:12mm; }
+      .print-today-section, .print-tomorrow-section, .print-toorder-section{display:block !important;}
+    }
   </style>
 
   <!-- Funções base (modal + máscara de matrícula) definidas ANTES do script.js -->
@@ -32,7 +65,7 @@
       const m=document.getElementById('appointmentModal');
       if(m){ m.classList.remove('show'); }
     }
-    // Fallback para máscara AA-00-AA
+    // Fallback máscara AA-00-AA
     if(!window.formatPlate){
       window.formatPlate = function(input){
         let v = (input.value || '').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
@@ -61,22 +94,18 @@
       </div>
     </header>
 
-    <!-- Navegação principal -->
+    <!-- Navegação com botão +Novo Serviço à esquerda e Imprimir à direita -->
     <div class="nav-bar no-print">
       <div class="nav-left">
         <button id="prevWeek" class="nav-button" type="button">◄ Anterior</button>
         <button id="todayWeek" class="nav-button" type="button">Hoje</button>
         <button id="nextWeek" class="nav-button" type="button">Seguinte ►</button>
+        <button id="addServiceNav" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
       </div>
       <div id="weekRange" class="week-range">—</div>
       <div class="nav-right">
         <button id="printPage" class="nav-button no-print" type="button">🖨 Imprimir</button>
       </div>
-    </div>
-
-    <!-- Sub-barra: Novo Serviço por baixo, alinhado à esquerda -->
-    <div class="nav-sub no-print">
-      <button id="addServiceTop" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
     </div>
 
     <!-- Pesquisa -->
@@ -90,11 +119,11 @@
       <table id="schedule" class="schedule"></table>
     </div>
 
-    <!-- APP: Por agendar -->
+    <!-- Por agendar -->
     <section class="unscheduled-container">
       <h3>SERVIÇOS POR AGENDAR</h3>
       <div class="unscheduled-actions">
-        <!-- Removido o botão duplicado de novo serviço aqui -->
+        <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
         <select id="filterStatus" class="filter-select">
           <option value="">Todos os estados</option>
           <option value="NE">N/E - Não Executado</option>
@@ -105,11 +134,11 @@
       <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
     </section>
 
-    <!-- NOVA SECÇÃO: Vidros para encomendar -->
-    <section class="to-order-section">
-      <h3 id="toOrderTitle" class="to-order-title">VIDROS PARA ENCOMENDAR (Hoje + 3 dias)</h3>
+    <!-- Vidros para encomendar (on-page) -->
+    <section class="toorder-container">
+      <h3>VIDROS PARA ENCOMENDAR <small>(Hoje + 3 dias)</small></h3>
       <div class="table-wrapper">
-        <table class="to-order-table">
+        <table class="toorder-table">
           <thead>
             <tr>
               <th>Data</th>
@@ -126,7 +155,7 @@
       </div>
     </section>
 
-    <!-- APP: Vista diária (mobile) -->
+    <!-- Vista diária (mobile) -->
     <section id="mobileDayView" class="mobile-day-container">
       <div class="mobile-day-header">
         <div id="mobileDayLabel" class="mobile-day-label">—</div>
@@ -140,7 +169,7 @@
       <button id="addServiceMobile" class="mobile-add-btn" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
     </section>
 
-    <!-- APP: Tabela de serviços -->
+    <!-- Tabela de serviços futuros -->
     <section class="services-table-container print-page-2">
       <h3 id="servicesTableTitle">SERVIÇOS A REALIZAR</h3>
       <div class="services-summary">
@@ -214,6 +243,29 @@
       </table>
       <div class="print-tomorrow-empty" id="printTomorrowEmpty" style="display:none;">
         <p>Não há serviços agendados para amanhã.</p>
+      </div>
+    </div>
+
+    <!-- PRINT: Vidros para encomendar -->
+    <div class="print-toorder-section print-break-before">
+      <h2 id="printToOrderTitle" class="print-title">VIDROS PARA ENCOMENDAR</h2>
+      <div class="print-tomorrow-date" id="printToOrderDateRange"></div>
+      <table class="print-toorder-table">
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Matrícula</th>
+            <th>Modelo do Carro</th>
+            <th>Serviço</th>
+            <th>Estado</th>
+            <th>Observações</th>
+            <th>Outros Dados</th>
+          </tr>
+        </thead>
+        <tbody id="printToOrderTableBody"></tbody>
+      </table>
+      <div class="print-toorder-empty" id="printToOrderEmpty" style="display:none;">
+        <p>Não há vidros por encomendar no intervalo.</p>
       </div>
     </div>
   </div>
@@ -295,82 +347,16 @@
   <!-- script principal -->
   <script src="script.js?v=7" defer></script>
 
-  <!-- Fallbacks: abrir/fechar modal e GUARDAR mesmo sem script.js -->
+  <!-- Fallbacks mínimos para abrir/fechar modal -->
   <script>
     (function () {
       const open = () => openAppointmentModal();
       const close = () => closeAppointmentModal();
-      document.getElementById('addServiceTop')?.addEventListener('click', open);
+      document.getElementById('addServiceBtn')?.addEventListener('click', open);
+      document.getElementById('addServiceNav')?.addEventListener('click', open);
       document.getElementById('addServiceMobile')?.addEventListener('click', open);
       document.getElementById('closeModal')?.addEventListener('click', close);
       document.getElementById('cancelForm')?.addEventListener('click', close);
-
-      // ===== Fallback de GUARDAR (corrigido p/ data opcional) =====
-      const form = document.getElementById('appointmentForm');
-      const API = 'https://expressglass-backend-famalicao.netlify.app/api/appointments';
-
-      function normalizePeriod(p){
-        if(!p) return '';
-        const t = String(p).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
-        if(t==='manha') return 'Manhã';
-        if(t==='tarde') return 'Tarde';
-        return '';
-      }
-      function toast(msg,type){
-        const c=document.getElementById('toastContainer'); 
-        const t=document.createElement('div');
-        t.className='toast '+(type||'info');
-        t.innerHTML = '<span>'+msg+'</span>';
-        (c||document.body).appendChild(t);
-        setTimeout(()=>t.remove(),3500);
-      }
-
-      form?.addEventListener('submit', async (e)=>{
-        if(window.__saveHandled){ return; } // se o script.js já registou o handler
-        e.preventDefault();
-
-        const rawDate   = document.getElementById('appointmentDate').value || '';
-        const rawPeriod = document.getElementById('appointmentPeriod').value || '';
-
-        const payload = {
-          id: Date.now(),
-          plate: (document.getElementById('appointmentPlate').value||'').toUpperCase(),
-          car: document.getElementById('appointmentCar').value,
-          service: document.getElementById('appointmentService').value,
-          status: document.getElementById('appointmentStatus').value || 'NE',
-          notes: document.getElementById('appointmentNotes').value,
-          extra: document.getElementById('appointmentExtra').value,
-          sortIndex: 1
-        };
-
-        if(rawDate){
-          payload.date = rawDate;                               // yyyy-mm-dd
-          payload.period = normalizePeriod(rawPeriod) || 'Manhã';
-        }else{
-          // Sem data -> não enviar "date" e deixar period vazio => vai para "Por agendar"
-          payload.period = '';
-        }
-
-        try{
-          const r = await fetch(API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Tenant-Id': 'famalicao' },
-            body: JSON.stringify(payload)
-          });
-          if(!r.ok){
-            const msg = await r.text().catch(()=> String(r.status));
-            throw new Error(msg || ('HTTP '+r.status));
-          }
-          toast('Agendamento criado!','success');
-          close();
-          location.reload();
-        }catch(err){
-          console.error(err);
-          toast('Erro ao guardar: '+(err.message||err),'error');
-        }
-      });
-
-      console.debug('Fallback modal + save (data opcional) ativo');
     })();
   </script>
 </body>
