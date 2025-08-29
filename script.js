@@ -138,7 +138,6 @@ function normalizeAllBucketsOrder(list){
     byBucket.get(b).push(a);
   });
   byBucket.forEach(items=>{
-    // ordena por sortIndex asc (vazios no fim), tie-break por id
     items.sort((x,y)=>{
       const sx = (x.sortIndex ?? 1e9);
       const sy = (y.sortIndex ?? 1e9);
@@ -497,8 +496,7 @@ async function saveAppointment(){
       await apiPut(`/api/appointments/${editingId}`, payload);
       showToast('Agendamento atualizado!','success');
     }else{
-      // não enviar id → backend gera; evita clones
-      const { id, ...toCreate } = payload;
+      const { id, ...toCreate } = payload;   // backend gera id → evita clones
       await apiPost('/api/appointments', toCreate);
       showToast('Agendamento criado!','success');
     }
@@ -581,15 +579,44 @@ function attachStatusListeners() {
 /* ===========================
    PRINT helpers
 =========================== */
-function updatePrintUnscheduledTable(){
-  const uns=filterAppointments(appointments.filter(a=>!a.date||!a.period).sort((x,y)=>{
-    const sx=(x.sortIndex??1e9), sy=(y.sortIndex??1e9);
-    return sx===sy ? String(x.id).localeCompare(String(y.id)) : sx-sy;
-  }));
-  const tbody=document.getElementById('printUnscheduledTableBody'); if(!tbody) return;
-  const sec=document.querySelector('.print-unscheduled-section'); if(uns.length===0){ if(sec) sec.style.display='none'; return; } if(sec) sec.style.display='';
-  tbody.innerHTML = uns.map(a=>`<tr><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
+function updatePrintTodayTable(){
+  const title=document.getElementById('printTodayTitle');
+  const dateEl=document.getElementById('printTodayDate');
+  const tbody=document.getElementById('printTodayTableBody');
+  const empty=document.getElementById('printTodayEmpty');
+  if(!tbody) return;
+
+  const today = new Date();
+  const iso   = localISO(today);
+
+  if(title) title.textContent='SERVIÇOS DE HOJE';
+  if(dateEl) dateEl.textContent=today.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+
+  const rows=appointments
+    .filter(a=>a.date===iso)
+    .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) :
+          ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)));
+
+  if(rows.length===0){
+    if(empty) empty.style.display='block';
+    tbody.innerHTML='';
+    return;
+  }
+  if(empty) empty.style.display='none';
+
+  tbody.innerHTML = rows.map(a=>
+    `<tr>
+      <td>${a.period||''}</td>
+      <td>${a.plate||''}</td>
+      <td>${a.car||''}</td>
+      <td>${a.service||''}</td>
+      <td>${a.status||''}</td>
+      <td>${a.notes||''}</td>
+      <td>${a.extra||''}</td>
+    </tr>`
+  ).join('');
 }
+
 function updatePrintTomorrowTable(){
   const title=document.getElementById('printTomorrowTitle');
   const dateEl=document.getElementById('printTomorrowDate');
@@ -630,9 +657,25 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay=new Date(); renderMobileDay(); });
   document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,1); renderMobileDay(); });
 
-  // Impressão
+  // Impressão — só HOJE + AMANHÃ
   document.getElementById('printPage')?.addEventListener('click', ()=>{
-    updatePrintUnscheduledTable(); updatePrintTomorrowTable(); window.print();
+    // popular tabelas
+    updatePrintTodayTable();
+    updatePrintTomorrowTable();
+
+    // mostrar só as secções de impressão que interessam
+    const hideSel = '.schedule-container, .unscheduled-container, .services-table-container, .mobile-day-container, .search-bar, .nav-bar, .page-header, .no-print';
+    document.querySelectorAll(hideSel).forEach(el=> el.style.display='none');
+
+    const t = document.querySelector('.print-today-section');
+    const tm = document.querySelector('.print-tomorrow-section');
+    if (t) t.style.display = 'block';
+    if (tm) tm.style.display = 'block';
+
+    window.print();
+
+    // repor UI após imprimir
+    setTimeout(()=>{ location.reload(); }, 300);
   });
 
   // Pesquisa
@@ -653,7 +696,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
   const form = document.getElementById('appointmentForm');
   if (form){
-    // mata qualquer onsubmit inline herdado
     form.onsubmit = null;
     if (!__wiredForm){
       form.addEventListener('submit', (e)=>{ e.preventDefault(); e.stopImmediatePropagation(); saveAppointment(); }, true);
