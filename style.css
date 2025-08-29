@@ -587,3 +587,75 @@ table.schedule td:first-child{ border-left:none; }
   margin-top: 8px;
   margin-left: 0;        /* encosta à esquerda */
 }
+/* ===== Navegação em 2 linhas ===== */
+.nav-bar{
+  display:grid;
+  grid-template-columns: 1fr auto 1fr; /* esquerda | centro | direita */
+  align-items:center;
+  gap:12px;
+}
+.nav-left{ justify-self:start; display:flex; gap:8px; flex-wrap:wrap; }
+.week-range{ justify-self:center; font-weight:600; }
+.nav-right{ justify-self:end; }
+
+.nav-sub{
+  margin:8px 0 16px;
+  display:flex;
+  gap:10px;
+  justify-content:flex-start; /* encostado à esquerda */
+}
+
+/* Responsivo */
+@media (max-width: 780px){
+  .nav-bar{ grid-template-columns: 1fr 1fr; grid-template-areas:
+      "left right"
+      "range range"; }
+  .nav-left{ grid-area:left; }
+  .nav-right{ grid-area:right; justify-self:end; }
+  .week-range{ grid-area:range; justify-self:center; }
+  .nav-sub{ margin-top:6px; }
+}
+
+/* ===== Tabela “Vidros para Encomendar” igual à de serviços ===== */
+.to-order-section{
+  background:#fff;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:16px;
+  margin-top:16px;
+}
+.to-order-title{
+  font-size:1rem;
+  font-weight:700;
+  margin:0 0 10px 0;
+}
+.to-order-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  overflow:hidden;
+  border-radius:10px;
+}
+.to-order-table th, .to-order-table td{
+  padding:10px 12px;
+  border-bottom:1px solid #eef2f7;
+  text-align:left;
+  white-space:nowrap;
+}
+.to-order-table thead th{
+  background:#f8fafc;
+  font-weight:700;
+}
+.to-order-table tbody tr:nth-child(odd){
+  background:#fbfdff;
+}
+.to-order-table tbody tr:last-child td{
+  border-bottom:0;
+}
+
+/* Harmoniza botões */
+.action-btn.primary, .nav-button{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
