@@ -101,6 +101,9 @@ let currentMobileDay = new Date();
 let editingId = null;
 let searchQuery = '';
 let statusFilter = '';
+// Anti-duplo submit / listener único
+let __wiredForm = false;
+let __savingAppointment = false;
 
 /* ===========================
    LOAD
@@ -377,7 +380,6 @@ function openAppointmentModal(id=null){
 function closeAppointmentModal(){ const m=document.getElementById('appointmentModal'); if(m) m.classList.remove('show'); editingId=null; }
 
 function sanitizeForApi(a){
-  // clona e substitui strings vazias por null onde for adequado
   const out = { ...a };
   out.date   = (out.date && String(out.date).trim() !== '') ? out.date : null;
   out.period = (out.period && String(out.period).trim() !== '') ? out.period : null;
@@ -387,8 +389,11 @@ function sanitizeForApi(a){
 }
 
 async function saveAppointment(){
+  if (__savingAppointment) return;         // evita duplo submit
+  __savingAppointment = true;
+
   const rawDate=document.getElementById('appointmentDate').value;
-  let appointment={
+  const appointment={
     id: editingId || Date.now()+Math.random(),
     date: parseDate(rawDate),
     period: normalizePeriod(document.getElementById('appointmentPeriod').value),
@@ -401,22 +406,31 @@ async function saveAppointment(){
     sortIndex: 1
   };
   if(!appointment.plate || !appointment.car || !appointment.service){
-    showToast('Preenche Matrícula, Carro e Serviço.','error'); return;
+    showToast('Preenche Matrícula, Carro e Serviço.','error');
+    __savingAppointment = false;
+    return;
   }
+
+  const submitBtn = document.querySelector('#appointmentForm .btn.primary');
+  const prevTxt   = submitBtn ? submitBtn.textContent : '';
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'A guardar…'; }
+
   try{
     const payload = sanitizeForApi(appointment);
     if(editingId){
-      const result=await apiPut(`/api/appointments/${editingId}`,payload);
-      const idx=appointments.findIndex(a=>a.id==editingId);
-      if(idx>=0) appointments[idx]={...appointments[idx],...(result||appointment)};
+      await apiPut(`/api/appointments/${editingId}`,payload);
       showToast('Agendamento atualizado!','success');
     }else{
-      const created=await apiPost('/api/appointments',payload);
-      appointments.push(created||appointment);
+      await apiPost('/api/appointments',payload);
       showToast('Agendamento criado!','success');
     }
     await load(); renderAll(); closeAppointmentModal();
-  }catch(e){ console.error(e); showToast('Erro ao guardar: '+e.message,'error'); }
+  }catch(e){
+    console.error(e); showToast('Erro ao guardar: '+e.message,'error');
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = prevTxt; }
+    __savingAppointment = false;
+  }
 }
 function editAppointment(id){ openAppointmentModal(id); }
 async function deleteAppointment(id){
@@ -549,10 +563,14 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   // Filtro estado
   document.getElementById('filterStatus')?.addEventListener('change', e=>{ statusFilter=e.target.value||''; renderAll(); });
 
-  // Modal & form
+  // Modal & form (único listener)
   document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
   document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
-  document.getElementById('appointmentForm')?.addEventListener('submit', e=>{ e.preventDefault(); saveAppointment(); });
+  const form = document.getElementById('appointmentForm');
+  if (form && !__wiredForm){
+    form.addEventListener('submit', e=>{ e.preventDefault(); saveAppointment(); });
+    __wiredForm = true;
+  }
   document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if(editingId) deleteAppointment(editingId); });
 
   // Backup/Stats
