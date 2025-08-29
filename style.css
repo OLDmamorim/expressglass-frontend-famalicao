@@ -1156,3 +1156,8 @@ select#appointmentStatus{
 .appointment-block .appt-sub {
   color: inherit;
 }
+/* ⚠️ Override forçado para cartões VE */
+.appointment-block.status-VE {
+  background: linear-gradient(180deg, #fde68a, #f59e0b) !important; /* amarelo */
+  color: #111 !important;
+}
