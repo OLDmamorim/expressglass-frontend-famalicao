@@ -122,3 +122,27 @@ table.schedule td{min-height:120px; border-left:1px solid #e5e7eb; border-bottom
   .schedule-container, .services-table-container{display:none !important;}
   .mobile-day-container{display:block !important;}
 }
+/* 1) Vista diária — esconder sempre (para desaparecer os cartões compridos) */
+.mobile-day-container { display: none !important; }
+/* 2) Por agendar com a mesma largura dos cartões do calendário */
+:root { --card-w: 180px; }                  /* largura padrão do cartão */
+
+.unscheduled-list{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--card-w));
+  gap: 12px;
+  justify-content: flex-start;              /* não esticar */
+}
+
+.unscheduled-list .appointment-block{
+  width: var(--card-w);
+  max-width: var(--card-w);
+  border-radius:16px;
+  padding:14px 16px 46px;                   /* igual aos agendados */
+  box-shadow:0 8px 18px rgba(0,0,0,.1);
+}
+
+/* ajuste em ecrãs pequenos (um pouco mais estreitos) */
+@media (max-width: 480px){
+  :root { --card-w: 160px; }
+}
