@@ -5,7 +5,7 @@
 =========================== */
 const API_BASE = 'https://expressglass-backend-famalicao.netlify.app';
 
-/* -------- HTTP helpers -------- */
+/* HTTP helpers */
 async function apiGet(path, params = {}) {
   const url = new URL(API_BASE + path);
   Object.entries(params).forEach(([k, v]) => {
@@ -65,8 +65,6 @@ function formatDateForInput(dateStr){
   }
   return dateStr;
 }
-
-/* Remove acentos */
 function normalizePeriod(p){
   if(!p) return '';
   const t = String(p).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
@@ -74,7 +72,6 @@ function normalizePeriod(p){
   if(t==='tarde') return 'Tarde';
   return '';
 }
-
 function showToast(msg,type='info'){
   const c=document.getElementById('toastContainer');
   if(!c){ console.log(type.toUpperCase()+':', msg); return; }
@@ -85,12 +82,8 @@ function showToast(msg,type='info'){
   c.appendChild(t);
   setTimeout(()=>t.remove(),3500);
 }
-function formatPlate(input){
-  let v=(input.value||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
-  if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);
-  if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5,7);
-  input.value=v;
-}
+function isMobile(){ return window.matchMedia('(max-width: 820px)').matches; }
+const MOBILE_Q = window.matchMedia('(max-width: 820px)');
 
 /* ===========================
    STATE
@@ -105,27 +98,14 @@ let __wiredForm = false;
 let __savingAppointment = false;
 
 /* ===========================
-   MOBILE BREAKPOINT
-=========================== */
-const MOBILE_Q = window.matchMedia('(max-width: 900px)');
-const isMobile = () => MOBILE_Q.matches;
-
-/* ===========================
    ORDEM & DEDUPE
 =========================== */
 function bucketOf(a){ return (a.date && a.period) ? `${a.date}|${a.period}` : 'unscheduled'; }
-
 function nextSortIndexFor(date, period){
   const bucket = (date && period) ? `${date}|${period}` : 'unscheduled';
-  const max = Math.max(
-    0,
-    ...appointments
-      .filter(x => bucketOf(x) === bucket)
-      .map(x => Number(x.sortIndex) || 0)
-  );
+  const max = Math.max(0, ...appointments.filter(x => bucketOf(x) === bucket).map(x => Number(x.sortIndex) || 0));
   return max + 1;
 }
-
 function dedupeByIdOrKey(rows){
   const seen = new Map();
   rows.forEach(a=>{
@@ -134,8 +114,6 @@ function dedupeByIdOrKey(rows){
   });
   return Array.from(seen.values());
 }
-
-/* Dá sortIndex incremental a quem não tiver, por balde */
 function normalizeAllBucketsOrder(list){
   const byBucket = new Map();
   list.forEach(a=>{
@@ -145,64 +123,34 @@ function normalizeAllBucketsOrder(list){
   });
   byBucket.forEach(items=>{
     items.sort((x,y)=>{
-      const sx = (x.sortIndex ?? 1e9);
-      const sy = (y.sortIndex ?? 1e9);
+      const sx = (x.sortIndex ?? 1e9), sy = (y.sortIndex ?? 1e9);
       if (sx !== sy) return sx - sy;
       return String(x.id).localeCompare(String(y.id));
     });
     let i = 1;
-    items.forEach(it=>{
-      if (it.sortIndex == null || isNaN(it.sortIndex)) it.sortIndex = i;
-      i++;
-    });
+    items.forEach(it=>{ if (it.sortIndex == null || isNaN(it.sortIndex)) it.sortIndex = i++; });
   });
   return list;
 }
 
 /* ===========================
-   CONEXÃO (status + retry)
-=========================== */
-function setConnectionStatus(ok){
-  const icon = document.getElementById('statusIcon');
-  const text = document.getElementById('statusText');
-  if (!icon || !text) return;
-  if (ok){
-    icon.textContent = '🌐';
-    text.textContent = 'Online';
-  } else {
-    icon.textContent = '⚠️';
-    text.textContent = 'Offline';
-  }
-}
-
-/* ===========================
-   LOAD (com retry 3x)
+   LOAD
 =========================== */
 async function load(){
-  let lastErr = null;
-  for (let i=0;i<3;i++){
-    try{
-      setConnectionStatus(navigator.onLine);
-      const rows = await apiGet('/api/appointments');
-      const mapped = rows.map(a=>({
-        ...a,
-        date: parseDate(a.date),
-        period: normalizePeriod(a.period),
-        id: a.id ?? (Date.now()+Math.random()),
-        sortIndex: (a.sortIndex != null ? Number(a.sortIndex) : null),
-        status: a.status ?? 'NE'
-      }));
-      appointments = normalizeAllBucketsOrder(dedupeByIdOrKey(mapped));
-      setConnectionStatus(true);
-      return;
-    }catch(e){
-      lastErr = e;
-      setConnectionStatus(false);
-      await new Promise(r=>setTimeout(r, 400*(i+1)));
-    }
+  try{
+    const rows = await apiGet('/api/appointments');
+    const mapped = rows.map(a=>({
+      ...a,
+      date: parseDate(a.date),
+      period: normalizePeriod(a.period),
+      id: a.id ?? (Date.now()+Math.random()),
+      sortIndex: (a.sortIndex != null ? Number(a.sortIndex) : null),
+      status: a.status ?? 'NE'
+    }));
+    appointments = normalizeAllBucketsOrder(dedupeByIdOrKey(mapped));
+  }catch(e){
+    appointments=[]; showToast('Erro ao carregar: '+e.message,'error');
   }
-  appointments=[]; 
-  showToast('Erro ao carregar: '+(lastErr?.message||lastErr),'error');
 }
 
 /* ===========================
@@ -231,7 +179,7 @@ function highlightSearchResults(){
 }
 
 /* ===========================
-   Drag & Drop
+   Drag & Drop (desktop)
 =========================== */
 function enableDragDrop(scope){
   (scope||document).querySelectorAll('.appointment-block[data-id]').forEach(card=>{
@@ -290,10 +238,11 @@ async function onDropAppointment(id,targetBucket,targetIndex){
 =========================== */
 function renderSchedule(){
   const table=document.getElementById('schedule'); if(!table) return; table.innerHTML='';
+  if (isMobile()){ table.closest('.schedule-container')?.classList.add('hidden'); return; }
+  table.closest('.schedule-container')?.classList.remove('hidden');
 
-  // Segunda -> Sábado (6 dias)
-  const wr=document.getElementById('weekRange');
   const week=[...Array(6)].map((_,i)=> addDays(currentMonday,i));
+  const wr=document.getElementById('weekRange');
   if(wr){ wr.textContent = `${week[0].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})} - ${week[5].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'})}`; }
 
   let thead='<thead><tr><th>Período</th>';
@@ -312,9 +261,7 @@ function renderSchedule(){
     );
     const blocks=items.map(a=>{
       return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
-                <div class="appt-header">
-                  <strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}
-                </div>
+                <div class="appt-header"><strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
                 <div class="appt-sub">${a.notes||''}</div>
                 <div class="appt-status">
                   <label><input type="checkbox" class="state-box" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
@@ -333,7 +280,7 @@ function renderSchedule(){
   const tbody=document.createElement('tbody');
   ['Manhã','Tarde'].forEach(period=>{
     const row=document.createElement('tr');
-    row.innerHTML = `<th>${period}</th>` + [...Array(6)].map((_,i)=>`<td>${renderCell(period, addDays(currentMonday,i))}</td>`).join('');
+    row.innerHTML = `<th>${period}</th>` + week.map(d=>`<td>${renderCell(period,d)}</td>`).join('');
     tbody.appendChild(row);
   });
   table.appendChild(tbody);
@@ -354,37 +301,32 @@ function renderUnscheduled(){
       })
   );
 
-  if (uns.length === 0){
-    container.innerHTML =
-      `<div class="drop-zone empty" data-drop-bucket="unscheduled">
-         <div class="unscheduled-empty-msg">
-           Sem serviços por agendar.
-           <small>Arrasta para aqui a partir do calendário, ou clica em “+ Novo Serviço”.</small>
-         </div>
-       </div>`;
-    enableDragDrop(container);
-    return;
-  }
+  container.innerHTML = uns.length ? (
+    `<div class="drop-zone" data-drop-bucket="unscheduled">${
+      uns.map(a=>`
+        <div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
+          <div class="appt-header"><strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
+          <div class="appt-sub">${a.notes||''}</div>
+          <div class="appt-status">
+            <label><input type="checkbox" class="state-box" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
+            <label><input type="checkbox" class="state-box" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
+            <label><input type="checkbox" class="state-box" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
+          </div>
+          <div class="card-actions">
+            <button title="Editar" type="button" onclick="editAppointment(${a.id})">✏️</button>
+            <button title="Apagar" type="button" onclick="deleteAppointment(${a.id})">🗑️</button>
+          </div>
+        </div>`).join('')
+    }</div>`
+  ) : (
+    `<div class="drop-zone empty" data-drop-bucket="unscheduled">
+       <div class="unscheduled-empty-msg">
+         Sem serviços por agendar.
+         <small>Arrasta para aqui a partir do calendário, ou clica em “+ Novo Serviço”.</small>
+       </div>
+     </div>`
+  );
 
-  const blocks=uns.map(a=>{
-    return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
-              <div class="appt-header">
-                <strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}
-              </div>
-              <div class="appt-sub">${a.notes||''}</div>
-              <div class="appt-status">
-                <label><input type="checkbox" class="state-box" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
-                <label><input type="checkbox" class="state-box" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
-                <label><input type="checkbox" class="state-box" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
-              </div>
-              <div class="card-actions">
-                <button title="Editar" type="button" onclick="editAppointment(${a.id})">✏️</button>
-                <button title="Apagar" type="button" onclick="deleteAppointment(${a.id})">🗑️</button>
-              </div>
-            </div>`;
-  }).join('');
-
-  container.innerHTML = `<div class="drop-zone" data-drop-bucket="unscheduled">${blocks}</div>`;
   enableDragDrop(container);
   highlightSearchResults();
 }
@@ -408,12 +350,21 @@ function renderMobileDay(){
     return `<div class="appointment-block status-${a.status}" style="margin-bottom:10px;" data-id="${a.id}">
               <div class="appt-header">${a.period} - ${(a.plate||'')} | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
               <div class="appt-sub">${a.notes||''}</div>
+              <div class="appt-status">
+                <label><input type="checkbox" class="state-box" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
+                <label><input type="checkbox" class="state-box" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
+                <label><input type="checkbox" class="state-box" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
+              </div>
+              <div class="card-actions">
+                <button class="table-btn" type="button" onclick="editAppointment(${a.id})">✏️</button>
+                <button class="table-btn danger" type="button" onclick="deleteAppointment(${a.id})">🗑️</button>
+              </div>
             </div>`;
   }).join('');
   highlightSearchResults();
 }
 
-/* Services table */
+/* Serviços (tabela desktop) */
 function renderServicesTable(){
   const tbody=document.getElementById('servicesTableBody'); if(!tbody) return;
   const today=new Date();
@@ -445,17 +396,18 @@ function renderServicesTable(){
   const sum=document.getElementById('servicesSummary'); if(sum) sum.textContent = `${future.length} serviços pendentes`;
 }
 
-/* Glass orders (NE, hoje -> +3 dias) */
+/* Vidros para encomendar (Hoje + 3 dias) — desktop only */
 function renderGlassOrdersTable(){
   const section = document.querySelector('.glass-orders-container');
   const tbody = document.getElementById('glassOrdersTableBody');
   if (!section || !tbody) return;
 
-  // Em mobile, não renderiza nada (fica limpo)
   if (isMobile()){
+    section.style.display = 'none';
     tbody.innerHTML = '';
     return;
   }
+  section.style.display = '';
 
   const today = new Date();
   const maxDay = addDays(today, 3);
@@ -485,14 +437,7 @@ function renderGlassOrdersTable(){
   }).join('');
 }
 
-/* Master render */
-function renderAll(){
-  renderSchedule();
-  renderUnscheduled();
-  renderMobileDay();
-  renderServicesTable();
-  renderGlassOrdersTable();
-}
+function renderAll(){ renderSchedule(); renderUnscheduled(); renderMobileDay(); renderServicesTable(); renderGlassOrdersTable(); }
 
 /* ===========================
    CRUD
@@ -538,7 +483,7 @@ function sanitizeForApi(a){
 }
 
 async function saveAppointment(){
-  if (__savingAppointment) return;         // evita duplo submit
+  if (__savingAppointment) return;
   __savingAppointment = true;
 
   const rawDate=document.getElementById('appointmentDate').value;
@@ -571,12 +516,11 @@ async function saveAppointment(){
 
   try{
     const payload = sanitizeForApi(appointment);
-
     if(isEdit){
       await apiPut(`/api/appointments/${editingId}`, payload);
       showToast('Agendamento atualizado!','success');
     }else{
-      const { id, ...toCreate } = payload;   // backend gera id
+      const { id, ...toCreate } = payload;
       await apiPost('/api/appointments', toCreate);
       showToast('Agendamento criado!','success');
     }
@@ -615,22 +559,18 @@ async function __onStatusChange(e) {
   const statusKey = target.getAttribute('data-status'); // "NE" | "VE" | "ST"
   if (!statusKey) return;
 
-  const card = target.closest('.appointment-block');
-  if (!card) return;
+  const card = target.closest('.appointment-block'); if (!card) return;
   const id = Number(card.getAttribute('data-id'));
-  const a = appointments.find(x => x.id == id);
-  if (!a) return;
+  const a = appointments.find(x => x.id == id); if (!a) return;
 
   // desmarca as outras boxes do mesmo cartão
   card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
     if (cb !== target) cb.checked = false;
   });
 
-  // otimista
   const prevStatus = a.status;
   a.status = statusKey;
 
-  // atualiza classes do cartão (cor)
   card.classList.remove('status-NE', 'status-VE', 'status-ST');
   card.classList.add('status-' + statusKey);
 
@@ -640,7 +580,6 @@ async function __onStatusChange(e) {
     if (updated && typeof updated === 'object') Object.assign(a, updated);
     showToast(`Status gravado: ${statusKey}`, 'success');
   } catch (err) {
-    // rollback
     a.status = prevStatus;
     card.classList.remove('status-NE', 'status-VE', 'status-ST');
     card.classList.add('status-' + prevStatus);
@@ -650,38 +589,27 @@ async function __onStatusChange(e) {
     showToast('Erro a gravar status: ' + (err.message || err), 'error');
   }
 }
-
 function attachStatusListeners() {
   document.removeEventListener('change', __onStatusChange, true);
   document.addEventListener('change', __onStatusChange, true);
 }
 
 /* ===========================
-   PRINT helpers
+   PRINT helpers (3 folhas)
 =========================== */
 function isSameLocalDay(dateStr, refDate){
   if (!dateStr) return false;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    return dateStr === localISO(refDate);
-  }
-  const a = new Date(dateStr);
-  const b = new Date(refDate);
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth()    === b.getMonth() &&
-    a.getDate()     === b.getDate()
-  );
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr === localISO(refDate);
+  const a = new Date(dateStr), b = new Date(refDate);
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
-
 function updatePrintTodayTable(){
   const title=document.getElementById('printTodayTitle');
   const dateEl=document.getElementById('printTodayDate');
   const tbody=document.getElementById('printTodayTableBody');
-  const empty=document.getElementById('printTodayEmpty');
-  if(!tbody) return;
+  const empty=document.getElementById('printTodayEmpty'); if(!tbody) return;
 
   const today = new Date();
-
   if(title) title.textContent='SERVIÇOS DE HOJE';
   if(dateEl) dateEl.textContent=today.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
 
@@ -690,33 +618,18 @@ function updatePrintTodayTable(){
     .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) :
           ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)));
 
-  if(rows.length===0){
-    if(empty) empty.style.display='block';
-    tbody.innerHTML='';
-    return;
-  }
+  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
   if(empty) empty.style.display='none';
 
-  tbody.innerHTML = rows.map(a=>
-    `<tr>
-      <td>${a.period||''}</td>
-      <td>${a.plate||''}</td>
-      <td>${a.car||''}</td>
-      <td>${a.service||''}</td>
-      <td>${a.status||''}</td>
-      <td>${a.notes||''}</td>
-      <td>${a.extra||''}</td>
-    </tr>`
-  ).join('');
+  tbody.innerHTML = rows.map(a=>`
+    <tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td>
+    <td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
 }
-
 function updatePrintTomorrowTable(){
-  const title=document.getElementById('printTomorrowTitle');
   const dateEl=document.getElementById('printTomorrowDate');
   const tbody=document.getElementById('printTomorrowTableBody');
   const empty=document.getElementById('printTomorrowEmpty'); if(!tbody) return;
   const tomorrow=addDays(new Date(),1); const iso=localISO(tomorrow);
-  if(title) title.textContent='SERVIÇOS DE AMANHÃ';
   if(dateEl) dateEl.textContent=tomorrow.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
   const rows=appointments.filter(a=>a.date===iso).sort((a,b)=>
     (a.period!==b.period ? (a.period==='Manhã'?-1:1) :
@@ -724,7 +637,43 @@ function updatePrintTomorrowTable(){
   );
   if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
   if(empty) empty.style.display='none';
-  tbody.innerHTML = rows.map(a=>`<tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
+  tbody.innerHTML = rows.map(a=>`<tr>
+    <td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td>
+    <td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
+}
+function updatePrintToOrderTable(){
+  const tbody=document.getElementById('printToOrderTableBody');
+  const empty=document.getElementById('printToOrderEmpty'); if(!tbody) return;
+
+  const today = new Date();
+  const maxDay = addDays(today, 3);
+  const rows = appointments
+    .filter(a=>{
+      if(a.status !== 'NE' || !a.date) return false;
+      const d = new Date(a.date);
+      const d0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      return d0 >= t0 && d0 <= maxDay;
+    })
+    .sort((a,b)=> new Date(a.date)-new Date(b.date) ||
+                 (a.period==='Manhã'?-1:1) - (b.period==='Manhã'?-1:1) ||
+                 ((a.sortIndex??1e9)-(b.sortIndex??1e9)));
+
+  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
+  if(empty) empty.style.display='none';
+
+  tbody.innerHTML = rows.map(a=>{
+    const dt = new Date(a.date);
+    return `<tr>
+      <td>${dt.toLocaleDateString('pt-PT')}</td>
+      <td>${a.period||''}</td>
+      <td>${a.plate||''}</td>
+      <td>${a.car||''}</td>
+      <td>${a.service||''}</td>
+      <td>${a.notes||''}</td>
+      <td>${a.extra||''}</td>
+    </tr>`;
+  }).join('');
 }
 
 /* ===========================
@@ -750,23 +699,12 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay=new Date(); renderMobileDay(); });
   document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,1); renderMobileDay(); });
 
-  // Impressão — HOJE + AMANHÃ + Vidros
+  // Impressão — Hoje + Amanhã + Vidros p/ Encomendar
   document.getElementById('printPage')?.addEventListener('click', ()=>{
     updatePrintTodayTable();
     updatePrintTomorrowTable();
-
-    const hideSel = '.schedule-container, .unscheduled-container, .services-table-container, .mobile-day-container, .search-bar, .nav-bar, .page-header, .no-print';
-    document.querySelectorAll(hideSel).forEach(el=> el.style.display='none');
-
-    const t = document.querySelector('.print-today-section');
-    const tm = document.querySelector('.print-tomorrow-section');
-    const go = document.querySelector('.print-glassorders-section');
-    if (t) t.style.display = 'block';
-    if (tm) tm.style.display = 'block';
-    if (go) go.style.display = 'block';
-
+    updatePrintToOrderTable();
     window.print();
-    setTimeout(()=>{ location.reload(); }, 300);
   });
 
   // Pesquisa
@@ -796,15 +734,11 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   }
   document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if(editingId) deleteAppointment(editingId); });
 
+  // Re-render quando muda breakpoint (gira a tela etc.)
+  MOBILE_Q.addEventListener?.('change', ()=> renderAll());
+
   // Estados
   attachStatusListeners();
-
-  // Online/Offline
-  window.addEventListener('online', ()=> setConnectionStatus(true));
-  window.addEventListener('offline', ()=> setConnectionStatus(false));
-
-  // Re-render ao mudar breakpoint (entra/sai de mobile)
-  MOBILE_Q.addEventListener?.('change', ()=> renderAll());
 
   await load();
   renderAll();
