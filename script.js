@@ -48,12 +48,6 @@ function localISO(date) { const y=date.getFullYear(), m=String(date.getMonth()+1
 function fmtHeader(date){ return { day: date.toLocaleDateString('pt-PT',{weekday:'long'}), dm: date.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'}) }; }
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
 
-// compara string yyyy-mm-dd com um Date (mesmo dia local)
-function isSameLocalDay(dateStr, refDate){
-  if (!dateStr) return false;
-  return dateStr === localISO(refDate);
-}
-
 function parseDate(dateStr){
   if(!dateStr) return '';
   if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
@@ -363,6 +357,44 @@ function renderUnscheduled(){
   highlightSearchResults();
 }
 
+/* Vidros para encomendar (on-page) */
+function renderToOrderTable(){
+  const tbody = document.getElementById('toOrderTableBody'); if(!tbody) return;
+  const start = new Date(); start.setHours(0,0,0,0);
+  const end   = addDays(start, 3); end.setHours(23,59,59,999);
+
+  const rows = appointments
+    .filter(a => a.status === 'NE' && a.date)
+    .filter(a => {
+      const d = new Date(a.date);
+      return d >= start && d <= end;
+    })
+    .sort((a,b) => {
+      const ad=new Date(a.date), bd=new Date(b.date);
+      if (ad - bd !== 0) return ad - bd;
+      if (a.period !== b.period) return a.period === 'Manhã' ? -1 : 1;
+      return ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id));
+    });
+
+  if (rows.length === 0){
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:12px;color:#6b7280;">Sem vidros para encomendar no intervalo.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(a=>{
+    const d = new Date(a.date).toLocaleDateString('pt-PT');
+    return `<tr>
+      <td>${d}</td>
+      <td>${a.period||''}</td>
+      <td>${a.plate||''}</td>
+      <td>${a.car||''}</td>
+      <td>${a.service||''}</td>
+      <td>${a.notes||''}</td>
+      <td>${a.extra||''}</td>
+    </tr>`;
+  }).join('');
+}
+
 function renderMobileDay(){
   const label=document.getElementById('mobileDayLabel');
   if(label){
@@ -417,50 +449,12 @@ function renderServicesTable(){
   const sum=document.getElementById('servicesSummary'); if(sum) sum.textContent = `${future.length} serviços pendentes`;
 }
 
-/* -------- Vidros para Encomendar (NE hoje → +3 dias) -------- */
-function renderToOrderTable(){
-  const tbody = document.getElementById('toOrderTableBody');
-  const title = document.getElementById('toOrderTitle');
-  if(!tbody) return;
-
-  const today    = new Date();
-  const end      = addDays(today, 3);
-  const isoStart = localISO(new Date(today.getFullYear(), today.getMonth(), today.getDate()));
-  const isoEnd   = localISO(new Date(end.getFullYear(), end.getMonth(), end.getDate()));
-
-  const isGlass = (svc) => ['PB','LT','OC'].includes(String(svc || '').toUpperCase());
-
-  const rows = appointments
-    .filter(a => a.status === 'NE' && a.date && a.date >= isoStart && a.date <= isoEnd)
-    .filter(a => isGlass(a.service))
-    .sort((a,b) =>
-      new Date(a.date) - new Date(b.date) ||
-      (a.period === b.period ? 0 : (a.period === 'Manhã' ? -1 : 1)) ||
-      ((a.sortIndex??1e9) - (b.sortIndex??1e9)) ||
-      String(a.id).localeCompare(String(b.id))
-    );
-
-  tbody.innerHTML = rows.map(a => `
-    <tr>
-      <td>${new Date(a.date).toLocaleDateString('pt-PT')}</td>
-      <td>${a.period || ''}</td>
-      <td>${a.plate || ''}</td>
-      <td>${a.car || ''}</td>
-      <td>${a.service || ''}</td>
-      <td>${a.notes || ''}</td>
-      <td>${a.extra || ''}</td>
-    </tr>
-  `).join('');
-
-  if (title) title.textContent = `VIDROS PARA ENCOMENDAR (Hoje + 3 dias)${rows.length ? ` (${rows.length})` : ''}`;
-}
-
-function renderAll(){
-  renderSchedule();
-  renderUnscheduled();
-  renderMobileDay();
-  renderServicesTable();
-  renderToOrderTable();  // nova tabela
+function renderAll(){ 
+  renderSchedule(); 
+  renderUnscheduled(); 
+  renderToOrderTable();      // <- nova tabela on-page
+  renderMobileDay(); 
+  renderServicesTable(); 
 }
 
 /* ===========================
@@ -532,7 +526,7 @@ async function saveAppointment(){
     return;
   }
 
-  // garante que entra no FIM do balde
+  // entra no FIM do balde
   appointment.sortIndex = nextSortIndexFor(appointment.date, appointment.period);
 
   const submitBtn = document.querySelector('#appointmentForm .btn.primary');
@@ -629,6 +623,21 @@ function attachStatusListeners() {
 /* ===========================
    PRINT helpers
 =========================== */
+// helper robusto: compara string de data com um Date pelo dia LOCAL
+function isSameLocalDay(dateStr, refDate){
+  if (!dateStr) return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr === localISO(refDate);
+  }
+  const a = new Date(dateStr);
+  const b = new Date(refDate);
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth()    === b.getMonth() &&
+    a.getDate()     === b.getDate()
+  );
+}
+
 function updatePrintTodayTable(){
   const title=document.getElementById('printTodayTitle');
   const dateEl=document.getElementById('printTodayDate');
@@ -683,6 +692,57 @@ function updatePrintTomorrowTable(){
   tbody.innerHTML = rows.map(a=>`<tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
 }
 
+/* PRINT: Vidros para encomendar (hoje + 3 dias) */
+function updatePrintToOrderTable(){
+  const title   = document.getElementById('printToOrderTitle');
+  const dateEl  = document.getElementById('printToOrderDateRange');
+  const tbody   = document.getElementById('printToOrderTableBody');
+  const empty   = document.getElementById('printToOrderEmpty');
+  if(!tbody) return;
+
+  const start = new Date(); start.setHours(0,0,0,0);
+  const end   = addDays(start, 3); end.setHours(23,59,59,999);
+
+  if (title) title.textContent = 'VIDROS PARA ENCOMENDAR';
+  if (dateEl) {
+    const rangeTxt = `${start.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})} – ${end.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'})}`;
+    dateEl.textContent = `De ${rangeTxt}`;
+  }
+
+  const rows = appointments
+    .filter(a => a.status === 'NE' && a.date)
+    .filter(a => {
+      const d = new Date(a.date);
+      return d >= start && d <= end;
+    })
+    .sort((a,b) => {
+      const ad = new Date(a.date), bd = new Date(b.date);
+      if (ad - bd !== 0) return ad - bd;
+      if (a.period !== b.period) return a.period === 'Manhã' ? -1 : 1;
+      return ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id));
+    });
+
+  if (rows.length === 0){
+    if (empty) empty.style.display = 'block';
+    tbody.innerHTML = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  tbody.innerHTML = rows.map(a => {
+    const d = new Date(a.date).toLocaleDateString('pt-PT', { day:'2-digit', month:'2-digit' });
+    return `<tr>
+      <td>${a.period||''} <small>(${d})</small></td>
+      <td>${a.plate||''}</td>
+      <td>${a.car||''}</td>
+      <td>${a.service||''}</td>
+      <td>${a.status||''}</td>
+      <td>${a.notes||''}</td>
+      <td>${a.extra||''}</td>
+    </tr>`;
+  }).join('');
+}
+
 /* ===========================
    STUBS
 =========================== */
@@ -706,18 +766,21 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay=new Date(); renderMobileDay(); });
   document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,1); renderMobileDay(); });
 
-  // Impressão — só HOJE + AMANHÃ
+  // Impressão — HOJE + AMANHÃ + VIDROS
   document.getElementById('printPage')?.addEventListener('click', ()=>{
     updatePrintTodayTable();
     updatePrintTomorrowTable();
+    updatePrintToOrderTable();
 
-    const hideSel = '.schedule-container, .unscheduled-container, .services-table-container, .mobile-day-container, .search-bar, .nav-bar, .page-header, .no-print';
+    const hideSel = '.schedule-container, .unscheduled-container, .toorder-container, .services-table-container, .mobile-day-container, .search-bar, .nav-bar, .page-header, .no-print';
     document.querySelectorAll(hideSel).forEach(el=> el.style.display='none');
 
-    const t = document.querySelector('.print-today-section');
+    const t  = document.querySelector('.print-today-section');
     const tm = document.querySelector('.print-tomorrow-section');
-    if (t) t.style.display = 'block';
+    const to = document.querySelector('.print-toorder-section');
+    if (t)  t.style.display  = 'block';
     if (tm) tm.style.display = 'block';
+    if (to) to.style.display = 'block';
 
     window.print();
 
@@ -737,7 +800,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   // Filtro estado
   document.getElementById('filterStatus')?.addEventListener('change', e=>{ statusFilter=e.target.value||''; renderAll(); });
 
-  // Modal & form
+  // Modal & form (único listener e “anti-fallbacks”)
   document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
   document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
   const form = document.getElementById('appointmentForm');
@@ -750,14 +813,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     }
   }
   document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if(editingId) deleteAppointment(editingId); });
-
-  // Backup/Stats
-  document.getElementById('backupBtn')?.addEventListener('click', ()=>{ const m=document.getElementById('backupModal'); if(m) m.classList.add('show'); });
-  document.getElementById('statsBtn')?.addEventListener('click', showStats);
-  document.getElementById('importBtn')?.addEventListener('click', ()=>{ const f=document.getElementById('importFile'); if(f) f.click(); });
-  document.getElementById('importFile')?.addEventListener('change', e=>{ const f=e.target.files&&e.target.files[0]; if(f) importFromJson(f); });
-  document.getElementById('exportJson')?.addEventListener('click', exportToJson);
-  document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
 
   // Estados
   attachStatusListeners();
