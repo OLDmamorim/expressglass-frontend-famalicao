@@ -20,8 +20,6 @@
     .toast.success{ border-left:4px solid #10b981; }
     .toast.error{ border-left:4px solid #ef4444; }
     .toast.info{ border-left:4px solid #3b82f6; }
-    /* pequeno alinhamento para o botão abaixo da navegação */
-    .nav-add-service{ display:flex; justify-content:center; gap:8px; margin:10px 0 18px; }
   </style>
 
   <!-- Funções base (modal + máscara de matrícula) definidas ANTES do script.js -->
@@ -76,7 +74,7 @@
       </div>
     </div>
 
-    <!-- ✅ Botão Novo Serviço debaixo do nav -->
+    <!-- Botão Novo Serviço abaixo da navegação -->
     <div class="nav-add-service no-print">
       <button id="addServiceTop" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
     </div>
@@ -147,20 +145,6 @@
         </table>
       </div>
     </section>
-
-    <!-- PRINT: Por agendar -->
-    <div class="print-unscheduled-section print-break-before">
-      <h2 class="print-title">SERVIÇOS POR AGENDAR</h2>
-      <table class="print-unscheduled-table">
-        <thead>
-          <tr>
-            <th>Matrícula</th><th>Modelo do Carro</th><th>Serviço</th>
-            <th>Estado</th><th>Observações</th><th>Outros Dados</th>
-          </tr>
-        </thead>
-        <tbody id="printUnscheduledTableBody"></tbody>
-      </table>
-    </div>
 
     <!-- PRINT: Hoje -->
     <div class="print-today-section print-break-before">
@@ -275,84 +259,5 @@
 
   <!-- script principal -->
   <script src="script.js?v=6" defer></script>
-
-  <!-- Fallbacks: abrir/fechar modal e GUARDAR mesmo sem script.js -->
-  <script>
-    (function () {
-      const open = () => openAppointmentModal();
-      const close = () => closeAppointmentModal();
-      document.getElementById('addServiceTop')?.addEventListener('click', open);   // ✅ novo botão
-      document.getElementById('addServiceBtn')?.addEventListener('click', open);
-      document.getElementById('addServiceMobile')?.addEventListener('click', open);
-      document.getElementById('closeModal')?.addEventListener('click', close);
-      document.getElementById('cancelForm')?.addEventListener('click', close);
-
-      // ===== Fallback de GUARDAR (corrigido p/ data opcional) =====
-      const form = document.getElementById('appointmentForm');
-      const API = 'https://expressglass-backend-famalicao.netlify.app/api/appointments';
-
-      function normalizePeriod(p){
-        if(!p) return '';
-        const t = String(p).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
-        if(t==='manha') return 'Manhã';
-        if(t==='tarde') return 'Tarde';
-        return '';
-      }
-      function toast(msg,type){
-        const c=document.getElementById('toastContainer'); 
-        const t=document.createElement('div');
-        t.className='toast '+(type||'info');
-        t.innerHTML = '<span>'+msg+'</span>';
-        (c||document.body).appendChild(t);
-        setTimeout(()=>t.remove(),3500);
-      }
-
-      form?.addEventListener('submit', async (e)=>{
-        if(window.__saveHandled){ return; } // se o script.js já registou o handler
-        e.preventDefault();
-
-        const rawDate   = document.getElementById('appointmentDate').value || '';
-        const rawPeriod = document.getElementById('appointmentPeriod').value || '';
-
-        const payload = {
-          id: Date.now(),
-          plate: (document.getElementById('appointmentPlate').value||'').toUpperCase(),
-          car: document.getElementById('appointmentCar').value,
-          service: document.getElementById('appointmentService').value,
-          status: document.getElementById('appointmentStatus').value || 'NE',
-          notes: document.getElementById('appointmentNotes').value,
-          extra: document.getElementById('appointmentExtra').value,
-          sortIndex: 1
-        };
-
-        if(rawDate){
-          payload.date = rawDate;                               // yyyy-mm-dd
-          payload.period = normalizePeriod(rawPeriod) || 'Manhã';
-        }else{
-          payload.period = ''; // Sem data -> “Por agendar”
-        }
-
-        try{
-          const r = await fetch(API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Tenant-Id': 'famalicao' },
-            body: JSON.stringify(payload)
-          });
-          if(!r.ok){
-            const msg = await r.text().catch(()=> String(r.status));
-            throw new Error(msg || ('HTTP '+r.status));
-          }
-          toast('Agendamento criado!','success');
-          close();
-          location.reload();
-        }catch(err){
-          console.error(err);
-          toast('Erro ao guardar: '+(err.message||err),'error');
-        }
-      });
-
-      console.debug('Fallback modal + save (data opcional) ativo');
-    })();
-  </script>
 </body>
 </html>
