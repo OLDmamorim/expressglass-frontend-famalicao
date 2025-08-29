@@ -2,47 +2,54 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
   <title>Agendamentos Famalicão</title>
   <link rel="stylesheet" href="style.css"/>
 
-  <!-- Mínimos para o modal funcionar mesmo sem JS -->
+  <!-- CSS inline mínimo p/ modal e toasts visíveis caso o style.css falhe -->
   <style>
-    .modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:24px}
-    .modal.show{display:flex}
-    .modal-content{width:min(720px,95vw);background:#fff;border-radius:16px;overflow:hidden}
-    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%);color:#fff}
-    .close-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+    .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center; }
+    .modal.show{ display:flex; }
+    .modal-content{ background:#fff; border-radius:12px; max-width:720px; width:90%; max-height:90vh; overflow:auto; }
+    .modal-header{ display:flex; justify-content:space-between; align-items:center; padding:16px 18px; border-bottom:1px solid #e5e7eb; }
+    .close-btn{ background:none; border:none; font-size:18px; cursor:pointer; color:#6b7280; }
+    .toast-container{ position:fixed; top:20px; right:20px; z-index:10000; }
+    .toast{ background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:12px 16px; margin-bottom:8px; box-shadow:0 4px 6px -1px rgba(0,0,0,.1); display:flex; gap:8px; min-width:260px; }
   </style>
 
+  <!-- Funções básicas para modal e máscara de matrícula (fallback) -->
   <script>
-    // Fallback para abrir/fechar modal e máscara da matrícula
-    function openAppointmentModal(){document.getElementById('appointmentModal')?.classList.add('show')}
-    function closeAppointmentModal(){document.getElementById('appointmentModal')?.classList.remove('show')}
-    function formatPlate(input){
-      let v=(input.value||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
-      if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);
-      if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5,7);
-      input.value=v;
+    function openAppointmentModal(){ const m=document.getElementById('appointmentModal'); if(m) m.classList.add('show'); }
+    function closeAppointmentModal(){ const m=document.getElementById('appointmentModal'); if(m) m.classList.remove('show'); }
+    if(!window.formatPlate){
+      window.formatPlate = function(input){
+        let v=(input.value||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+        if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);
+        if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5,7);
+        input.value=v;
+      };
     }
-    window.openAppointmentModal=openAppointmentModal;
-    window.closeAppointmentModal=closeAppointmentModal;
+    window.openAppointmentModal = window.openAppointmentModal || openAppointmentModal;
+    window.closeAppointmentModal = window.closeAppointmentModal || closeAppointmentModal;
   </script>
 </head>
 <body>
   <div class="page">
-    <!-- HEADER -->
     <header class="page-header">
       <h1>AGENDAMENTOS FAMALICÃO</h1>
       <p class="subtitle">Agendamento serviços Expressglass</p>
       <div class="header-actions">
         <div id="connectionStatus" class="connection-status" title="Status da conexão">
-          <span id="statusIcon">🌐</span><span id="statusText">Online</span>
+          <span id="statusIcon">🌐</span>
+          <span id="statusText">Online</span>
         </div>
+        <button id="backupBtn" class="header-btn" title="Backup de dados">💾</button>
+        <button id="statsBtn" class="header-btn" title="Estatísticas">📊</button>
+        <button id="searchBtn" class="header-btn" title="Pesquisar">🔍</button>
       </div>
     </header>
 
-    <!-- NAV -->
+    <!-- Navegação da semana -->
     <div class="nav-bar no-print">
       <div class="nav-left">
         <button id="prevWeek" class="nav-button" type="button">◄ Anterior</button>
@@ -55,24 +62,24 @@
       </div>
     </div>
 
-    <!-- Botão “+ Novo Serviço” encostado à esquerda, logo abaixo da navegação -->
+    <!-- Botão Novo Serviço (logo abaixo da navegação) -->
     <div class="nav-sub no-print">
       <button id="addServiceTop" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
     </div>
 
-    <!-- PESQUISA -->
-    <div id="searchBar" class="search-bar hidden no-print">
+    <!-- Pesquisa -->
+    <div id="searchBar" class="search-bar hidden">
       <input type="text" id="searchInput" placeholder="Pesquisar por matrícula, carro ou localidade..." />
       <button id="clearSearch" class="search-clear" type="button">✕</button>
     </div>
 
-    <!-- CALENDÁRIO (desktop) -->
+    <!-- Calendário -->
     <div class="schedule-container print-page-1">
       <table id="schedule" class="schedule"></table>
     </div>
 
-    <!-- POR AGENDAR -->
-    <section class="unscheduled-container no-print">
+    <!-- Por agendar -->
+    <section class="unscheduled-container">
       <h3>SERVIÇOS POR AGENDAR</h3>
       <div class="unscheduled-actions">
         <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
@@ -86,8 +93,8 @@
       <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
     </section>
 
-    <!-- VERSÃO MOBILE: vista diária -->
-    <section id="mobileDayView" class="mobile-day-container no-print">
+    <!-- Vista diária (mobile) -->
+    <section id="mobileDayView" class="mobile-day-container">
       <div class="mobile-day-header">
         <div id="mobileDayLabel" class="mobile-day-label">—</div>
         <div class="mobile-day-buttons">
@@ -97,31 +104,11 @@
         </div>
       </div>
       <div id="mobileDayList" class="mobile-day-list"></div>
+      <button id="addServiceMobile" class="mobile-add-btn" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
     </section>
 
-    <!-- TABELA: Vidros para encomendar (Hoje + 3 dias) — escondida no mobile pelo CSS -->
-    <section class="to-order-section glass-orders-container no-print">
-      <h3 class="to-order-title">VIDROS PARA ENCOMENDAR <small>(Hoje + 3 dias)</small></h3>
-      <div class="table-wrapper">
-        <table class="to-order-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Período</th>
-              <th>Matrícula</th>
-              <th>Carro</th>
-              <th>Serviço</th>
-              <th>Observações</th>
-              <th>Outros Dados</th>
-            </tr>
-          </thead>
-          <tbody id="glassOrdersTableBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- TABELA: Serviços (desktop) -->
-    <section class="services-table-container print-page-2 no-print">
+    <!-- Tabela de serviços -->
+    <section class="services-table-container print-page-2">
       <h3 id="servicesTableTitle">SERVIÇOS A REALIZAR</h3>
       <div class="services-summary">
         <span id="servicesSummary">Todos os serviços desde hoje em diante</span>
@@ -147,10 +134,31 @@
       </div>
     </section>
 
-    <!-- SECÇÕES DE IMPRESSÃO -->
-    <div class="print-today-section print-page-1">
+    <!-- Tabela: Vidros para Encomendar (Hoje + 3 dias) -->
+    <section id="glassOrdersSection" class="to-order-section glass-orders-container">
+      <h3 class="to-order-title">VIDROS PARA ENCOMENDAR <small>(Hoje + 3 dias)</small></h3>
+      <div class="table-wrapper">
+        <table class="to-order-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Período</th>
+              <th>Matrícula</th>
+              <th>Carro</th>
+              <th>Serviço</th>
+              <th>Observações</th>
+              <th>Outros Dados</th>
+            </tr>
+          </thead>
+          <tbody id="glassOrdersTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PRINT: Hoje -->
+    <div class="print-today-section print-break-before" style="display:none">
       <h2 id="printTodayTitle" class="print-title">SERVIÇOS DE HOJE</h2>
-      <div id="printTodayDate" class="print-today-date"></div>
+      <div class="print-today-date" id="printTodayDate"></div>
       <table class="print-today-table">
         <thead>
           <tr>
@@ -160,12 +168,15 @@
         </thead>
         <tbody id="printTodayTableBody"></tbody>
       </table>
-      <div id="printTodayEmpty" style="display:none;"><p>Não há serviços agendados para hoje.</p></div>
+      <div class="print-today-empty" id="printTodayEmpty" style="display:none;">
+        <p>Não há serviços agendados para hoje.</p>
+      </div>
     </div>
 
-    <div class="print-tomorrow-section print-page-2">
+    <!-- PRINT: Amanhã -->
+    <div class="print-tomorrow-section print-break-before" style="display:none">
       <h2 id="printTomorrowTitle" class="print-title">SERVIÇOS DE AMANHÃ</h2>
-      <div id="printTomorrowDate" class="print-tomorrow-date"></div>
+      <div class="print-tomorrow-date" id="printTomorrowDate"></div>
       <table class="print-tomorrow-table">
         <thead>
           <tr>
@@ -175,28 +186,33 @@
         </thead>
         <tbody id="printTomorrowTableBody"></tbody>
       </table>
-      <div id="printTomorrowEmpty" style="display:none;"><p>Não há serviços agendados para amanhã.</p></div>
+      <div class="print-tomorrow-empty" id="printTomorrowEmpty" style="display:none;">
+        <p>Não há serviços agendados para amanhã.</p>
+      </div>
     </div>
 
-    <div class="print-toorder-section print-page-3">
+    <!-- PRINT: Vidros para Encomendar -->
+    <div class="print-toorder-section print-break-before" style="display:none">
       <h2 class="print-title">VIDROS PARA ENCOMENDAR (Hoje + 3 dias)</h2>
       <table class="print-toorder-table">
         <thead>
           <tr>
-            <th>Data</th><th>Período</th><th>Matrícula</th>
-            <th>Modelo do Carro</th><th>Serviço</th><th>Observações</th><th>Outros Dados</th>
+            <th>Data</th><th>Período</th><th>Matrícula</th><th>Modelo do Carro</th>
+            <th>Serviço</th><th>Observações</th><th>Outros Dados</th>
           </tr>
         </thead>
         <tbody id="printToOrderTableBody"></tbody>
       </table>
-      <div id="printToOrderEmpty" style="display:none;"><p>Sem vidros para encomendar neste período.</p></div>
+      <div id="printToOrderEmpty" style="display:none;">
+        <p>Sem vidros para encomendar neste período.</p>
+      </div>
     </div>
   </div>
 
   <!-- Toasts -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- MODAL -->
+  <!-- MODAL: Novo/Editar Agendamento -->
   <div id="appointmentModal" class="modal" aria-hidden="true">
     <div class="modal-content">
       <div class="modal-header">
@@ -226,7 +242,6 @@
             <label for="appointmentCar">Carro</label>
             <input id="appointmentCar" name="car" type="text" placeholder="Modelo / Marca" />
           </div>
-
           <div class="form-group">
             <label for="appointmentService">Serviço</label>
             <select id="appointmentService" name="service">
@@ -245,7 +260,6 @@
               <option value="ST">ST — Terminado</option>
             </select>
           </div>
-
           <div class="form-group" style="grid-column: 1 / -1;">
             <label for="appointmentNotes">Observações</label>
             <textarea id="appointmentNotes" name="notes" rows="2" placeholder="Notas internas…"></textarea>
@@ -255,7 +269,6 @@
             <textarea id="appointmentExtra" name="extra" rows="2" placeholder="Contacto, morada, etc."></textarea>
           </div>
         </div>
-
         <div class="form-actions">
           <button id="deleteAppointment" class="btn danger hidden" type="button">Eliminar</button>
           <button id="cancelForm" class="btn secondary" type="button" onclick="closeAppointmentModal()">Cancelar</button>
@@ -265,7 +278,7 @@
     </div>
   </div>
 
-  <!-- Script principal -->
+  <!-- script principal -->
   <script src="script.js?v=9" defer></script>
 </body>
 </html>
