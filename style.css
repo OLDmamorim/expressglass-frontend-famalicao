@@ -723,3 +723,24 @@ table.schedule td:first-child{ border-left:none; }
   .to-order-table thead th,
   .to-order-table tbody td{ padding:10px 12px; }
 }
+
+@media print{
+  /* esconder a app toda e mostrar só as 3 folhas de impressão */
+  .schedule-container,
+  .unscheduled-container,
+  .toorder-container,          /* <- tabela on-page */
+  .services-table-container,
+  .mobile-day-container,
+  .search-bar,
+  .nav-bar,
+  .page-header,
+  .no-print {
+    display: none !important;
+  }
+
+  .print-today-section,
+  .print-tomorrow-section,
+  .print-toorder-section {
+    display: block !important;
+  }
+}
