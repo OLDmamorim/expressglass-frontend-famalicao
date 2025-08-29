@@ -169,3 +169,112 @@ table.schedule td:first-child{ border-left:none; }
   .print-today-table th,
   .print-tomorrow-table th{ background:#f0f0f0; font-weight:700; text-align:center; }
 }
+/* ===== FIX: Botão "+ Novo Serviço" bonito ===== */
+.unscheduled-actions .action-btn.primary {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(37,99,235,.25);
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.unscheduled-actions .action-btn.primary:hover {
+  background:#1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(37,99,235,.30);
+}
+
+/* ===== FIX: Modal estilizado e responsivo ===== */
+.modal{
+  display:none;
+  position:fixed; inset:0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, .55);
+  backdrop-filter: blur(3px);
+  align-items: center; justify-content: center;
+  padding: 24px;
+}
+.modal.show{ display:flex; }
+
+.modal-content{
+  width: min(760px, 96vw);
+  background:#fff;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid #e5e7eb;
+  box-shadow: 0 20px 50px rgba(2,6,23,.25);
+}
+
+.modal-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px;
+  background: linear-gradient(135deg,#3b82f6 0%, #1d4ed8 100%);
+  color:#fff;
+}
+.modal-header h3{ margin:0; font-size:18px; font-weight:800; }
+.close-btn{
+  background: rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.25);
+  color:#fff; border-radius:8px; padding:6px 10px; cursor:pointer;
+}
+.close-btn:hover{ background: rgba(255,255,255,.3); }
+
+/* Conteúdo do formulário */
+.appointment-form{ padding:18px; }
+.form-row{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (min-width: 820px){
+  .form-row{ grid-template-columns: repeat(4, 1fr); }
+}
+.form-group{ display:flex; flex-direction:column; }
+.form-group label{ font-weight:600; color:#111827; margin-bottom:6px; font-size:14px; }
+.form-group small.form-hint{ font-size:12px; color:#6b7280; margin-top:4px; }
+
+/* Inputs 100% e confortáveis no mobile (evita zoom) */
+.appointment-form input,
+.appointment-form select,
+.appointment-form textarea{
+  width:100%;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:16px;               /* 16px para evitar zoom iOS/Android */
+  outline:none;
+  background:#fff;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.appointment-form textarea{ min-height:84px; resize:vertical; }
+.appointment-form input:focus,
+.appointment-form select:focus,
+.appointment-form textarea:focus{
+  border-color:#3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+}
+
+/* Ações do formulário alinhadas à direita */
+.form-actions{
+  display:flex; gap:10px; justify-content:flex-end;
+  margin-top:16px; padding-top:12px; border-top:1px solid #e5e7eb;
+}
+.btn{
+  border:none; border-radius:10px; padding:10px 16px;
+  font-weight:700; cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.btn.primary{ background:#2563eb; color:#fff; }
+.btn.primary:hover{ background:#1d4ed8; transform: translateY(-1px); box-shadow:0 8px 18px rgba(37,99,235,.25); }
+.btn.secondary{ background:#6b7280; color:#fff; }
+.btn.secondary:hover{ background:#4b5563; transform: translateY(-1px); }
+.btn.danger{ background:#ef4444; color:#fff; }
+.btn.danger:hover{ background:#dc2626; transform: translateY(-1px); }
+
+/* Campos largos (Observações/Outros) ocupam a linha toda */
+.form-group[style*="grid-column: 1 / -1;"],
+#appointmentNotes, #appointmentExtra{
+  grid-column: 1 / -1;
+}
