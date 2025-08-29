@@ -105,6 +105,12 @@ let __wiredForm = false;
 let __savingAppointment = false;
 
 /* ===========================
+   MOBILE BREAKPOINT
+=========================== */
+const MOBILE_Q = window.matchMedia('(max-width: 900px)');
+const isMobile = () => MOBILE_Q.matches;
+
+/* ===========================
    ORDEM & DEDUPE
 =========================== */
 function bucketOf(a){ return (a.date && a.period) ? `${a.date}|${a.period}` : 'unscheduled'; }
@@ -154,23 +160,49 @@ function normalizeAllBucketsOrder(list){
 }
 
 /* ===========================
-   LOAD
+   CONEXÃO (status + retry)
+=========================== */
+function setConnectionStatus(ok){
+  const icon = document.getElementById('statusIcon');
+  const text = document.getElementById('statusText');
+  if (!icon || !text) return;
+  if (ok){
+    icon.textContent = '🌐';
+    text.textContent = 'Online';
+  } else {
+    icon.textContent = '⚠️';
+    text.textContent = 'Offline';
+  }
+}
+
+/* ===========================
+   LOAD (com retry 3x)
 =========================== */
 async function load(){
-  try{
-    const rows = await apiGet('/api/appointments');
-    const mapped = rows.map(a=>({
-      ...a,
-      date: parseDate(a.date),
-      period: normalizePeriod(a.period),
-      id: a.id ?? (Date.now()+Math.random()),
-      sortIndex: (a.sortIndex != null ? Number(a.sortIndex) : null),
-      status: a.status ?? 'NE'
-    }));
-    appointments = normalizeAllBucketsOrder(dedupeByIdOrKey(mapped));
-  }catch(e){
-    appointments=[]; showToast('Erro ao carregar: '+e.message,'error');
+  let lastErr = null;
+  for (let i=0;i<3;i++){
+    try{
+      setConnectionStatus(navigator.onLine);
+      const rows = await apiGet('/api/appointments');
+      const mapped = rows.map(a=>({
+        ...a,
+        date: parseDate(a.date),
+        period: normalizePeriod(a.period),
+        id: a.id ?? (Date.now()+Math.random()),
+        sortIndex: (a.sortIndex != null ? Number(a.sortIndex) : null),
+        status: a.status ?? 'NE'
+      }));
+      appointments = normalizeAllBucketsOrder(dedupeByIdOrKey(mapped));
+      setConnectionStatus(true);
+      return;
+    }catch(e){
+      lastErr = e;
+      setConnectionStatus(false);
+      await new Promise(r=>setTimeout(r, 400*(i+1)));
+    }
   }
+  appointments=[]; 
+  showToast('Erro ao carregar: '+(lastErr?.message||lastErr),'error');
 }
 
 /* ===========================
@@ -260,8 +292,8 @@ function renderSchedule(){
   const table=document.getElementById('schedule'); if(!table) return; table.innerHTML='';
 
   // Segunda -> Sábado (6 dias)
-  const week=[...Array(6)].map((_,i)=> addDays(currentMonday,i));
   const wr=document.getElementById('weekRange');
+  const week=[...Array(6)].map((_,i)=> addDays(currentMonday,i));
   if(wr){ wr.textContent = `${week[0].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})} - ${week[5].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'})}`; }
 
   let thead='<thead><tr><th>Período</th>';
@@ -415,12 +447,15 @@ function renderServicesTable(){
 
 /* Glass orders (NE, hoje -> +3 dias) */
 function renderGlassOrdersTable(){
-  const tbody = document.getElementById('glassOrdersTableBody');
   const section = document.querySelector('.glass-orders-container');
-  if(!tbody || !section) return;
+  const tbody = document.getElementById('glassOrdersTableBody');
+  if (!section || !tbody) return;
 
-  // Se o CSS do mobile estiver a ocultar, não mexe (evita “piscar”)
-  if (getComputedStyle(section).display === 'none') return;
+  // Em mobile, não renderiza nada (fica limpo)
+  if (isMobile()){
+    tbody.innerHTML = '';
+    return;
+  }
 
   const today = new Date();
   const maxDay = addDays(today, 3);
@@ -456,7 +491,7 @@ function renderAll(){
   renderUnscheduled();
   renderMobileDay();
   renderServicesTable();
-  renderGlassOrdersTable();   // <= garantir chamada
+  renderGlassOrdersTable();
 }
 
 /* ===========================
@@ -715,7 +750,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay=new Date(); renderMobileDay(); });
   document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,1); renderMobileDay(); });
 
-  // Impressão — só HOJE + AMANHÃ (+ vidros na própria folha)
+  // Impressão — HOJE + AMANHÃ + Vidros
   document.getElementById('printPage')?.addEventListener('click', ()=>{
     updatePrintTodayTable();
     updatePrintTomorrowTable();
@@ -731,7 +766,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     if (go) go.style.display = 'block';
 
     window.print();
-
     setTimeout(()=>{ location.reload(); }, 300);
   });
 
@@ -764,6 +798,13 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
   // Estados
   attachStatusListeners();
+
+  // Online/Offline
+  window.addEventListener('online', ()=> setConnectionStatus(true));
+  window.addEventListener('offline', ()=> setConnectionStatus(false));
+
+  // Re-render ao mudar breakpoint (entra/sai de mobile)
+  MOBILE_Q.addEventListener?.('change', ()=> renderAll());
 
   await load();
   renderAll();
