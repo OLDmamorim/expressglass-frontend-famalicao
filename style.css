@@ -390,4 +390,70 @@ table.schedule td:first-child{ border-left:none; }
 .btn.secondary { background: #6b7280; color: #fff; }
 .btn.secondary:hover { background: #4b5563; }
 .btn.danger { background: #ef4444; color: #fff; }
-.btn.danger:hover { background: #dc2626; } 
+.btn.danger:hover { background: #dc2626; }
+/* ===== MOBILE FIX PACK ===== */
+@media (max-width: 820px){
+
+  /* 1) trocamos grelha por vista diária */
+  .schedule-container{ display:none !important; }
+  .mobile-day-container{ display:block !important; margin-top:12px; }
+
+  /* 2) header mais compacto e sem quebrar */
+  .page-header{ padding:16px; border-radius:12px; }
+  .page-header h1{ font-size:22px; line-height:1.1; }
+  .subtitle{ font-size:12px; }
+
+  .nav-bar{ gap:8px; }
+  .nav-button{ padding:8px 10px; font-size:14px; }
+  .week-range{ font-size:14px; }
+
+  /* 3) lista diária — cartões 100% largura e compactos */
+  #mobileDayList .appointment-block{
+    width:100%;
+    border-radius:16px;
+    padding:12px 14px 40px; /* espaço pro editar/apagar */
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
+  }
+  #mobileDayList .appt-header{ font-size:16px; line-height:1.2; }
+  #mobileDayList .appt-sub{ font-size:12px; opacity:.95; }
+
+  /* 4) pills de estado pequenas e sem “estourar” */
+  #mobileDayList .appt-status,
+  .appointment-block .appt-status{
+    gap:8px; margin-top:8px; flex-wrap:wrap;
+  }
+  #mobileDayList .appt-status label,
+  .appointment-block .appt-status label{
+    padding:4px 8px; border-radius:999px; font-size:12px;
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.25);
+  }
+  /* checkbox menor com visto preto (já tens classes .state-box, mas reforço tamanho no mobile) */
+  #mobileDayList .appt-status input[type="checkbox"],
+  .appointment-block .appt-status input[type="checkbox"]{
+    width:18px; height:18px; border-radius:6px;
+  }
+  #mobileDayList .appt-status input[type="checkbox"]::after,
+  .appointment-block .appt-status input[type="checkbox"]::after{
+    width:8px; height:5px; border-width:2.5px;
+  }
+
+  /* 5) ações fixas no canto e menores */
+  .card-actions{ left:8px; bottom:8px; gap:8px; }
+  .card-actions button{ height:32px; min-width:40px; padding:4px 8px; font-size:13px; }
+
+  /* 6) secções desktop fora do caminho */
+  .unscheduled-container{ margin-top:12px; }
+  .services-table-container{ display:none !important; }
+
+  /* 7) garante que nada sangra pra fora do cartão */
+  .appointment-block{ overflow:hidden; }
+}
+
+/* ===== DESKTOP pequenos (>= 821px) — evitar quebra feia nas cabeças da grelha */
+@media (min-width: 821px){
+  table.schedule thead th .day,
+  table.schedule thead th .date{
+    white-space:nowrap;
+  }
+}
