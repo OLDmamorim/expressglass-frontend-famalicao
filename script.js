@@ -3,57 +3,48 @@
 /* ===========================
    API CONFIG
 =========================== */
-var API_BASE = 'https://expressglass-backend-famalicao.netlify.app';
+const API_BASE = 'https://expressglass-backend-famalicao.netlify.app';
 
 /* -------- HTTP helpers -------- */
-function apiGet(path, params) {
-  params = params || {};
-  var url = new URL(API_BASE + path);
-  Object.keys(params).forEach(function (k) {
-    var v = params[k];
+async function apiGet(path, params = {}) {
+  const url = new URL(API_BASE + path);
+  Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
   });
-  return fetch(url, { headers: { 'X-Tenant-Id': 'famalicao' } })
-    .then(function (res) {
-      if (!res.ok) throw new Error('GET ' + path + ' -> ' + res.status);
-      return res.json();
-    });
+  const res = await fetch(url, { headers: { 'X-Tenant-Id': 'famalicao' } });
+  if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
+  return res.json();
 }
-function apiPost(path, data) {
-  return fetch(API_BASE + path, {
+async function apiPost(path, data) {
+  const res = await fetch(API_BASE + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Tenant-Id': 'famalicao' },
     body: JSON.stringify(data)
-  }).then(function (res) {
-    if (!res.ok) return res.text().then(function (t) { throw new Error('POST ' + path + ' -> ' + res.status + ' ' + t); });
-    return res.json();
   });
+  if (!res.ok) throw new Error(`POST ${path} -> ${res.status} ${await res.text()}`);
+  return res.json();
 }
-function apiPut(path, data) {
-  return fetch(API_BASE + path, {
+async function apiPut(path, data) {
+  const res = await fetch(API_BASE + path, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'X-Tenant-Id': 'famalicao' },
     body: JSON.stringify(data)
-  }).then(function (res) {
-    if (!res.ok) return res.text().then(function (t) { throw new Error('PUT ' + path + ' -> ' + res.status + ' ' + t); });
-    return res.json().catch(function () { return null; });
   });
+  if (!res.ok) throw new Error(`PUT ${path} -> ${res.status} ${await res.text().catch(()=> '')}`);
+  try { return await res.json(); } catch { return null; }
 }
-function apiDelete(path) {
-  return fetch(API_BASE + path, { method: 'DELETE', headers: { 'X-Tenant-Id': 'famalicao' } })
-    .then(function (res) {
-      if (!res.ok && res.status !== 204) throw new Error('DELETE ' + path + ' -> ' + res.status);
-      return true;
-    });
+async function apiDelete(path) {
+  const res = await fetch(API_BASE + path, { method: 'DELETE', headers: { 'X-Tenant-Id': 'famalicao' } });
+  if (!res.ok && res.status !== 204) throw new Error(`DELETE ${path} -> ${res.status}`);
+  return true;
 }
 
 /* ===========================
    UTILS
 =========================== */
-function $(id){ return document.getElementById(id); }
-function addDays(date, days) { var d = new Date(date); d.setDate(d.getDate() + days); return d; }
-function getMonday(date) { var d = new Date(date); var day = d.getDay(); var diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.setDate(diff)); }
-function localISO(date) { var y=date.getFullYear(), m=String(date.getMonth()+1).padStart(2,'0'), d=String(date.getDate()).padStart(2,'0'); return y+'-'+m+'-'+d; }
+function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
+function getMonday(date) { const d = new Date(date); const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.setDate(diff)); }
+function localISO(date) { const y=date.getFullYear(), m=String(date.getMonth()+1).padStart(2,'0'), d=String(date.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
 function fmtHeader(date){ return { day: date.toLocaleDateString('pt-PT',{weekday:'long'}), dm: date.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'}) }; }
 function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
 
@@ -61,420 +52,369 @@ function parseDate(dateStr){
   if(!dateStr) return '';
   if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
   if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)){
-    var p=dateStr.split('/'); var d=p[0], m=p[1], y=p[2];
-    return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const [d,m,y]=dateStr.split('/');
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
   }
-  var dt = new Date(dateStr); return isNaN(dt)?'':localISO(dt);
+  const dt = new Date(dateStr);
+  return isNaN(dt)?'':localISO(dt);
 }
 function formatDateForInput(dateStr){
   if(!dateStr) return '';
   if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)){
-    var s=dateStr.split('-'); return s[2]+'/'+s[1]+'/'+s[0];
+    const [y,m,d]=dateStr.split('-'); return `${d}/${m}/${y}`;
   }
   return dateStr;
 }
 
-/* remover acentos */
+/* Compat Android/WebView: remover acentos sem \p{Diacritic} */
 function normalizePeriod(p){
   if(!p) return '';
-  var t = String(p).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  const t = String(p).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
   if(t==='manha') return 'Manhã';
   if(t==='tarde') return 'Tarde';
   return '';
 }
 
-function showToast(msg,type){
-  type = type || 'info';
-  var c=$('toastContainer'); if(!c){ alert(msg); return; }
-  var t=document.createElement('div');
-  t.className='toast '+type;
-  var icon=type==='success'?'✅':(type==='error'?'❌':'ℹ️');
-  t.innerHTML='<span>'+icon+'</span><span>'+msg+'</span>';
+function showToast(msg,type='info'){
+  const c=document.getElementById('toastContainer');
+  if(!c){ console.log(type.toUpperCase()+':', msg); return; }
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  const icon=type==='success'?'✅':type==='error'?'❌':'ℹ️';
+  t.innerHTML=`<span>${icon}</span><span>${msg}</span>`;
   c.appendChild(t);
-  setTimeout(function(){ if(t && t.parentNode) t.parentNode.removeChild(t); },3500);
+  setTimeout(()=>t.remove(),3500);
 }
 function formatPlate(input){
-  var v=(input.value||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
-  if(v.length>2) v=v.slice(0,2)+'-'+v.slice(2);
-  if(v.length>5) v=v.slice(0,5)+'-'+v.slice(5,7);
+  let v=(input.value||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);
+  if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5,7);
   input.value=v;
 }
 
 /* ===========================
    STATE
 =========================== */
-var appointments = [];
-var currentMonday  = getMonday(new Date());
-var currentMobileDay = new Date();
-var editingId = null;
-var searchQuery = '';
-var statusFilter = '';
+let appointments = [];
+let currentMonday  = getMonday(new Date());
+let currentMobileDay = new Date();
+let editingId = null;
+let searchQuery = '';
+let statusFilter = '';
 
 /* ===========================
    LOAD
 =========================== */
-function load(){
-  return apiGet('/api/appointments').then(function(rows){
-    appointments = rows.map(function(a){
-      return {
-        id: (a && a.id) ? a.id : (Date.now()+Math.random()),
-        date: parseDate(a && a.date),
-        period: normalizePeriod(a && a.period),
-        plate: a && a.plate,
-        car: a && a.car,
-        service: a && a.service,
-        status: (a && a.status) ? a.status : 'NE',
-        notes: a && a.notes,
-        extra: a && a.extra,
-        sortIndex: (a && a.sortIndex) ? a.sortIndex : 1
-      };
-    });
-  }).catch(function(e){
-    appointments = [];
-    showToast('Erro ao carregar: '+e.message,'error');
-  });
+async function load(){
+  try{
+    const rows = await apiGet('/api/appointments');
+    appointments = rows.map(a=>({
+      ...a,
+      date: parseDate(a.date),
+      period: normalizePeriod(a.period),
+      id: a.id ?? (Date.now()+Math.random()),
+      sortIndex: a.sortIndex ?? 1,
+      status: a.status ?? 'NE'
+    }));
+  }catch(e){
+    appointments=[]; showToast('Erro ao carregar: '+e.message,'error');
+  }
 }
 
 /* ===========================
    FILTERS
 =========================== */
 function filterAppointments(list){
-  var r=list.slice();
+  let r=[...list];
   if(searchQuery){
-    var q=searchQuery.toLowerCase();
-    r=r.filter(function(a){
-      return ((a.plate||'').toLowerCase().indexOf(q)>-1) ||
-             ((a.car||'').toLowerCase().indexOf(q)>-1)   ||
-             ((a.notes||'').toLowerCase().indexOf(q)>-1) ||
-             ((a.extra||'').toLowerCase().indexOf(q)>-1);
-    });
+    const q=searchQuery.toLowerCase();
+    r=r.filter(a=>
+      (a.plate||'').toLowerCase().includes(q) ||
+      (a.car||'').toLowerCase().includes(q)   ||
+      (a.notes||'').toLowerCase().includes(q) ||
+      (a.extra||'').toLowerCase().includes(q)
+    );
   }
-  if(statusFilter) r=r.filter(function(a){ return a.status===statusFilter; });
+  if(statusFilter) r=r.filter(a=>a.status===statusFilter);
   return r;
 }
 function highlightSearchResults(){
   if(!searchQuery) return;
-  var els=document.querySelectorAll('.appointment-block');
-  for(var i=0;i<els.length;i++){
-    var el=els[i];
-    if(el.textContent.toLowerCase().indexOf(searchQuery.toLowerCase())>-1) el.classList.add('highlight');
-    else el.classList.remove('highlight');
-  }
+  document.querySelectorAll('.appointment-block').forEach(el=>{
+    el.classList.remove('highlight');
+    if(el.textContent.toLowerCase().includes(searchQuery.toLowerCase())) el.classList.add('highlight');
+  });
 }
 
 /* ===========================
-   DnD
+   Drag & Drop
 =========================== */
 function enableDragDrop(scope){
-  scope = scope || document;
-  var cards = scope.querySelectorAll('.appointment-block[data-id]');
-  for(var i=0;i<cards.length;i++){
-    (function(card){
-      card.draggable=true;
-      card.addEventListener('dragstart',function(e){
-        e.dataTransfer.setData('text/plain',card.getAttribute('data-id'));
-        e.dataTransfer.effectAllowed='move';
-        card.classList.add('dragging');
-      });
-      card.addEventListener('dragend',function(){ card.classList.remove('dragging'); });
-    })(cards[i]);
-  }
-  var zones = scope.querySelectorAll('[data-drop-bucket]');
-  for(var j=0;j<zones.length;j++){
-    (function(zone){
-      zone.addEventListener('dragover',function(e){ e.preventDefault(); zone.classList.add('drag-over'); });
-      zone.addEventListener('dragleave',function(){ zone.classList.remove('drag-over'); });
-      zone.addEventListener('drop',function(e){
-        e.preventDefault(); zone.classList.remove('drag-over');
-        var id=Number(e.dataTransfer.getData('text/plain'));
-        var targetBucket=zone.getAttribute('data-drop-bucket');
-        var targetIndex=zone.querySelectorAll('.appointment-block').length;
-        onDropAppointment(id,targetBucket,targetIndex);
-      });
-    })(zones[j]);
-  }
+  (scope||document).querySelectorAll('.appointment-block[data-id]').forEach(card=>{
+    card.draggable=true;
+    card.addEventListener('dragstart',e=>{
+      e.dataTransfer.setData('text/plain',card.getAttribute('data-id'));
+      e.dataTransfer.effectAllowed='move';
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend',()=> card.classList.remove('dragging'));
+  });
+  (scope||document).querySelectorAll('[data-drop-bucket]').forEach(zone=>{
+    zone.addEventListener('dragover',e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave',()=> zone.classList.remove('drag-over'));
+    zone.addEventListener('drop',e=>{
+      e.preventDefault(); zone.classList.remove('drag-over');
+      const id=Number(e.dataTransfer.getData('text/plain'));
+      const targetBucket=zone.getAttribute('data-drop-bucket');
+      const targetIndex=zone.querySelectorAll('.appointment-block').length;
+      onDropAppointment(id,targetBucket,targetIndex);
+    });
+  });
 }
-function bucketOf(a){ return (a.date && a.period) ? (a.date+'|'+a.period) : 'unscheduled'; }
-function normalizeBucketOrder(bucket){
-  var items=appointments.filter(function(a){ return bucketOf(a)===bucket; });
-  for(var i=0;i<items.length;i++){ items[i].sortIndex=i+1; }
-}
-function onDropAppointment(id,targetBucket,targetIndex){
-  var i=-1; for(var k=0;k<appointments.length;k++){ if(appointments[k].id==id){ i=k; break; } }
-  if(i<0) return;
-  var a=appointments[i];
-  var prev={date:a.date,period:a.period,sortIndex:a.sortIndex};
+function bucketOf(a){ return (a.date && a.period) ? `${a.date}|${a.period}` : 'unscheduled'; }
+function normalizeBucketOrder(bucket){ const items=appointments.filter(a=>bucketOf(a)===bucket); items.forEach((it,i)=> it.sortIndex=i+1); }
+async function onDropAppointment(id,targetBucket,targetIndex){
+  const i=appointments.findIndex(a=>a.id==id); if(i<0) return;
+  const a=appointments[i]; const prev={date:a.date,period:a.period,sortIndex:a.sortIndex};
 
   if(targetBucket==='unscheduled'){ a.date=''; a.period=''; }
-  else { var parts=targetBucket.split('|'); a.date=parts[0]; a.period=parts[1]||a.period||'Manhã'; }
+  else { const [d,p]=targetBucket.split('|'); a.date=d; a.period=p||a.period||'Manhã'; }
 
   normalizeBucketOrder(targetBucket);
-  var list=appointments.filter(function(x){ return bucketOf(x)===targetBucket; }).sort(function(x,y){ return (x.sortIndex||0)-(y.sortIndex||0); });
-  for(var t=0;t<list.length;t++){ list[t].sortIndex=t+1; }
+  const list=appointments.filter(x=>bucketOf(x)===targetBucket).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
+  list.forEach((x,idx)=> x.sortIndex=idx+1);
   if(targetIndex>=list.length) a.sortIndex=list.length+1;
-  else {
-    list.splice(targetIndex,0,a);
-    for(var u=0;u<list.length;u++){ list[u].sortIndex=u+1; }
-  }
+  else { list.splice(targetIndex,0,a); list.forEach((x,idx)=> x.sortIndex=idx+1); }
 
   renderAll(); // otimista
 
-  apiPut('/api/appointments/'+id,a).then(function(updated){
-    if(updated && typeof updated==='object'){ for(var k=0;k<appointments.length;k++){ if(appointments[k].id==id){ for(var p in updated){ appointments[k][p]=updated[p]; } } } }
-    return load().then(renderAll).then(function(){ showToast('Agendamento movido!','success'); });
-  }).catch(function(e){
+  try{
+    const updated=await apiPut(`/api/appointments/${id}`,a);
+    if(updated && typeof updated==='object') Object.assign(a,updated);
+    await load(); renderAll(); showToast('Agendamento movido!','success');
+  }catch(e){
     a.date=prev.date; a.period=prev.period; a.sortIndex=prev.sortIndex; renderAll();
     showToast('Erro a gravar movimento: '+e.message,'error');
-  });
+  }
 }
 
 /* ===========================
    RENDER
 =========================== */
 function renderSchedule(){
-  var table=$('schedule'); if(!table) return; table.innerHTML='';
+  const table=document.getElementById('schedule'); if(!table) return; table.innerHTML='';
 
-  // Segunda → Sábado
-  var week=[]; for(var i=0;i<6;i++) week.push(addDays(currentMonday,i));
-  var wr=$('weekRange');
-  if(wr){ wr.textContent = week[0].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})+' - '+week[5].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+  // Segunda -> Sábado (6 dias)
+  const week=[...Array(6)].map((_,i)=> addDays(currentMonday,i));
+  const wr=document.getElementById('weekRange');
+  if(wr){ wr.textContent = `${week[0].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})} - ${week[5].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'})}`; }
 
-  var thead='<thead><tr><th>Período</th>';
-  for(var d=0; d<week.length; d++){ var h=fmtHeader(week[d]); thead+='<th><div class="day">'+cap(h.day)+'</div><div class="date">'+h.dm+'</div></th>'; }
-  thead+='</tr></thead>';
-  table.insertAdjacentHTML('beforeend',thead);
+  let thead='<thead><tr><th>Período</th>';
+  for(const d of week){ const h=fmtHeader(d); thead+=`<th><div class="day">${cap(h.day)}</div><div class="date">${h.dm}</div></th>`; }
+  thead+='</tr></thead>'; table.insertAdjacentHTML('beforeend',thead);
 
-  function renderCell(period,dayDate){
-    var iso=localISO(dayDate);
-    var items=filterAppointments(
-      appointments.filter(function(a){ return a.date && a.date===iso && a.period===period; })
-                  .sort(function(x,y){ return (x.sortIndex||0)-(y.sortIndex||0); })
+  const renderCell=(period,dayDate)=>{
+    const iso=localISO(dayDate);
+    const items=filterAppointments(
+      appointments.filter(a=>a.date && a.date===iso && a.period===period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0))
     );
-    var html='';
-    for(var i=0;i<items.length;i++){
-      var a=items[i];
-      html += '<div class="appointment-block status-'+a.status+'" data-id="'+a.id+'" draggable="true">'+
-                '<div class="appt-header"><strong>'+(a.plate||'')+'</strong> | '+(a.service||'')+' | '+(String(a.car||'').toUpperCase())+'</div>'+
-                '<div class="appt-sub">'+(a.notes||'')+'</div>'+
-                '<div class="appt-status">'+
-                  '<label><input type="checkbox" data-status="NE" '+(a.status==='NE'?'checked':'')+'> N/E</label>'+
-                  '<label><input type="checkbox" data-status="VE" '+(a.status==='VE'?'checked':'')+'> V/E</label>'+
-                  '<label><input type="checkbox" data-status="ST" '+(a.status==='ST'?'checked':'')+'> ST</label>'+
-                '</div>'+
-                '<div class="card-actions">'+
-                  '<button class="action" type="button" title="Editar" onclick="editAppointment('+a.id+')">✏️</button>'+
-                  '<button class="action" type="button" title="Apagar" onclick="deleteAppointment('+a.id+')">🗑️</button>'+
-                '</div>'+
-              '</div>';
-    }
-    return '<div class="drop-zone" data-drop-bucket="'+iso+'|'+period+'">'+html+'</div>';
-  }
+    const blocks=items.map(a=>{
+      return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
+                <div class="appt-header">
+                  <strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}
+                </div>
+                <div class="appt-sub">${a.notes||''}</div>
+                <div class="appt-status">
+                  <label><input type="checkbox" class="state-box" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
+                  <label><input type="checkbox" class="state-box" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
+                  <label><input type="checkbox" class="state-box" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
+                </div>
+                <div class="card-actions">
+                  <button title="Editar" type="button" onclick="editAppointment(${a.id})">✏️</button>
+                  <button title="Apagar" type="button" onclick="deleteAppointment(${a.id})">🗑️</button>
+                </div>
+              </div>`;
+    }).join('');
+    return `<div class="drop-zone" data-drop-bucket="${iso}|${period}">${blocks}</div>`;
+  };
 
-  var tbody=document.createElement('tbody');
-  var periods=['Manhã','Tarde'];
-  for(var r=0;r<periods.length;r++){
-    var row=document.createElement('tr');
-    var cells='<th>'+periods[r]+'</th>';
-    for(var c=0;c<week.length;c++){ cells+='<td>'+renderCell(periods[r],week[c])+'</td>'; }
-    row.innerHTML=cells;
+  const tbody=document.createElement('tbody');
+  ['Manhã','Tarde'].forEach(period=>{
+    const row=document.createElement('tr');
+    row.innerHTML = `<th>${period}</th>` + week.map(d=>`<td>${renderCell(period,d)}</td>`).join('');
     tbody.appendChild(row);
-  }
+  });
   table.appendChild(tbody);
-
   enableDragDrop();
-  attachStatusListeners();
-  wireStatePills(table);
   highlightSearchResults();
 }
 
 /* Unscheduled */
 function renderUnscheduled(){
-  var container=$('unscheduledList'); if(!container) return;
+  const container=document.getElementById('unscheduledList'); if(!container) return;
 
-  var uns=filterAppointments(
-    appointments.filter(function(a){ return !a.date || !a.period; })
-                .sort(function(x,y){ return (x.sortIndex||0)-(y.sortIndex||0); })
+  const uns=filterAppointments(
+    appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0))
   );
 
   if (uns.length === 0){
     container.innerHTML =
-      '<div class="drop-zone empty" data-drop-bucket="unscheduled">'+
-         '<div class="unscheduled-empty-msg">Sem serviços por agendar.<small> Arrasta para aqui a partir do calendário, ou clica em “+ Novo Serviço”.</small></div>'+
-      '</div>';
+      `<div class="drop-zone empty" data-drop-bucket="unscheduled">
+         <div class="unscheduled-empty-msg">
+           Sem serviços por agendar.
+           <small>Arrasta para aqui a partir do calendário, ou clica em “+ Novo Serviço”.</small>
+         </div>
+       </div>`;
     enableDragDrop(container);
     return;
   }
 
-  var blocks='';
-  for(var i=0;i<uns.length;i++){
-    var a=uns[i];
-    blocks += '<div class="appointment-block status-'+a.status+'" data-id="'+a.id+'" draggable="true">'+
-                '<div class="appt-header"><strong>'+(a.plate||'')+'</strong> | '+(a.service||'')+' | '+(String(a.car||'').toUpperCase())+'</div>'+
-                '<div class="appt-sub">'+(a.notes||'')+'</div>'+
-                '<div class="appt-status">'+
-                  '<label><input type="checkbox" data-status="NE" '+(a.status==='NE'?'checked':'')+'> N/E</label>'+
-                  '<label><input type="checkbox" data-status="VE" '+(a.status==='VE'?'checked':'')+'> V/E</label>'+
-                  '<label><input type="checkbox" data-status="ST" '+(a.status==='ST'?'checked':'')+'> ST</label>'+
-                '</div>'+
-                '<div class="card-actions">'+
-                  '<button class="action" type="button" title="Editar" onclick="editAppointment('+a.id+')">✏️</button>'+
-                  '<button class="action" type="button" title="Apagar" onclick="deleteAppointment('+a.id+')">🗑️</button>'+
-                '</div>'+
-              '</div>';
-  }
-  container.innerHTML = '<div class="drop-zone" data-drop-bucket="unscheduled">'+blocks+'</div>';
+  const blocks=uns.map(a=>{
+    return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
+              <div class="appt-header">
+                <strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}
+              </div>
+              <div class="appt-sub">${a.notes||''}</div>
+              <div class="appt-status">
+                <label><input type="checkbox" class="state-box" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
+                <label><input type="checkbox" class="state-box" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
+                <label><input type="checkbox" class="state-box" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
+              </div>
+              <div class="card-actions">
+                <button title="Editar" type="button" onclick="editAppointment(${a.id})">✏️</button>
+                <button title="Apagar" type="button" onclick="deleteAppointment(${a.id})">🗑️</button>
+              </div>
+            </div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="drop-zone" data-drop-bucket="unscheduled">${blocks}</div>`;
   enableDragDrop(container);
-  attachStatusListeners();
-  wireStatePills(container);
   highlightSearchResults();
 }
 
 function renderMobileDay(){
-  var label=$('mobileDayLabel');
+  const label=document.getElementById('mobileDayLabel');
   if(label){
-    var s=currentMobileDay.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+    const s=currentMobileDay.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
     label.textContent=cap(s);
   }
-  var iso=localISO(currentMobileDay);
-  var dayItems=filterAppointments(
-    appointments.filter(function(a){ return a.date===iso; })
-                .sort(function(a,b){
-                  if(a.period!==b.period) return a.period==='Manhã'?-1:1;
-                  return (a.sortIndex||0)-(b.sortIndex||0);
-                })
+  const iso=localISO(currentMobileDay);
+  const dayItems=filterAppointments(
+    appointments.filter(a=>a.date===iso).sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0))
   );
-  var container=$('mobileDayList'); if(!container) return;
-  var html='';
-  for(var i=0;i<dayItems.length;i++){
-    var a=dayItems[i];
-    html += '<div class="appointment-block status-'+a.status+'" style="margin-bottom:10px;" data-id="'+a.id+'">'+
-              '<div class="appt-header">'+a.period+' - '+(a.plate||'')+' | '+(a.service||'')+' | '+(String(a.car||'').toUpperCase())+'</div>'+
-              '<div class="appt-sub">'+(a.notes||'')+'</div>'+
-            '</div>';
-  }
-  container.innerHTML = html;
-  wireStatePills(container);
+  const container=document.getElementById('mobileDayList'); if(!container) return;
+  container.innerHTML = dayItems.map(a=>{
+    return `<div class="appointment-block status-${a.status}" style="margin-bottom:10px;" data-id="${a.id}">
+              <div class="appt-header">${a.period} - ${(a.plate||'')} | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
+              <div class="appt-sub">${a.notes||''}</div>
+            </div>`;
+  }).join('');
   highlightSearchResults();
 }
 
 function renderServicesTable(){
-  var tbody=$('servicesTableBody'); if(!tbody) return;
-  var today=new Date();
-  var future=filterAppointments(
-    appointments.filter(function(a){ return a.date && new Date(a.date)>=new Date().setHours(0,0,0,0); })
-                .sort(function(a,b){ return new Date(a.date)-new Date(b.date); })
+  const tbody=document.getElementById('servicesTableBody'); if(!tbody) return;
+  const today=new Date();
+  const future=filterAppointments(
+    appointments.filter(a=>a.date && new Date(a.date)>=new Date().setHours(0,0,0,0)).sort((a,b)=> new Date(a.date)-new Date(b.date))
   );
-  var rows='';
-  for(var i=0;i<future.length;i++){
-    var a=future[i]; var dt=new Date(a.date);
-    var diff=Math.ceil((dt-today)/(1000*60*60*24));
-    var daysText = diff<0?(Math.abs(diff)+' dias atrás') : (diff===0?'Hoje' : (diff===1?'Amanhã' : (diff+' dias')));
-    rows += '<tr>'+
-      '<td>'+dt.toLocaleDateString('pt-PT')+'</td>'+
-      '<td>'+(a.period||'')+'</td>'+
-      '<td>'+(a.plate||'')+'</td>'+
-      '<td>'+(a.car||'')+'</td>'+
-      '<td><span class="badge badge-'+(a.service||'')+'">'+(a.service||'')+'</span></td>'+
-      '<td>'+(a.notes||'')+'</td>'+
-      '<td>'+(a.status||'')+'</td>'+
-      '<td>'+daysText+'</td>'+
-      '<td class="no-print">'+
-        '<button class="table-btn" type="button" onclick="editAppointment('+a.id+')">✏️</button>'+
-        '<button class="table-btn danger" type="button" onclick="deleteAppointment('+a.id+')">🗑️</button>'+
-      '</td>'+
-    '</tr>';
-  }
-  tbody.innerHTML = rows;
-  var sum=$('servicesSummary'); if(sum) sum.textContent = future.length+' serviços pendentes';
+  tbody.innerHTML = future.map(a=>{
+    const dt=new Date(a.date); const diff=Math.ceil((dt-today)/(1000*60*60*24));
+    const daysText = diff<0?`${Math.abs(diff)} dias atrás` : diff===0?'Hoje' : diff===1?'Amanhã' : `${diff} dias`;
+    return `<tr>
+      <td>${dt.toLocaleDateString('pt-PT')}</td>
+      <td>${a.period||''}</td>
+      <td>${a.plate||''}</td>
+      <td>${a.car||''}</td>
+      <td><span class="badge badge-${a.service}">${a.service||''}</span></td>
+      <td>${a.notes||''}</td>
+      <td>${a.status||''}</td>
+      <td>${daysText}</td>
+      <td class="no-print">
+        <button class="table-btn" type="button" onclick="editAppointment(${a.id})">✏️</button>
+        <button class="table-btn danger" type="button" onclick="deleteAppointment(${a.id})">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+  const sum=document.getElementById('servicesSummary'); if(sum) sum.textContent = `${future.length} serviços pendentes`;
 }
 
-function renderAll(){
-  try{
-    renderSchedule();
-    renderUnscheduled();
-    renderMobileDay();
-    renderServicesTable();
-  }catch(err){
-    console.error(err);
-    showToast('Erro a desenhar o ecrã.','error');
-  }
-}
+function renderAll(){ renderSchedule(); renderUnscheduled(); renderMobileDay(); renderServicesTable(); }
 
 /* ===========================
    CRUD
 =========================== */
-function openAppointmentModal(id){
-  id = id || null;
-  var modal=$('appointmentModal'); if(!modal){ showToast('Modal não encontrado.','error'); return; }
+function openAppointmentModal(id=null){
+  const modal=document.getElementById('appointmentModal'); if(!modal){ showToast('Modal não encontrado.','error'); return; }
   editingId=id;
-  var form=$('appointmentForm');
-  var title=$('modalTitle');
-  var del=$('deleteAppointment');
+  const form=document.getElementById('appointmentForm');
+  const title=document.getElementById('modalTitle');
+  const del=document.getElementById('deleteAppointment');
 
   if(id){
-    var a=null; for(var k=0;k<appointments.length;k++){ if(appointments[k].id==id){ a=appointments[k]; break; } }
+    const a=appointments.find(x=>x.id==id);
     if(a){
-      if(title) title.textContent='Editar Agendamento';
-      if($('appointmentDate')) $('appointmentDate').value   = formatDateForInput(a.date)||'';
-      if($('appointmentPeriod')) $('appointmentPeriod').value = a.period||'';
-      if($('appointmentPlate')) $('appointmentPlate').value  = a.plate||'';
-      if($('appointmentCar')) $('appointmentCar').value    = a.car||'';
-      if($('appointmentService')) $('appointmentService').value= a.service||'';
-      if($('appointmentStatus')) $('appointmentStatus').value = a.status||'NE';
-      if($('appointmentNotes')) $('appointmentNotes').value  = a.notes||'';
-      if($('appointmentExtra')) $('appointmentExtra').value  = a.extra||'';
-      if(del) del.classList.remove('hidden');
+      title.textContent='Editar Agendamento';
+      document.getElementById('appointmentDate').value   = formatDateForInput(a.date)||'';
+      document.getElementById('appointmentPeriod').value = a.period||'';
+      document.getElementById('appointmentPlate').value  = a.plate||'';
+      document.getElementById('appointmentCar').value    = a.car||'';
+      document.getElementById('appointmentService').value= a.service||'';
+      document.getElementById('appointmentStatus').value = a.status||'NE';
+      document.getElementById('appointmentNotes').value  = a.notes||'';
+      document.getElementById('appointmentExtra').value  = a.extra||'';
+      del.classList.remove('hidden');
     }
   }else{
-    if(title) title.textContent='Novo Agendamento';
+    title.textContent='Novo Agendamento';
     if(form) form.reset();
-    if($('appointmentStatus')) $('appointmentStatus').value='NE';
-    if(del) del.classList.add('hidden');
+    document.getElementById('appointmentStatus').value='NE';
+    del.classList.add('hidden');
   }
   modal.classList.add('show');
 }
-function closeAppointmentModal(){ var m=$('appointmentModal'); if(m) m.classList.remove('show'); editingId=null; }
+function closeAppointmentModal(){ const m=document.getElementById('appointmentModal'); if(m) m.classList.remove('show'); editingId=null; }
 
-function saveAppointment(){
-  var rawDate=$('appointmentDate') ? $('appointmentDate').value : '';
-  var appointment={
-    id: editingId || (Date.now()+Math.random()),
+async function saveAppointment(){
+  const rawDate=document.getElementById('appointmentDate').value;
+  const appointment={
+    id: editingId || Date.now()+Math.random(),
     date: parseDate(rawDate),
-    period: normalizePeriod($('appointmentPeriod') ? $('appointmentPeriod').value : ''),
-    plate: ( $('appointmentPlate') ? $('appointmentPlate').value : '' ).toUpperCase(),
-    car:   $('appointmentCar') ? $('appointmentCar').value : '',
-    service: $('appointmentService') ? $('appointmentService').value : '',
-    status:  $('appointmentStatus') ? $('appointmentStatus').value : 'NE',
-    notes:   $('appointmentNotes') ? $('appointmentNotes').value : '',
-    extra:   $('appointmentExtra') ? $('appointmentExtra').value : '',
+    period: normalizePeriod(document.getElementById('appointmentPeriod').value),
+    plate: (document.getElementById('appointmentPlate').value||'').toUpperCase(),
+    car:   document.getElementById('appointmentCar').value,
+    service: document.getElementById('appointmentService').value,
+    status:  document.getElementById('appointmentStatus').value,
+    notes:   document.getElementById('appointmentNotes').value,
+    extra:   document.getElementById('appointmentExtra').value,
     sortIndex: 1
   };
   if(!appointment.plate || !appointment.car || !appointment.service){
     showToast('Preenche Matrícula, Carro e Serviço.','error'); return;
   }
-  var promise;
-  if(editingId){
-    promise = apiPut('/api/appointments/'+editingId, appointment).then(function(result){
-      var idx=-1; for(var i=0;i<appointments.length;i++){ if(appointments[i].id==editingId){ idx=i; break; } }
-      if(idx>=0) appointments[idx]=Object.assign({}, appointments[idx], result || appointment);
+  try{
+    if(editingId){
+      const result=await apiPut(`/api/appointments/${editingId}`,appointment);
+      const idx=appointments.findIndex(a=>a.id==editingId);
+      if(idx>=0) appointments[idx]={...appointments[idx],...(result||appointment)};
       showToast('Agendamento atualizado!','success');
-    });
-  }else{
-    promise = apiPost('/api/appointments', appointment).then(function(created){
-      appointments.push(created || appointment);
+    }else{
+      const created=await apiPost('/api/appointments',appointment);
+      appointments.push(created||appointment);
       showToast('Agendamento criado!','success');
-    });
-  }
-  promise.then(function(){ return load(); })
-         .then(function(){ renderAll(); closeAppointmentModal(); })
-         .catch(function(e){ console.error(e); showToast('Erro ao guardar: '+e.message,'error'); });
+    }
+    await load(); renderAll(); closeAppointmentModal();
+  }catch(e){ console.error(e); showToast('Erro ao guardar: '+e.message,'error'); }
 }
 function editAppointment(id){ openAppointmentModal(id); }
-function deleteAppointment(id){
+async function deleteAppointment(id){
   if(!confirm('Eliminar este agendamento?')) return;
-  apiDelete('/api/appointments/'+id).then(function(){
-    return load().then(function(){ renderAll(); showToast('Eliminado!','success'); if(editingId==id) closeAppointmentModal(); });
-  }).catch(function(e){ console.error(e); showToast('Erro ao eliminar: '+e.message,'error'); });
+  try{
+    await apiDelete(`/api/appointments/${id}`);
+    await load(); renderAll(); showToast('Eliminado!','success');
+    if(editingId==id) closeAppointmentModal();
+  }
+  catch(e){ console.error(e); showToast('Erro ao eliminar: '+e.message,'error'); }
 }
 
 /* Expor para onclick inline */
@@ -483,134 +423,138 @@ window.editAppointment = editAppointment;
 window.deleteAppointment = deleteAppointment;
 
 /* ===========================
-   STATUS (checkboxes)
+   STATUS (checkboxes) — delegação
 =========================== */
-function attachStatusListeners(){
-  var cbs=document.querySelectorAll('.appt-status input[type="checkbox"]');
-  for(var i=0;i<cbs.length;i++){
-    cbs[i].addEventListener('change', function(){
-      var self=this;
-      var card=self.closest('.appointment-block');
-      var id=Number(card.getAttribute('data-id'));
-      var st=self.getAttribute('data-status');
+// handler separado para conseguirmos des/registrar
+async function __onStatusChange(e) {
+  const target = e.target;
+  if (!(target instanceof HTMLInputElement)) return;
+  if (target.type !== 'checkbox') return;
+  const statusKey = target.getAttribute('data-status'); // "NE" | "VE" | "ST"
+  if (!statusKey) return;
 
-      // exclusivo
-      var siblings=card.querySelectorAll('.appt-status input[type="checkbox"]');
-      for(var j=0;j<siblings.length;j++){ if(siblings[j]!==self) siblings[j].checked=false; }
+  const card = target.closest('.appointment-block');
+  if (!card) return;
+  const id = Number(card.getAttribute('data-id'));
+  const a = appointments.find(x => x.id == id);
+  if (!a) return;
 
-      // otimista
-      var a=null; for(var k=0;k<appointments.length;k++){ if(appointments[k].id==id){ a=appointments[k]; break; } }
-      if(!a) return;
-      var prevStatus=a.status; var prevFilter=statusFilter;
-      a.status=st;
-      if(statusFilter && a.status!==statusFilter){ statusFilter=''; var sel=$('filterStatus'); if(sel) sel.value=''; }
-      wireStatePills(card);
+  // desmarca as outras boxes do mesmo cartão
+  card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
+    if (cb !== target) cb.checked = false;
+  });
 
-      apiPut('/api/appointments/'+id, a).then(function(updated){
-        if(updated && typeof updated==='object'){ for(var p in updated){ a[p]=updated[p]; } }
-        return load().then(function(){ renderAll(); showToast('Status gravado: '+st,'success'); });
-      }).catch(function(e){
-        a.status=prevStatus;
-        if(prevFilter){ statusFilter=prevFilter; var s=$('filterStatus'); if(s) s.value=prevFilter; }
-        return load().then(function(){ renderAll(); showToast('Erro a gravar status: '+e.message,'error'); });
-      });
+  // otimista
+  const prevStatus = a.status;
+  a.status = statusKey;
+
+  // atualiza classes do cartão (cor)
+  card.classList.remove('status-NE', 'status-VE', 'status-ST');
+  card.classList.add('status-' + statusKey);
+
+  try {
+    const updated = await apiPut(`/api/appointments/${id}`, a);
+    if (updated && typeof updated === 'object') Object.assign(a, updated);
+    showToast(`Status gravado: ${statusKey}`, 'success');
+  } catch (err) {
+    // rollback
+    a.status = prevStatus;
+    card.classList.remove('status-NE', 'status-VE', 'status-ST');
+    card.classList.add('status-' + prevStatus);
+    card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
+      cb.checked = cb.getAttribute('data-status') === prevStatus;
     });
+    showToast('Erro a gravar status: ' + (err.message || err), 'error');
   }
+}
+
+function attachStatusListeners() {
+  // remove e volta a adicionar para evitar múltiplos handlers
+  document.removeEventListener('change', __onStatusChange, true);
+  document.addEventListener('change', __onStatusChange, true);
 }
 
 /* ===========================
-   PRINT helpers
+   PRINT helpers (mantidos)
 =========================== */
 function updatePrintUnscheduledTable(){
-  var uns=filterAppointments(appointments.filter(function(a){ return !a.date || !a.period; })
-    .sort(function(x,y){ return (x.sortIndex||0)-(y.sortIndex||0); }));
-  var tbody=$('printUnscheduledTableBody'); if(!tbody) return;
-  var sec=document.querySelector('.print-unscheduled-section'); if(uns.length===0){ if(sec) sec.style.display='none'; return; } if(sec) sec.style.display='';
-  var html='';
-  for(var i=0;i<uns.length;i++){
-    var a=uns[i];
-    html+='<tr><td>'+(a.plate||'')+'</td><td>'+(a.car||'')+'</td><td>'+(a.service||'')+'</td><td>'+(a.status||'')+'</td><td>'+(a.notes||'')+'</td><td>'+(a.extra||'')+'</td></tr>';
-  }
-  tbody.innerHTML=html;
+  const uns=filterAppointments(appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
+  const tbody=document.getElementById('printUnscheduledTableBody'); if(!tbody) return;
+  const sec=document.querySelector('.print-unscheduled-section'); if(uns.length===0){ if(sec) sec.style.display='none'; return; } if(sec) sec.style.display='';
+  tbody.innerHTML = uns.map(a=>`<tr><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
 }
 function updatePrintTomorrowTable(){
-  var title=$('printTomorrowTitle');
-  var dateEl=$('printTomorrowDate');
-  var tbody=$('printTomorrowTableBody');
-  var empty=$('printTomorrowEmpty'); if(!tbody) return;
-  var tomorrow=addDays(new Date(),1); var iso=localISO(tomorrow);
+  const title=document.getElementById('printTomorrowTitle');
+  const dateEl=document.getElementById('printTomorrowDate');
+  const tbody=document.getElementById('printTomorrowTableBody');
+  const empty=document.getElementById('printTomorrowEmpty'); if(!tbody) return;
+  const tomorrow=addDays(new Date(),1); const iso=localISO(tomorrow);
   if(title) title.textContent='SERVIÇOS DE AMANHÃ';
   if(dateEl) dateEl.textContent=tomorrow.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
-  var rows=appointments.filter(function(a){ return a.date===iso; })
-    .sort(function(a,b){ if(a.period!==b.period) return a.period==='Manhã'?-1:1; return (a.sortIndex||0)-(b.sortIndex||0); });
+  const rows=appointments.filter(a=>a.date===iso).sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0));
   if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
   if(empty) empty.style.display='none';
-  var html='';
-  for(var i=0;i<rows.length;i++){
-    var a=rows[i];
-    html+='<tr><td>'+(a.period||'')+'</td><td>'+(a.plate||'')+'</td><td>'+(a.car||'')+'</td><td>'+(a.service||'')+'</td><td>'+(a.status||'')+'</td><td>'+(a.notes||'')+'</td><td>'+(a.extra||'')+'</td></tr>';
-  }
-  tbody.innerHTML=html;
+  tbody.innerHTML = rows.map(a=>`<tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
 }
+
+/* ===========================
+   STUBS p/ botões secundários
+=========================== */
+function closeBackupModal(){ const m=document.getElementById('backupModal'); if(m) m.classList.remove('show'); }
+function showStats(){ const m=document.getElementById('statsModal'); if(m) m.classList.add('show'); }
+function importFromJson(file){ const s=document.getElementById('importStatus'); if(s) s.textContent=`Ficheiro: ${file.name}`; }
+function exportToJson(){ showToast('Export JSON pronto (stub).','info'); }
+function exportToCsv(){ showToast('Export CSV pronto (stub).','info'); }
 
 /* ===========================
    BOOT
 =========================== */
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded', async ()=>{
   // Semana
-  var prevWeekBtn=$('prevWeek'); if(prevWeekBtn) prevWeekBtn.addEventListener('click', function(){ currentMonday=addDays(currentMonday,-7); renderAll(); });
-  var nextWeekBtn=$('nextWeek'); if(nextWeekBtn) nextWeekBtn.addEventListener('click', function(){ currentMonday=addDays(currentMonday, 7); renderAll(); });
-  var todayWeekBtn=$('todayWeek'); if(todayWeekBtn) todayWeekBtn.addEventListener('click', function(){ currentMonday=getMonday(new Date()); renderAll(); });
+  document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday=addDays(currentMonday,-7); renderAll(); });
+  document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday=addDays(currentMonday, 7); renderAll(); });
+  document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday=getMonday(new Date()); renderAll(); });
 
   // Mobile day
-  var prevDay=$('prevDay'); if(prevDay) prevDay.addEventListener('click', function(){ currentMobileDay=addDays(currentMobileDay,-1); renderMobileDay(); });
-  var todayDay=$('todayDay'); if(todayDay) todayDay.addEventListener('click', function(){ currentMobileDay=new Date(); renderMobileDay(); });
-  var nextDay=$('nextDay'); if(nextDay) nextDay.addEventListener('click', function(){ currentMobileDay=addDays(currentMobileDay,1); renderMobileDay(); });
+  document.getElementById('prevDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,-1); renderMobileDay(); });
+  document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay=new Date(); renderMobileDay(); });
+  document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,1); renderMobileDay(); });
 
   // Impressão
-  var printBtn=$('printPage'); if(printBtn) printBtn.addEventListener('click', function(){ updatePrintUnscheduledTable(); updatePrintTomorrowTable(); window.print(); });
+  document.getElementById('printPage')?.addEventListener('click', ()=>{
+    updatePrintUnscheduledTable(); updatePrintTomorrowTable(); window.print();
+  });
 
   // Pesquisa
-  var searchBtn=$('searchBtn'); if(searchBtn) searchBtn.addEventListener('click', function(){ var sb=$('searchBar'); if(sb){ sb.classList.toggle('hidden'); var i=$('searchInput'); if(i) i.focus(); }});
-  var searchInput=$('searchInput'); if(searchInput) searchInput.addEventListener('input', function(e){ searchQuery=e.target.value||''; renderAll(); });
-  var clearSearch=$('clearSearch'); if(clearSearch) clearSearch.addEventListener('click', function(){ var i=$('searchInput'); if(i) i.value=''; searchQuery=''; renderAll(); });
+  document.getElementById('searchBtn')?.addEventListener('click', ()=>{
+    const sb=document.getElementById('searchBar');
+    if(sb){ sb.classList.toggle('hidden'); const i=document.getElementById('searchInput'); if(i) i.focus(); }
+  });
+  document.getElementById('searchInput')?.addEventListener('input', e=>{ searchQuery=e.target.value||''; renderAll(); });
+  document.getElementById('clearSearch')?.addEventListener('click', ()=>{
+    const i=document.getElementById('searchInput'); if(i) i.value=''; searchQuery=''; renderAll();
+  });
 
   // Filtro estado
-  var filterSel=$('filterStatus'); if(filterSel) filterSel.addEventListener('change', function(e){ statusFilter=e.target.value||''; renderAll(); });
+  document.getElementById('filterStatus')?.addEventListener('change', e=>{ statusFilter=e.target.value||''; renderAll(); });
 
   // Modal & form
-  var closeModal=$('closeModal'); if(closeModal) closeModal.addEventListener('click', closeAppointmentModal);
-  var cancelForm=$('cancelForm'); if(cancelForm) cancelForm.addEventListener('click', closeAppointmentModal);
-  var form=$('appointmentForm'); if(form) form.addEventListener('submit', function(e){ e.preventDefault(); saveAppointment(); });
-  var delBtn=$('deleteAppointment'); if(delBtn) delBtn.addEventListener('click', function(){ if(editingId) deleteAppointment(editingId); });
+  document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
+  document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
+  document.getElementById('appointmentForm')?.addEventListener('submit', e=>{ e.preventDefault(); saveAppointment(); });
+  document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if(editingId) deleteAppointment(editingId); });
 
-  // Backup/Stats (stubs)
-  var backupBtn=$('backupBtn'); if(backupBtn) backupBtn.addEventListener('click', function(){ var m=$('backupModal'); if(m) m.classList.add('show'); });
-  var statsBtn=$('statsBtn'); if(statsBtn) statsBtn.addEventListener('click', function(){ var m=$('statsModal'); if(m) m.classList.add('show'); });
+  // Backup/Stats
+  document.getElementById('backupBtn')?.addEventListener('click', ()=>{ const m=document.getElementById('backupModal'); if(m) m.classList.add('show'); });
+  document.getElementById('statsBtn')?.addEventListener('click', showStats);
+  document.getElementById('importBtn')?.addEventListener('click', ()=>{ const f=document.getElementById('importFile'); if(f) f.click(); });
+  document.getElementById('importFile')?.addEventListener('change', e=>{ const f=e.target.files&&e.target.files[0]; if(f) importFromJson(f); });
+  document.getElementById('exportJson')?.addEventListener('click', exportToJson);
+  document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
 
-  load().then(renderAll);
+  // Estados: liga uma única vez (delegação)
+  attachStatusListeners();
+
+  await load();
+  renderAll();
 });
-
-/* ===========================
-   PILLs dos estados (NE / VE / ST)
-   — aplica classes: .ne (vermelho), .ve (amarelo), .st (verde)
-=========================== */
-function wireStatePills(root) {
-  root = root || document;
-  var boxes = root.querySelectorAll('#schedule input[type="checkbox"], #unscheduledList input[type="checkbox"]');
-  for(var i=0;i<boxes.length;i++){
-    (function(cb){
-      var pill = cb.closest ? (cb.closest('label') || cb.parentElement) : cb.parentElement;
-      if (!pill) return;
-      pill.classList.add('state-pill');
-      cb.classList.add('state-box');
-      var code = (cb.getAttribute('data-status') || cb.value || '').toUpperCase();
-      pill.classList.remove('ne','ve','st');
-      if (code === 'NE') pill.classList.add('ne');
-      if (code === 'VE') pill.classList.add('ve');
-      if (code === 'ST') pill.classList.add('st');
-      pill.classList.toggle('is-checked', cb.checked);
-      cb.addEventListener('change', function(){ pill.classList.toggle('is-checked', cb.checked); });
-    })(boxes[i]);
-  }
-}
