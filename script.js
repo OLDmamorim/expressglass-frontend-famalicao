@@ -174,14 +174,14 @@ async function onDropAppointment(id,targetBucket,targetIndex){
 function renderSchedule(){
   const table=document.getElementById('schedule'); if(!table) return; table.innerHTML='';
 
-  // Segunda -> Sábado (6 dias)
-  const week=[...Array(6)].map((_,i)=> addDays(currentMonday,i));
+  const week=[...Array(6)].map((_,i)=> addDays(currentMonday,i)); // Segunda → Sábado
   const wr=document.getElementById('weekRange');
   if(wr){ wr.textContent = `${week[0].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})} - ${week[5].toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'})}`; }
 
   let thead='<thead><tr><th>Período</th>';
   for(const d of week){ const h=fmtHeader(d); thead+=`<th><div class="day">${cap(h.day)}</div><div class="date">${h.dm}</div></th>`; }
-  thead+='</tr></thead>'; table.insertAdjacentHTML('beforeend',thead);
+  thead+='</tr></thead>';
+  table.insertAdjacentHTML('beforeend',thead);
 
   const renderCell=(period,dayDate)=>{
     const iso=localISO(dayDate);
@@ -199,6 +199,10 @@ function renderSchedule(){
                   <label><input type="checkbox" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
                   <label><input type="checkbox" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
                 </div>
+                <div class="card-actions">
+                  <button class="action" type="button" title="Editar" onclick="editAppointment(${a.id})">✏️</button>
+                  <button class="action" type="button" title="Apagar" onclick="deleteAppointment(${a.id})">🗑️</button>
+                </div>
               </div>`;
     }).join('');
     return `<div class="drop-zone" data-drop-bucket="${iso}|${period}">${blocks}</div>`;
@@ -211,8 +215,10 @@ function renderSchedule(){
     tbody.appendChild(row);
   });
   table.appendChild(tbody);
+
   enableDragDrop();
   attachStatusListeners();
+  wireStatePills(table);
   highlightSearchResults();
 }
 
@@ -247,9 +253,9 @@ function renderUnscheduled(){
                 <label><input type="checkbox" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
                 <label><input type="checkbox" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
               </div>
-              <div class="unscheduled-actions">
-                <button class="icon edit" type="button" onclick="editAppointment(${a.id})" title="Editar">✏️</button>
-                <button class="icon delete" type="button" onclick="deleteAppointment(${a.id})" title="Eliminar">🗑️</button>
+              <div class="card-actions">
+                <button class="action" type="button" title="Editar" onclick="editAppointment(${a.id})">✏️</button>
+                <button class="action" type="button" title="Apagar" onclick="deleteAppointment(${a.id})">🗑️</button>
               </div>
             </div>`;
   }).join('');
@@ -257,6 +263,7 @@ function renderUnscheduled(){
   container.innerHTML = `<div class="drop-zone" data-drop-bucket="unscheduled">${blocks}</div>`;
   enableDragDrop(container);
   attachStatusListeners();
+  wireStatePills(container);
   highlightSearchResults();
 }
 
@@ -274,6 +281,7 @@ function renderMobileDay(){
               <div class="appt-sub">${a.notes||''}</div>
             </div>`;
   }).join('');
+  wireStatePills(container);
   highlightSearchResults();
 }
 
@@ -304,7 +312,17 @@ function renderServicesTable(){
   const sum=document.getElementById('servicesSummary'); if(sum) sum.textContent = `${future.length} serviços pendentes`;
 }
 
-function renderAll(){ renderSchedule(); renderUnscheduled(); renderMobileDay(); renderServicesTable(); }
+function renderAll(){
+  try{
+    renderSchedule();
+    renderUnscheduled();
+    renderMobileDay();
+    renderServicesTable();
+  }catch(err){
+    console.error(err);
+    showToast('Erro a desenhar o ecrã.','error');
+  }
+}
 
 /* ===========================
    CRUD
@@ -327,4 +345,179 @@ function openAppointmentModal(id=null){
       document.getElementById('appointmentService').value= a.service||'';
       document.getElementById('appointmentStatus').value = a.status||'NE';
       document.getElementById('appointmentNotes').value  = a.notes||'';
-      document.getElement
+      document.getElementById('appointmentExtra').value  = a.extra||'';
+      del.classList.remove('hidden');
+    }
+  }else{
+    title.textContent='Novo Agendamento';
+    if(form) form.reset();
+    document.getElementById('appointmentStatus').value='NE';
+    del.classList.add('hidden');
+  }
+  modal.classList.add('show');
+}
+function closeAppointmentModal(){ const m=document.getElementById('appointmentModal'); if(m) m.classList.remove('show'); editingId=null; }
+
+async function saveAppointment(){
+  const rawDate=document.getElementById('appointmentDate').value;
+  const appointment={
+    id: editingId || Date.now()+Math.random(),
+    date: parseDate(rawDate),
+    period: normalizePeriod(document.getElementById('appointmentPeriod').value),
+    plate: (document.getElementById('appointmentPlate').value||'').toUpperCase(),
+    car:   document.getElementById('appointmentCar').value,
+    service: document.getElementById('appointmentService').value,
+    status:  document.getElementById('appointmentStatus').value,
+    notes:   document.getElementById('appointmentNotes').value,
+    extra:   document.getElementById('appointmentExtra').value,
+    sortIndex: 1
+  };
+  if(!appointment.plate || !appointment.car || !appointment.service){
+    showToast('Preenche Matrícula, Carro e Serviço.','error'); return;
+  }
+  try{
+    if(editingId){
+      const result=await apiPut(`/api/appointments/${editingId}`,appointment);
+      const idx=appointments.findIndex(a=>a.id==editingId);
+      if(idx>=0) appointments[idx]={...appointments[idx],...(result||appointment)};
+      showToast('Agendamento atualizado!','success');
+    }else{
+      const created=await apiPost('/api/appointments',appointment);
+      appointments.push(created||appointment);
+      showToast('Agendamento criado!','success');
+    }
+    await load(); renderAll(); closeAppointmentModal();
+  }catch(e){ console.error(e); showToast('Erro ao guardar: '+e.message,'error'); }
+}
+function editAppointment(id){ openAppointmentModal(id); }
+async function deleteAppointment(id){
+  if(!confirm('Eliminar este agendamento?')) return;
+  try{ await apiDelete(`/api/appointments/${id}`); await load(); renderAll(); showToast('Eliminado!','success'); if(editingId==id) closeAppointmentModal(); }
+  catch(e){ console.error(e); showToast('Erro ao eliminar: '+e.message,'error'); }
+}
+
+/* Expor para onclick inline */
+window.openAppointmentModal = openAppointmentModal;
+window.editAppointment = editAppointment;
+window.deleteAppointment = deleteAppointment;
+
+/* ===========================
+   STATUS (checkboxes)
+=========================== */
+function attachStatusListeners(){
+  document.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb=>{
+    cb.addEventListener('change', async function(){
+      const card=this.closest('.appointment-block'); const id=Number(card.getAttribute('data-id')); const st=this.getAttribute('data-status');
+      // tornar exclusivo
+      card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(x=>{ if(x!==this) x.checked=false; });
+
+      const a=appointments.find(x=>x.id==id); if(!a) return;
+      const prevStatus=a.status; const prevFilter=statusFilter;
+
+      a.status=st; // otimista
+      if(statusFilter && a.status!==statusFilter){ statusFilter=''; const sel=document.getElementById('filterStatus'); if(sel) sel.value=''; }
+      wireStatePills(card);
+      try{
+        const updated=await apiPut(`/api/appointments/${id}`,a);
+        if(updated && typeof updated==='object') Object.assign(a,updated);
+        await load(); renderAll(); showToast(`Status gravado: ${st}`,'success');
+      }catch(e){
+        a.status=prevStatus;
+        if(prevFilter){ statusFilter=prevFilter; const sel=document.getElementById('filterStatus'); if(sel) sel.value=prevFilter; }
+        await load(); renderAll(); showToast('Erro a gravar status: '+e.message,'error');
+      }
+    });
+  });
+}
+
+/* ===========================
+   PRINT helpers
+=========================== */
+function updatePrintUnscheduledTable(){
+  const uns=filterAppointments(appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
+  const tbody=document.getElementById('printUnscheduledTableBody'); if(!tbody) return;
+  const sec=document.querySelector('.print-unscheduled-section'); if(uns.length===0){ if(sec) sec.style.display='none'; return; } if(sec) sec.style.display='';
+  tbody.innerHTML = uns.map(a=>`<tr><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
+}
+function updatePrintTomorrowTable(){
+  const title=document.getElementById('printTomorrowTitle');
+  const dateEl=document.getElementById('printTomorrowDate');
+  const tbody=document.getElementById('printTomorrowTableBody');
+  const empty=document.getElementById('printTomorrowEmpty'); if(!tbody) return;
+  const tomorrow=addDays(new Date(),1); const iso=localISO(tomorrow);
+  if(title) title.textContent='SERVIÇOS DE AMANHÃ';
+  if(dateEl) dateEl.textContent=tomorrow.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+  const rows=appointments.filter(a=>a.date===iso).sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0));
+  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
+  if(empty) empty.style.display='none';
+  tbody.innerHTML = rows.map(a=>`<tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
+}
+
+/* ===========================
+   BOOT
+=========================== */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  // Semana
+  document.getElementById('prevWeek')?.addEventListener('click', ()=>{ currentMonday=addDays(currentMonday,-7); renderAll(); });
+  document.getElementById('nextWeek')?.addEventListener('click', ()=>{ currentMonday=addDays(currentMonday, 7); renderAll(); });
+  document.getElementById('todayWeek')?.addEventListener('click', ()=>{ currentMonday=getMonday(new Date()); renderAll(); });
+
+  // Mobile day
+  document.getElementById('prevDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,-1); renderMobileDay(); });
+  document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay=new Date(); renderMobileDay(); });
+  document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,1); renderMobileDay(); });
+
+  // Impressão
+  document.getElementById('printPage')?.addEventListener('click', ()=>{ updatePrintUnscheduledTable(); updatePrintTomorrowTable(); window.print(); });
+
+  // Pesquisa
+  document.getElementById('searchBtn')?.addEventListener('click', ()=>{ const sb=document.getElementById('searchBar'); if(sb){ sb.classList.toggle('hidden'); const i=document.getElementById('searchInput'); if(i) i.focus(); }});
+  document.getElementById('searchInput')?.addEventListener('input', e=>{ searchQuery=e.target.value||''; renderAll(); });
+  document.getElementById('clearSearch')?.addEventListener('click', ()=>{ const i=document.getElementById('searchInput'); if(i) i.value=''; searchQuery=''; renderAll(); });
+
+  // Filtro estado
+  document.getElementById('filterStatus')?.addEventListener('change', e=>{ statusFilter=e.target.value||''; renderAll(); });
+
+  // Modal & form
+  document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
+  document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
+  document.getElementById('appointmentForm')?.addEventListener('submit', e=>{ e.preventDefault(); saveAppointment(); });
+  document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if(editingId) deleteAppointment(editingId); });
+
+  // Extras
+  document.getElementById('backupBtn')?.addEventListener('click', ()=>{ const m=document.getElementById('backupModal'); if(m) m.classList.add('show'); });
+  document.getElementById('statsBtn')?.addEventListener('click', ()=>{ const m=document.getElementById('statsModal'); if(m) m.classList.add('show'); });
+
+  await load();
+  renderAll();
+});
+
+/* ===========================
+   PILLs dos estados (NE / VE / ST)
+   — aplica classes para cores: .ne (vermelho), .ve (amarelo), .st (verde)
+=========================== */
+function wireStatePills(root = document) {
+  const boxes = root.querySelectorAll(
+    '#schedule input[type="checkbox"], #unscheduledList input[type="checkbox"]'
+  );
+
+  boxes.forEach(cb => {
+    const pill = cb.closest('label') || cb.parentElement;
+    if (!pill) return;
+
+    pill.classList.add('state-pill');
+    cb.classList.add('state-box');
+
+    const code = (cb.getAttribute('data-status') || cb.value || '').toUpperCase();
+    pill.classList.remove('ne','ve','st');
+    if (code === 'NE') pill.classList.add('ne');   // vermelho
+    if (code === 'VE') pill.classList.add('ve');   // amarelo
+    if (code === 'ST') pill.classList.add('st');   // verde
+
+    pill.classList.toggle('is-checked', cb.checked);
+
+    cb.addEventListener('change', () => {
+      pill.classList.toggle('is-checked', cb.checked);
+    });
+  });
+}
