@@ -457,3 +457,26 @@ table.schedule td:first-child{ border-left:none; }
     white-space:nowrap;
   }
 }
+/* Mobile: esconder "Serviços por Agendar" e o botão Imprimir */
+@media (max-width: 820px){
+  /* toda a secção Por Agendar */
+  .unscheduled-container,
+  #unscheduledList,
+  #addServiceBtn,           /* botão + Novo Serviço dessa secção */
+  .mobile-add-btn {         /* se existir o botão móvel de novo serviço */
+    display: none !important;
+  }
+
+  /* botão/área de imprimir na barra */
+  #printPage,
+  .nav-right {              /* onde costuma estar o botão de imprimir */
+    display: none !important;
+  }
+
+  /* por via das dúvidas, também escondo as versões de impressão no mobile */
+  .print-unscheduled-section,
+  .print-today-section,
+  .print-tomorrow-section {
+    display: none !important;
+  }
+}
