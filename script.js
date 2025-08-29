@@ -101,12 +101,11 @@ let currentMobileDay = new Date();
 let editingId = null;
 let searchQuery = '';
 let statusFilter = '';
-// Anti-duplo submit / listener único
 let __wiredForm = false;
 let __savingAppointment = false;
 
 /* ===========================
-   HELPERS DE ORDENAÇÃO & DEDUPE
+   ORDEM & DEDUPE
 =========================== */
 function bucketOf(a){ return (a.date && a.period) ? `${a.date}|${a.period}` : 'unscheduled'; }
 
@@ -114,7 +113,9 @@ function nextSortIndexFor(date, period){
   const bucket = (date && period) ? `${date}|${period}` : 'unscheduled';
   const max = Math.max(
     0,
-    ...appointments.filter(x => bucketOf(x)===bucket).map(x => x.sortIndex || 0)
+    ...appointments
+      .filter(x => bucketOf(x) === bucket)
+      .map(x => Number(x.sortIndex) || 0)
   );
   return max + 1;
 }
@@ -128,6 +129,31 @@ function dedupeByIdOrKey(rows){
   return Array.from(seen.values());
 }
 
+/* Dá sortIndex incremental a quem não tiver, por balde */
+function normalizeAllBucketsOrder(list){
+  const byBucket = new Map();
+  list.forEach(a=>{
+    const b = bucketOf(a);
+    if(!byBucket.has(b)) byBucket.set(b, []);
+    byBucket.get(b).push(a);
+  });
+  byBucket.forEach(items=>{
+    // ordena por sortIndex asc (vazios no fim), tie-break por id
+    items.sort((x,y)=>{
+      const sx = (x.sortIndex ?? 1e9);
+      const sy = (y.sortIndex ?? 1e9);
+      if (sx !== sy) return sx - sy;
+      return String(x.id).localeCompare(String(y.id));
+    });
+    let i = 1;
+    items.forEach(it=>{
+      if (it.sortIndex == null || isNaN(it.sortIndex)) it.sortIndex = i;
+      i++;
+    });
+  });
+  return list;
+}
+
 /* ===========================
    LOAD
 =========================== */
@@ -139,10 +165,10 @@ async function load(){
       date: parseDate(a.date),
       period: normalizePeriod(a.period),
       id: a.id ?? (Date.now()+Math.random()),
-      sortIndex: a.sortIndex ?? 1,
+      sortIndex: (a.sortIndex != null ? Number(a.sortIndex) : null),
       status: a.status ?? 'NE'
     }));
-    appointments = dedupeByIdOrKey(mapped);
+    appointments = normalizeAllBucketsOrder(dedupeByIdOrKey(mapped));
   }catch(e){
     appointments=[]; showToast('Erro ao carregar: '+e.message,'error');
   }
@@ -207,7 +233,10 @@ async function onDropAppointment(id,targetBucket,targetIndex){
   else { const [d,p]=targetBucket.split('|'); a.date=d; a.period=p||a.period||'Manhã'; }
 
   normalizeBucketOrder(targetBucket);
-  const list=appointments.filter(x=>bucketOf(x)===targetBucket).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
+  const list=appointments.filter(x=>bucketOf(x)===targetBucket).sort((x,y)=>{
+    const sx=(x.sortIndex??1e9), sy=(y.sortIndex??1e9);
+    return sx===sy ? String(x.id).localeCompare(String(y.id)) : sx-sy;
+  });
   list.forEach((x,idx)=> x.sortIndex=idx+1);
   if(targetIndex>=list.length) a.sortIndex = nextSortIndexFor(a.date, a.period);
   else { list.splice(targetIndex,0,a); list.forEach((x,idx)=> x.sortIndex=idx+1); }
@@ -243,7 +272,12 @@ function renderSchedule(){
   const renderCell=(period,dayDate)=>{
     const iso=localISO(dayDate);
     const items=filterAppointments(
-      appointments.filter(a=>a.date && a.date===iso && a.period===period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0))
+      appointments
+        .filter(a=>a.date && a.date===iso && a.period===period)
+        .sort((x,y)=>{
+          const sx=(x.sortIndex??1e9), sy=(y.sortIndex??1e9);
+          return sx===sy ? String(x.id).localeCompare(String(y.id)) : sx-sy;
+        })
     );
     const blocks=items.map(a=>{
       return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
@@ -281,7 +315,12 @@ function renderUnscheduled(){
   const container=document.getElementById('unscheduledList'); if(!container) return;
 
   const uns=filterAppointments(
-    appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0))
+    appointments
+      .filter(a=>!a.date||!a.period)
+      .sort((x,y)=>{
+        const sx=(x.sortIndex??1e9), sy=(y.sortIndex??1e9);
+        return sx===sy ? String(x.id).localeCompare(String(y.id)) : sx-sy;
+      })
   );
 
   if (uns.length === 0){
@@ -327,7 +366,10 @@ function renderMobileDay(){
   }
   const iso=localISO(currentMobileDay);
   const dayItems=filterAppointments(
-    appointments.filter(a=>a.date===iso).sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0))
+    appointments
+      .filter(a=>a.date===iso)
+      .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) :
+            ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)))
   );
   const container=document.getElementById('mobileDayList'); if(!container) return;
   container.innerHTML = dayItems.map(a=>{
@@ -343,7 +385,11 @@ function renderServicesTable(){
   const tbody=document.getElementById('servicesTableBody'); if(!tbody) return;
   const today=new Date();
   const future=filterAppointments(
-    appointments.filter(a=>a.date && new Date(a.date)>=new Date().setHours(0,0,0,0)).sort((a,b)=> new Date(a.date)-new Date(b.date))
+    appointments
+      .filter(a=>a.date && new Date(a.date)>=new Date().setHours(0,0,0,0))
+      .sort((a,b)=> new Date(a.date)-new Date(b.date) ||
+                    ((a.sortIndex??1e9)-(b.sortIndex??1e9)) ||
+                    String(a.id).localeCompare(String(b.id)))
   );
   tbody.innerHTML = future.map(a=>{
     const dt=new Date(a.date); const diff=Math.ceil((dt-today)/(1000*60*60*24));
@@ -418,7 +464,6 @@ async function saveAppointment(){
   const rawDate=document.getElementById('appointmentDate').value;
   const isEdit = !!editingId;
 
-  // base do objeto
   let appointment={
     id: editingId || Date.now()+Math.random(),
     date: parseDate(rawDate),
@@ -438,7 +483,7 @@ async function saveAppointment(){
     return;
   }
 
-  // coloca SEMPRE no fim do respetivo balde
+  // garante que entra no FIM do balde
   appointment.sortIndex = nextSortIndexFor(appointment.date, appointment.period);
 
   const submitBtn = document.querySelector('#appointmentForm .btn.primary');
@@ -452,7 +497,7 @@ async function saveAppointment(){
       await apiPut(`/api/appointments/${editingId}`, payload);
       showToast('Agendamento atualizado!','success');
     }else{
-      // NÃO mandar id no POST → backend cria o id e evita duplicações
+      // não enviar id → backend gera; evita clones
       const { id, ...toCreate } = payload;
       await apiPost('/api/appointments', toCreate);
       showToast('Agendamento criado!','success');
@@ -537,7 +582,10 @@ function attachStatusListeners() {
    PRINT helpers
 =========================== */
 function updatePrintUnscheduledTable(){
-  const uns=filterAppointments(appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
+  const uns=filterAppointments(appointments.filter(a=>!a.date||!a.period).sort((x,y)=>{
+    const sx=(x.sortIndex??1e9), sy=(y.sortIndex??1e9);
+    return sx===sy ? String(x.id).localeCompare(String(y.id)) : sx-sy;
+  }));
   const tbody=document.getElementById('printUnscheduledTableBody'); if(!tbody) return;
   const sec=document.querySelector('.print-unscheduled-section'); if(uns.length===0){ if(sec) sec.style.display='none'; return; } if(sec) sec.style.display='';
   tbody.innerHTML = uns.map(a=>`<tr><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
@@ -550,7 +598,10 @@ function updatePrintTomorrowTable(){
   const tomorrow=addDays(new Date(),1); const iso=localISO(tomorrow);
   if(title) title.textContent='SERVIÇOS DE AMANHÃ';
   if(dateEl) dateEl.textContent=tomorrow.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
-  const rows=appointments.filter(a=>a.date===iso).sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) : (a.sortIndex||0)-(b.sortIndex||0));
+  const rows=appointments.filter(a=>a.date===iso).sort((a,b)=>
+    (a.period!==b.period ? (a.period==='Manhã'?-1:1) :
+    ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)))
+  );
   if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
   if(empty) empty.style.display='none';
   tbody.innerHTML = rows.map(a=>`<tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
@@ -597,13 +648,18 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   // Filtro estado
   document.getElementById('filterStatus')?.addEventListener('change', e=>{ statusFilter=e.target.value||''; renderAll(); });
 
-  // Modal & form (único listener)
+  // Modal & form (único listener e “anti-fallbacks”)
   document.getElementById('closeModal')?.addEventListener('click', closeAppointmentModal);
   document.getElementById('cancelForm')?.addEventListener('click', closeAppointmentModal);
   const form = document.getElementById('appointmentForm');
-  if (form && !__wiredForm){
-    form.addEventListener('submit', e=>{ e.preventDefault(); saveAppointment(); });
-    __wiredForm = true;
+  if (form){
+    // mata qualquer onsubmit inline herdado
+    form.onsubmit = null;
+    if (!__wiredForm){
+      form.addEventListener('submit', (e)=>{ e.preventDefault(); e.stopImmediatePropagation(); saveAppointment(); }, true);
+      __wiredForm = true;
+      form.setAttribute('data-wired','1');
+    }
   }
   document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if(editingId) deleteAppointment(editingId); });
 
