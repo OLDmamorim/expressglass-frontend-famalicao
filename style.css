@@ -750,3 +750,9 @@ table.schedule td:first-child{ border-left:none; }
     display: none !important;
   }
 }
+/* Esconder a tabela "Vidros para Encomendar" no mobile */
+@media (max-width: 820px) {
+  .glass-orders-container {
+    display: none !important;
+  }
+}
