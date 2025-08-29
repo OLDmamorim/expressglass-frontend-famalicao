@@ -744,3 +744,9 @@ table.schedule td:first-child{ border-left:none; }
     display: block !important;
   }
 }
+/* ===== Mobile: esconder a tabela "Vidros para encomendar" na app ===== */
+@media (max-width: 820px) {
+  .to-order-section { 
+    display: none !important;
+  }
+}
