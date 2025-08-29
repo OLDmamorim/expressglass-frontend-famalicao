@@ -66,7 +66,7 @@ function formatDateForInput(dateStr){
   return dateStr;
 }
 
-/* Compat Android/WebView: remover acentos sem \p{Diacritic} */
+/* Remove acentos */
 function normalizePeriod(p){
   if(!p) return '';
   const t = String(p).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
@@ -189,7 +189,8 @@ async function onDropAppointment(id,targetBucket,targetIndex){
   renderAll(); // otimista
 
   try{
-    const updated=await apiPut(`/api/appointments/${id}`,a);
+    const payload = sanitizeForApi(a);
+    const updated=await apiPut(`/api/appointments/${id}`, payload);
     if(updated && typeof updated==='object') Object.assign(a,updated);
     await load(); renderAll(); showToast('Agendamento movido!','success');
   }catch(e){
@@ -375,9 +376,19 @@ function openAppointmentModal(id=null){
 }
 function closeAppointmentModal(){ const m=document.getElementById('appointmentModal'); if(m) m.classList.remove('show'); editingId=null; }
 
+function sanitizeForApi(a){
+  // clona e substitui strings vazias por null onde for adequado
+  const out = { ...a };
+  out.date   = (out.date && String(out.date).trim() !== '') ? out.date : null;
+  out.period = (out.period && String(out.period).trim() !== '') ? out.period : null;
+  out.notes  = (out.notes  && String(out.notes).trim()  !== '') ? out.notes  : null;
+  out.extra  = (out.extra  && String(out.extra).trim()  !== '') ? out.extra  : null;
+  return out;
+}
+
 async function saveAppointment(){
   const rawDate=document.getElementById('appointmentDate').value;
-  const appointment={
+  let appointment={
     id: editingId || Date.now()+Math.random(),
     date: parseDate(rawDate),
     period: normalizePeriod(document.getElementById('appointmentPeriod').value),
@@ -393,13 +404,14 @@ async function saveAppointment(){
     showToast('Preenche Matrícula, Carro e Serviço.','error'); return;
   }
   try{
+    const payload = sanitizeForApi(appointment);
     if(editingId){
-      const result=await apiPut(`/api/appointments/${editingId}`,appointment);
+      const result=await apiPut(`/api/appointments/${editingId}`,payload);
       const idx=appointments.findIndex(a=>a.id==editingId);
       if(idx>=0) appointments[idx]={...appointments[idx],...(result||appointment)};
       showToast('Agendamento atualizado!','success');
     }else{
-      const created=await apiPost('/api/appointments',appointment);
+      const created=await apiPost('/api/appointments',payload);
       appointments.push(created||appointment);
       showToast('Agendamento criado!','success');
     }
@@ -425,7 +437,6 @@ window.deleteAppointment = deleteAppointment;
 /* ===========================
    STATUS (checkboxes) — delegação
 =========================== */
-// handler separado para conseguirmos des/registrar
 async function __onStatusChange(e) {
   const target = e.target;
   if (!(target instanceof HTMLInputElement)) return;
@@ -453,7 +464,8 @@ async function __onStatusChange(e) {
   card.classList.add('status-' + statusKey);
 
   try {
-    const updated = await apiPut(`/api/appointments/${id}`, a);
+    const payload = sanitizeForApi(a);
+    const updated = await apiPut(`/api/appointments/${id}`, payload);
     if (updated && typeof updated === 'object') Object.assign(a, updated);
     showToast(`Status gravado: ${statusKey}`, 'success');
   } catch (err) {
@@ -469,13 +481,12 @@ async function __onStatusChange(e) {
 }
 
 function attachStatusListeners() {
-  // remove e volta a adicionar para evitar múltiplos handlers
   document.removeEventListener('change', __onStatusChange, true);
   document.addEventListener('change', __onStatusChange, true);
 }
 
 /* ===========================
-   PRINT helpers (mantidos)
+   PRINT helpers
 =========================== */
 function updatePrintUnscheduledTable(){
   const uns=filterAppointments(appointments.filter(a=>!a.date||!a.period).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0)));
@@ -498,7 +509,7 @@ function updatePrintTomorrowTable(){
 }
 
 /* ===========================
-   STUBS p/ botões secundários
+   STUBS
 =========================== */
 function closeBackupModal(){ const m=document.getElementById('backupModal'); if(m) m.classList.remove('show'); }
 function showStats(){ const m=document.getElementById('statsModal'); if(m) m.classList.add('show'); }
@@ -552,7 +563,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('exportJson')?.addEventListener('click', exportToJson);
   document.getElementById('exportCsv')?.addEventListener('click', exportToCsv);
 
-  // Estados: liga uma única vez (delegação)
+  // Estados
   attachStatusListeners();
 
   await load();
