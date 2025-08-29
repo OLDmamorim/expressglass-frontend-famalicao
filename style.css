@@ -659,3 +659,67 @@ table.schedule td:first-child{ border-left:none; }
   align-items:center;
   gap:6px;
 }
+/* ===== Vidros para Encomendar — visual "limpo" igual às outras tabelas ===== */
+.to-order-section{
+  background:#ffffff;
+  border-radius:12px;
+  padding:18px 18px 12px;
+  box-shadow:0 8px 24px rgba(16,24,40,.06);
+  border:1px solid #eef2f7;
+  margin-top:16px;
+}
+
+.to-order-title{
+  margin:0 0 12px 4px;
+  font-size:18px;
+  font-weight:700;
+  color:#111827;
+}
+
+.to-order-section .table-wrapper{
+  width:100%;
+  overflow:auto;
+  border-radius:10px;
+}
+
+/* mesma linguagem visual da .services-table */
+.to-order-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  font-size:14px;
+}
+
+.to-order-table thead th{
+  position:sticky; top:0;
+  background:#f8fafc;          /* cabeçalho claro */
+  color:#374151;
+  text-align:left;
+  font-weight:600;
+  padding:12px 14px;
+  border-bottom:1px solid #e5e7eb;
+  white-space:nowrap;
+}
+
+.to-order-table tbody td{
+  padding:12px 14px;
+  border-bottom:1px solid #f1f5f9;
+  color:#111827;
+}
+
+/* zebra + hover como na outra */
+.to-order-table tbody tr:nth-child(odd){ background:#fcfcfd; }
+.to-order-table tbody tr:hover{ background:#f8fafc; }
+
+/* cantos arredondados da tabela */
+.to-order-table thead th:first-child{ border-top-left-radius:10px; }
+.to-order-table thead th:last-child { border-top-right-radius:10px; }
+.to-order-table tbody tr:last-child td:first-child{ border-bottom-left-radius:10px; }
+.to-order-table tbody tr:last-child td:last-child { border-bottom-right-radius:10px; }
+
+/* responsivo: evita quebra feia */
+@media (max-width: 720px){
+  .to-order-title{ font-size:16px; }
+  .to-order-table thead th,
+  .to-order-table tbody td{ padding:10px 12px; }
+}
