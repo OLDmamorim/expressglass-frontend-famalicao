@@ -579,6 +579,21 @@ function attachStatusListeners() {
 /* ===========================
    PRINT helpers
 =========================== */
+// helper robusto: compara string de data com um Date pelo dia LOCAL
+function isSameLocalDay(dateStr, refDate){
+  if (!dateStr) return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr === localISO(refDate);
+  }
+  const a = new Date(dateStr);
+  const b = new Date(refDate);
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth()    === b.getMonth() &&
+    a.getDate()     === b.getDate()
+  );
+}
+
 function updatePrintTodayTable(){
   const title=document.getElementById('printTodayTitle');
   const dateEl=document.getElementById('printTodayDate');
@@ -587,13 +602,12 @@ function updatePrintTodayTable(){
   if(!tbody) return;
 
   const today = new Date();
-  const iso   = localISO(today);
 
   if(title) title.textContent='SERVIÇOS DE HOJE';
   if(dateEl) dateEl.textContent=today.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
 
   const rows=appointments
-    .filter(a=>a.date===iso)
+    .filter(a=> isSameLocalDay(a.date, today))
     .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) :
           ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)));
 
@@ -659,11 +673,9 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
   // Impressão — só HOJE + AMANHÃ
   document.getElementById('printPage')?.addEventListener('click', ()=>{
-    // popular tabelas
     updatePrintTodayTable();
     updatePrintTomorrowTable();
 
-    // mostrar só as secções de impressão que interessam
     const hideSel = '.schedule-container, .unscheduled-container, .services-table-container, .mobile-day-container, .search-bar, .nav-bar, .page-header, .no-print';
     document.querySelectorAll(hideSel).forEach(el=> el.style.display='none');
 
@@ -674,7 +686,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
     window.print();
 
-    // repor UI após imprimir
     setTimeout(()=>{ location.reload(); }, 300);
   });
 
