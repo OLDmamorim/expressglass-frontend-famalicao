@@ -1127,4 +1127,32 @@ select#appointmentStatus{
   border-radius: 8px;
   font-size: 13px;
 }
+/* ===========================
+   Cores dos cartões por ESTADO
+   =========================== */
 
+/* Cartão - Não Executado (NE) → Vermelho */
+.appointment-block.status-NE {
+  background: linear-gradient(180deg, #fca5a5, #ef4444) !important;
+  color: #fff;
+}
+
+/* Cartão - Vidro Encomendado (VE) → Amarelo */
+.appointment-block.status-VE {
+  background: linear-gradient(180deg, #fcd34d, #f59e0b) !important;
+  color: #111; /* texto escuro para contraste */
+}
+
+/* Cartão - Serviço Terminado (ST) → Verde */
+.appointment-block.status-ST {
+  background: linear-gradient(180deg, #6ee7b7, #10b981) !important;
+  color: #fff;
+}
+
+/* Garantir contraste nos títulos */
+.appointment-block .appt-header strong {
+  color: inherit;
+}
+.appointment-block .appt-sub {
+  color: inherit;
+}
