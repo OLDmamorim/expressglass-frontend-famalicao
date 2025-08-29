@@ -179,3 +179,19 @@ table.schedule td{min-height:120px; border-left:1px solid #e5e7eb; border-bottom
   border-radius: 16px !important;
   box-shadow: 0 8px 18px rgba(0,0,0,.10) !important;
 }
+/* =========================
+   Remover tabelas extras no ecrã
+   ========================= */
+.print-unscheduled-section,
+.print-today-section,
+.print-tomorrow-section {
+  display: none !important;   /* escondido no ecrã */
+}
+
+@media print {
+  .print-unscheduled-section,
+  .print-today-section,
+  .print-tomorrow-section {
+    display: block !important;   /* só no print */
+  }
+}
