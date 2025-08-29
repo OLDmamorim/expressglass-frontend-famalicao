@@ -20,6 +20,8 @@
     .toast.success{ border-left:4px solid #10b981; }
     .toast.error{ border-left:4px solid #ef4444; }
     .toast.info{ border-left:4px solid #3b82f6; }
+    /* pequeno alinhamento para o botão abaixo da navegação */
+    .nav-add-service{ display:flex; justify-content:center; gap:8px; margin:10px 0 18px; }
   </style>
 
   <!-- Funções base (modal + máscara de matrícula) definidas ANTES do script.js -->
@@ -72,6 +74,11 @@
       <div class="nav-right">
         <button id="printPage" class="nav-button no-print" type="button">🖨 Imprimir</button>
       </div>
+    </div>
+
+    <!-- ✅ Botão Novo Serviço debaixo do nav -->
+    <div class="nav-add-service no-print">
+      <button id="addServiceTop" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
     </div>
 
     <!-- Pesquisa -->
@@ -274,6 +281,7 @@
     (function () {
       const open = () => openAppointmentModal();
       const close = () => closeAppointmentModal();
+      document.getElementById('addServiceTop')?.addEventListener('click', open);   // ✅ novo botão
       document.getElementById('addServiceBtn')?.addEventListener('click', open);
       document.getElementById('addServiceMobile')?.addEventListener('click', open);
       document.getElementById('closeModal')?.addEventListener('click', close);
@@ -321,8 +329,7 @@
           payload.date = rawDate;                               // yyyy-mm-dd
           payload.period = normalizePeriod(rawPeriod) || 'Manhã';
         }else{
-          // Sem data -> não enviar "date" e deixar period vazio => vai para "Por agendar"
-          payload.period = '';
+          payload.period = ''; // Sem data -> “Por agendar”
         }
 
         try{
