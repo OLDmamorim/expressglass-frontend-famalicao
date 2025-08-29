@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css"/>
   <meta name="theme-color" content="#2563eb">
 
-  <!-- CSS inline mínimo para garantir modal visível mesmo sem style.css -->
+  <!-- CSS inline mínimo para garantir modal/toasts mesmo sem style.css -->
   <style>
     .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center; }
     .modal.show{ display:flex; }
@@ -61,22 +61,22 @@
       </div>
     </header>
 
-    <!-- Navegação -->
+    <!-- Navegação principal -->
     <div class="nav-bar no-print">
       <div class="nav-left">
         <button id="prevWeek" class="nav-button" type="button">◄ Anterior</button>
         <button id="todayWeek" class="nav-button" type="button">Hoje</button>
         <button id="nextWeek" class="nav-button" type="button">Seguinte ►</button>
       </div>
-
-      <div class="nav-cta">
-        <div id="weekRange" class="week-range">—</div>
-        <button id="addServiceBtnTop" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
-      </div>
-
+      <div id="weekRange" class="week-range">—</div>
       <div class="nav-right">
         <button id="printPage" class="nav-button no-print" type="button">🖨 Imprimir</button>
       </div>
+    </div>
+
+    <!-- Sub-barra: Novo Serviço por baixo, alinhado à esquerda -->
+    <div class="nav-sub no-print">
+      <button id="addServiceTop" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
     </div>
 
     <!-- Pesquisa -->
@@ -94,7 +94,7 @@
     <section class="unscheduled-container">
       <h3>SERVIÇOS POR AGENDAR</h3>
       <div class="unscheduled-actions">
-        <button id="addServiceBtn" class="action-btn primary" type="button" onclick="openAppointmentModal()">+ Novo Serviço</button>
+        <!-- Removido o botão duplicado de novo serviço aqui -->
         <select id="filterStatus" class="filter-select">
           <option value="">Todos os estados</option>
           <option value="NE">N/E - Não Executado</option>
@@ -105,11 +105,11 @@
       <div id="unscheduledList" class="unscheduled-list" data-drop-bucket="unscheduled"></div>
     </section>
 
-    <!-- APP: Vidros para Encomendar (Hoje + 3 dias) -->
-    <section class="to-order-container">
-      <h3>VIDROS PARA ENCOMENDAR (Hoje + 3 dias)</h3>
+    <!-- NOVA SECÇÃO: Vidros para encomendar -->
+    <section class="to-order-section">
+      <h3 id="toOrderTitle" class="to-order-title">VIDROS PARA ENCOMENDAR (Hoje + 3 dias)</h3>
       <div class="table-wrapper">
-        <table id="toOrderTable" class="services-table">
+        <table class="to-order-table">
           <thead>
             <tr>
               <th>Data</th>
@@ -300,8 +300,7 @@
     (function () {
       const open = () => openAppointmentModal();
       const close = () => closeAppointmentModal();
-      document.getElementById('addServiceBtn')?.addEventListener('click', open);
-      document.getElementById('addServiceBtnTop')?.addEventListener('click', open);
+      document.getElementById('addServiceTop')?.addEventListener('click', open);
       document.getElementById('addServiceMobile')?.addEventListener('click', open);
       document.getElementById('closeModal')?.addEventListener('click', close);
       document.getElementById('cancelForm')?.addEventListener('click', close);
