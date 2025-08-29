@@ -756,3 +756,12 @@ table.schedule td:first-child{ border-left:none; }
     display: none !important;
   }
 }
+/* Força esconder a tabela "Vidros para Encomendar" no mobile */
+@media (max-width: 820px){
+  section#glassOrdersSection.to-order-section.glass-orders-container {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+}
