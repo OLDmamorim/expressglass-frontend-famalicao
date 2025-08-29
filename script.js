@@ -106,12 +106,35 @@ let __wiredForm = false;
 let __savingAppointment = false;
 
 /* ===========================
+   HELPERS DE ORDENAÇÃO & DEDUPE
+=========================== */
+function bucketOf(a){ return (a.date && a.period) ? `${a.date}|${a.period}` : 'unscheduled'; }
+
+function nextSortIndexFor(date, period){
+  const bucket = (date && period) ? `${date}|${period}` : 'unscheduled';
+  const max = Math.max(
+    0,
+    ...appointments.filter(x => bucketOf(x)===bucket).map(x => x.sortIndex || 0)
+  );
+  return max + 1;
+}
+
+function dedupeByIdOrKey(rows){
+  const seen = new Map();
+  rows.forEach(a=>{
+    const key = String(a.id ?? `${a.plate}|${a.car}|${a.date||''}|${a.period||''}|${a.service||''}`);
+    if (!seen.has(key)) seen.set(key, a);
+  });
+  return Array.from(seen.values());
+}
+
+/* ===========================
    LOAD
 =========================== */
 async function load(){
   try{
     const rows = await apiGet('/api/appointments');
-    appointments = rows.map(a=>({
+    const mapped = rows.map(a=>({
       ...a,
       date: parseDate(a.date),
       period: normalizePeriod(a.period),
@@ -119,6 +142,7 @@ async function load(){
       sortIndex: a.sortIndex ?? 1,
       status: a.status ?? 'NE'
     }));
+    appointments = dedupeByIdOrKey(mapped);
   }catch(e){
     appointments=[]; showToast('Erro ao carregar: '+e.message,'error');
   }
@@ -174,7 +198,6 @@ function enableDragDrop(scope){
     });
   });
 }
-function bucketOf(a){ return (a.date && a.period) ? `${a.date}|${a.period}` : 'unscheduled'; }
 function normalizeBucketOrder(bucket){ const items=appointments.filter(a=>bucketOf(a)===bucket); items.forEach((it,i)=> it.sortIndex=i+1); }
 async function onDropAppointment(id,targetBucket,targetIndex){
   const i=appointments.findIndex(a=>a.id==id); if(i<0) return;
@@ -186,7 +209,7 @@ async function onDropAppointment(id,targetBucket,targetIndex){
   normalizeBucketOrder(targetBucket);
   const list=appointments.filter(x=>bucketOf(x)===targetBucket).sort((x,y)=>(x.sortIndex||0)-(y.sortIndex||0));
   list.forEach((x,idx)=> x.sortIndex=idx+1);
-  if(targetIndex>=list.length) a.sortIndex=list.length+1;
+  if(targetIndex>=list.length) a.sortIndex = nextSortIndexFor(a.date, a.period);
   else { list.splice(targetIndex,0,a); list.forEach((x,idx)=> x.sortIndex=idx+1); }
 
   renderAll(); // otimista
@@ -393,7 +416,10 @@ async function saveAppointment(){
   __savingAppointment = true;
 
   const rawDate=document.getElementById('appointmentDate').value;
-  const appointment={
+  const isEdit = !!editingId;
+
+  // base do objeto
+  let appointment={
     id: editingId || Date.now()+Math.random(),
     date: parseDate(rawDate),
     period: normalizePeriod(document.getElementById('appointmentPeriod').value),
@@ -405,11 +431,15 @@ async function saveAppointment(){
     extra:   document.getElementById('appointmentExtra').value,
     sortIndex: 1
   };
+
   if(!appointment.plate || !appointment.car || !appointment.service){
     showToast('Preenche Matrícula, Carro e Serviço.','error');
     __savingAppointment = false;
     return;
   }
+
+  // coloca SEMPRE no fim do respetivo balde
+  appointment.sortIndex = nextSortIndexFor(appointment.date, appointment.period);
 
   const submitBtn = document.querySelector('#appointmentForm .btn.primary');
   const prevTxt   = submitBtn ? submitBtn.textContent : '';
@@ -417,13 +447,17 @@ async function saveAppointment(){
 
   try{
     const payload = sanitizeForApi(appointment);
-    if(editingId){
-      await apiPut(`/api/appointments/${editingId}`,payload);
+
+    if(isEdit){
+      await apiPut(`/api/appointments/${editingId}`, payload);
       showToast('Agendamento atualizado!','success');
     }else{
-      await apiPost('/api/appointments',payload);
+      // NÃO mandar id no POST → backend cria o id e evita duplicações
+      const { id, ...toCreate } = payload;
+      await apiPost('/api/appointments', toCreate);
       showToast('Agendamento criado!','success');
     }
+
     await load(); renderAll(); closeAppointmentModal();
   }catch(e){
     console.error(e); showToast('Erro ao guardar: '+e.message,'error');
