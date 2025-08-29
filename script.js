@@ -5,7 +5,7 @@
 =========================== */
 const API_BASE = 'https://expressglass-backend-famalicao.netlify.app';
 
-/* HTTP helpers */
+/* -------- HTTP helpers -------- */
 async function apiGet(path, params = {}) {
   const url = new URL(API_BASE + path);
   Object.entries(params).forEach(([k, v]) => {
@@ -65,6 +65,8 @@ function formatDateForInput(dateStr){
   }
   return dateStr;
 }
+
+/* Remove acentos */
 function normalizePeriod(p){
   if(!p) return '';
   const t = String(p).normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
@@ -82,8 +84,13 @@ function showToast(msg,type='info'){
   c.appendChild(t);
   setTimeout(()=>t.remove(),3500);
 }
-function isMobile(){ return window.matchMedia('(max-width: 820px)').matches; }
-const MOBILE_Q = window.matchMedia('(max-width: 820px)');
+function formatPlate(input){
+  let v=(input.value||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();
+  if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);
+  if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5,7);
+  input.value=v;
+}
+function isMobile(){ return window.matchMedia && window.matchMedia('(max-width: 820px)').matches; }
 
 /* ===========================
    STATE
@@ -101,9 +108,13 @@ let __savingAppointment = false;
    ORDEM & DEDUPE
 =========================== */
 function bucketOf(a){ return (a.date && a.period) ? `${a.date}|${a.period}` : 'unscheduled'; }
+
 function nextSortIndexFor(date, period){
   const bucket = (date && period) ? `${date}|${period}` : 'unscheduled';
-  const max = Math.max(0, ...appointments.filter(x => bucketOf(x) === bucket).map(x => Number(x.sortIndex) || 0));
+  const max = Math.max(
+    0,
+    ...appointments.filter(x => bucketOf(x) === bucket).map(x => Number(x.sortIndex) || 0)
+  );
   return max + 1;
 }
 function dedupeByIdOrKey(rows){
@@ -123,12 +134,16 @@ function normalizeAllBucketsOrder(list){
   });
   byBucket.forEach(items=>{
     items.sort((x,y)=>{
-      const sx = (x.sortIndex ?? 1e9), sy = (y.sortIndex ?? 1e9);
+      const sx = (x.sortIndex ?? 1e9);
+      const sy = (y.sortIndex ?? 1e9);
       if (sx !== sy) return sx - sy;
       return String(x.id).localeCompare(String(y.id));
     });
     let i = 1;
-    items.forEach(it=>{ if (it.sortIndex == null || isNaN(it.sortIndex)) it.sortIndex = i++; });
+    items.forEach(it=>{
+      if (it.sortIndex == null || isNaN(it.sortIndex)) it.sortIndex = i;
+      i++;
+    });
   });
   return list;
 }
@@ -179,7 +194,7 @@ function highlightSearchResults(){
 }
 
 /* ===========================
-   Drag & Drop (desktop)
+   Drag & Drop
 =========================== */
 function enableDragDrop(scope){
   (scope||document).querySelectorAll('.appointment-block[data-id]').forEach(card=>{
@@ -238,8 +253,6 @@ async function onDropAppointment(id,targetBucket,targetIndex){
 =========================== */
 function renderSchedule(){
   const table=document.getElementById('schedule'); if(!table) return; table.innerHTML='';
-  if (isMobile()){ table.closest('.schedule-container')?.classList.add('hidden'); return; }
-  table.closest('.schedule-container')?.classList.remove('hidden');
 
   const week=[...Array(6)].map((_,i)=> addDays(currentMonday,i));
   const wr=document.getElementById('weekRange');
@@ -261,7 +274,9 @@ function renderSchedule(){
     );
     const blocks=items.map(a=>{
       return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
-                <div class="appt-header"><strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
+                <div class="appt-header">
+                  <strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}
+                </div>
                 <div class="appt-sub">${a.notes||''}</div>
                 <div class="appt-status">
                   <label><input type="checkbox" class="state-box" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
@@ -288,7 +303,7 @@ function renderSchedule(){
   highlightSearchResults();
 }
 
-/* Unscheduled */
+/* Por agendar */
 function renderUnscheduled(){
   const container=document.getElementById('unscheduledList'); if(!container) return;
 
@@ -301,37 +316,42 @@ function renderUnscheduled(){
       })
   );
 
-  container.innerHTML = uns.length ? (
-    `<div class="drop-zone" data-drop-bucket="unscheduled">${
-      uns.map(a=>`
-        <div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
-          <div class="appt-header"><strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
-          <div class="appt-sub">${a.notes||''}</div>
-          <div class="appt-status">
-            <label><input type="checkbox" class="state-box" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
-            <label><input type="checkbox" class="state-box" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
-            <label><input type="checkbox" class="state-box" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
-          </div>
-          <div class="card-actions">
-            <button title="Editar" type="button" onclick="editAppointment(${a.id})">✏️</button>
-            <button title="Apagar" type="button" onclick="deleteAppointment(${a.id})">🗑️</button>
-          </div>
-        </div>`).join('')
-    }</div>`
-  ) : (
-    `<div class="drop-zone empty" data-drop-bucket="unscheduled">
-       <div class="unscheduled-empty-msg">
-         Sem serviços por agendar.
-         <small>Arrasta para aqui a partir do calendário, ou clica em “+ Novo Serviço”.</small>
-       </div>
-     </div>`
-  );
+  if (uns.length === 0){
+    container.innerHTML =
+      `<div class="drop-zone empty" data-drop-bucket="unscheduled">
+         <div class="unscheduled-empty-msg">
+           Sem serviços por agendar.
+           <small>Arrasta para aqui a partir do calendário, ou clica em “+ Novo Serviço”.</small>
+         </div>
+       </div>`;
+    enableDragDrop(container);
+    return;
+  }
 
+  const blocks=uns.map(a=>{
+    return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
+              <div class="appt-header">
+                <strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}
+              </div>
+              <div class="appt-sub">${a.notes||''}</div>
+              <div class="appt-status">
+                <label><input type="checkbox" class="state-box" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
+                <label><input type="checkbox" class="state-box" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
+                <label><input type="checkbox" class="state-box" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
+              </div>
+              <div class="card-actions">
+                <button title="Editar" type="button" onclick="editAppointment(${a.id})">✏️</button>
+                <button title="Apagar" type="button" onclick="deleteAppointment(${a.id})">🗑️</button>
+              </div>
+            </div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="drop-zone" data-drop-bucket="unscheduled">${blocks}</div>`;
   enableDragDrop(container);
   highlightSearchResults();
 }
 
-/* Mobile day */
+/* Vista diária (mobile) */
 function renderMobileDay(){
   const label=document.getElementById('mobileDayLabel');
   if(label){
@@ -350,21 +370,12 @@ function renderMobileDay(){
     return `<div class="appointment-block status-${a.status}" style="margin-bottom:10px;" data-id="${a.id}">
               <div class="appt-header">${a.period} - ${(a.plate||'')} | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
               <div class="appt-sub">${a.notes||''}</div>
-              <div class="appt-status">
-                <label><input type="checkbox" class="state-box" data-status="NE" ${a.status==='NE'?'checked':''}/> N/E</label>
-                <label><input type="checkbox" class="state-box" data-status="VE" ${a.status==='VE'?'checked':''}/> V/E</label>
-                <label><input type="checkbox" class="state-box" data-status="ST" ${a.status==='ST'?'checked':''}/> ST</label>
-              </div>
-              <div class="card-actions">
-                <button class="table-btn" type="button" onclick="editAppointment(${a.id})">✏️</button>
-                <button class="table-btn danger" type="button" onclick="deleteAppointment(${a.id})">🗑️</button>
-              </div>
             </div>`;
   }).join('');
   highlightSearchResults();
 }
 
-/* Serviços (tabela desktop) */
+/* Tabela de serviços */
 function renderServicesTable(){
   const tbody=document.getElementById('servicesTableBody'); if(!tbody) return;
   const today=new Date();
@@ -396,32 +407,38 @@ function renderServicesTable(){
   const sum=document.getElementById('servicesSummary'); if(sum) sum.textContent = `${future.length} serviços pendentes`;
 }
 
-/* Vidros para encomendar (Hoje + 3 dias) — desktop only */
+/* === Tabela: VIDROS PARA ENCOMENDAR (Hoje + 3 dias) === */
 function renderGlassOrdersTable(){
-  const section = document.querySelector('.glass-orders-container');
+  const section = document.getElementById('glassOrdersSection');
   const tbody = document.getElementById('glassOrdersTableBody');
   if (!section || !tbody) return;
 
+  // No mobile: força esconder (CSS também esconde, isto é defensivo)
   if (isMobile()){
     section.style.display = 'none';
     tbody.innerHTML = '';
     return;
+  } else {
+    section.style.display = '';
   }
-  section.style.display = '';
 
-  const today = new Date();
-  const maxDay = addDays(today, 3);
+  const start = new Date(); start.setHours(0,0,0,0);
+  const end = addDays(start, 3); end.setHours(23,59,59,999);
+
   const rows = appointments
-    .filter(a=>{
-      if(a.status !== 'NE' || !a.date) return false;
+    .filter(a => a.date)
+    .filter(a => {
       const d = new Date(a.date);
-      const d0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      return d0 >= t0 && d0 <= maxDay;
+      return d >= start && d <= end;
     })
-    .sort((a,b)=> new Date(a.date)-new Date(b.date) ||
-                 (a.period==='Manhã'?-1:1) - (b.period==='Manhã'?-1:1) ||
-                 ((a.sortIndex??1e9)-(b.sortIndex??1e9)));
+    .filter(a => (a.status === 'NE') && (String(a.service).toUpperCase() === 'PB'))
+    .sort((a,b)=>{
+      const ad=new Date(a.date), bd=new Date(b.date);
+      return ad-bd ||
+             (a.period==='Manhã'?-1:1) - (b.period==='Manhã'?-1:1) ||
+             ((a.sortIndex??1e9)-(b.sortIndex??1e9)) ||
+             String(a.id).localeCompare(String(b.id));
+    });
 
   tbody.innerHTML = rows.map(a=>{
     const dt = new Date(a.date);
@@ -437,7 +454,112 @@ function renderGlassOrdersTable(){
   }).join('');
 }
 
-function renderAll(){ renderSchedule(); renderUnscheduled(); renderMobileDay(); renderServicesTable(); renderGlassOrdersTable(); }
+/* ===========================
+   PRINT helpers
+=========================== */
+function isSameLocalDay(dateStr, refDate){
+  if (!dateStr) return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr === localISO(refDate);
+  }
+  const a = new Date(dateStr);
+  const b = new Date(refDate);
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+function updatePrintTodayTable(){
+  const title=document.getElementById('printTodayTitle');
+  const dateEl=document.getElementById('printTodayDate');
+  const tbody=document.getElementById('printTodayTableBody');
+  const empty=document.getElementById('printTodayEmpty');
+  if(!tbody) return;
+
+  const today = new Date();
+  if(title) title.textContent='SERVIÇOS DE HOJE';
+  if(dateEl) dateEl.textContent=today.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+
+  const rows=appointments
+    .filter(a=> isSameLocalDay(a.date, today))
+    .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) :
+          ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)));
+
+  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
+  if(empty) empty.style.display='none';
+
+  tbody.innerHTML = rows.map(a=>
+    `<tr>
+      <td>${a.period||''}</td>
+      <td>${a.plate||''}</td>
+      <td>${a.car||''}</td>
+      <td>${a.service||''}</td>
+      <td>${a.status||''}</td>
+      <td>${a.notes||''}</td>
+      <td>${a.extra||''}</td>
+    </tr>`
+  ).join('');
+}
+
+function updatePrintTomorrowTable(){
+  const dateEl=document.getElementById('printTomorrowDate');
+  const tbody=document.getElementById('printTomorrowTableBody');
+  const empty=document.getElementById('printTomorrowEmpty'); if(!tbody) return;
+  const tomorrow=addDays(new Date(),1); const iso=localISO(tomorrow);
+  if(dateEl) dateEl.textContent=tomorrow.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+  const rows=appointments.filter(a=>a.date===iso).sort((a,b)=>
+    (a.period!==b.period ? (a.period==='Manhã'?-1:1) :
+    ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)))
+  );
+  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
+  if(empty) empty.style.display='none';
+  tbody.innerHTML = rows.map(a=>`<tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td><td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
+}
+
+/* Impressão: Vidros p/ Encomendar */
+function updatePrintToOrderTable(){
+  const tbody = document.getElementById('printToOrderTableBody');
+  const empty = document.getElementById('printToOrderEmpty');
+  if(!tbody) return;
+
+  const start = new Date(); start.setHours(0,0,0,0);
+  const end = addDays(start, 3); end.setHours(23,59,59,999);
+
+  const rows = appointments
+    .filter(a => a.date)
+    .filter(a => {
+      const d = new Date(a.date);
+      return d >= start && d <= end;
+    })
+    .filter(a => (a.status === 'NE') && (String(a.service).toUpperCase() === 'PB'))
+    .sort((a,b)=> new Date(a.date)-new Date(b.date) ||
+                  (a.period==='Manhã'?-1:1) - (b.period==='Manhã'?-1:1) ||
+                  ((a.sortIndex??1e9)-(b.sortIndex??1e9)) ||
+                  String(a.id).localeCompare(String(b.id)));
+
+  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
+  if(empty) empty.style.display='none';
+
+  tbody.innerHTML = rows.map(a=>{
+    const dt=new Date(a.date);
+    return `<tr>
+      <td>${dt.toLocaleDateString('pt-PT')}</td>
+      <td>${a.period||''}</td>
+      <td>${a.plate||''}</td>
+      <td>${a.car||''}</td>
+      <td>${a.service||''}</td>
+      <td>${a.notes||''}</td>
+      <td>${a.extra||''}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ===========================
+   STUBS
+=========================== */
+function closeBackupModal(){ const m=document.getElementById('backupModal'); if(m) m.classList.remove('show'); }
+function showStats(){ const m=document.getElementById('statsModal'); if(m) m.classList.add('show'); }
+function importFromJson(file){ const s=document.getElementById('importStatus'); if(s) s.textContent=`Ficheiro: ${file.name}`; }
+function exportToJson(){ showToast('Export JSON pronto (stub).','info'); }
+function exportToCsv(){ showToast('Export CSV pronto (stub).','info'); }
 
 /* ===========================
    CRUD
@@ -516,6 +638,7 @@ async function saveAppointment(){
 
   try{
     const payload = sanitizeForApi(appointment);
+
     if(isEdit){
       await apiPut(`/api/appointments/${editingId}`, payload);
       showToast('Agendamento atualizado!','success');
@@ -544,146 +667,10 @@ async function deleteAppointment(id){
   catch(e){ console.error(e); showToast('Erro ao eliminar: '+e.message,'error'); }
 }
 
-/* Expor para onclick inline */
+/* Expor */
 window.openAppointmentModal = openAppointmentModal;
 window.editAppointment = editAppointment;
 window.deleteAppointment = deleteAppointment;
-
-/* ===========================
-   STATUS (checkboxes) — delegação
-=========================== */
-async function __onStatusChange(e) {
-  const target = e.target;
-  if (!(target instanceof HTMLInputElement)) return;
-  if (target.type !== 'checkbox') return;
-  const statusKey = target.getAttribute('data-status'); // "NE" | "VE" | "ST"
-  if (!statusKey) return;
-
-  const card = target.closest('.appointment-block'); if (!card) return;
-  const id = Number(card.getAttribute('data-id'));
-  const a = appointments.find(x => x.id == id); if (!a) return;
-
-  // desmarca as outras boxes do mesmo cartão
-  card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
-    if (cb !== target) cb.checked = false;
-  });
-
-  const prevStatus = a.status;
-  a.status = statusKey;
-
-  card.classList.remove('status-NE', 'status-VE', 'status-ST');
-  card.classList.add('status-' + statusKey);
-
-  try {
-    const payload = sanitizeForApi(a);
-    const updated = await apiPut(`/api/appointments/${id}`, payload);
-    if (updated && typeof updated === 'object') Object.assign(a, updated);
-    showToast(`Status gravado: ${statusKey}`, 'success');
-  } catch (err) {
-    a.status = prevStatus;
-    card.classList.remove('status-NE', 'status-VE', 'status-ST');
-    card.classList.add('status-' + prevStatus);
-    card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
-      cb.checked = cb.getAttribute('data-status') === prevStatus;
-    });
-    showToast('Erro a gravar status: ' + (err.message || err), 'error');
-  }
-}
-function attachStatusListeners() {
-  document.removeEventListener('change', __onStatusChange, true);
-  document.addEventListener('change', __onStatusChange, true);
-}
-
-/* ===========================
-   PRINT helpers (3 folhas)
-=========================== */
-function isSameLocalDay(dateStr, refDate){
-  if (!dateStr) return false;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr === localISO(refDate);
-  const a = new Date(dateStr), b = new Date(refDate);
-  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
-}
-function updatePrintTodayTable(){
-  const title=document.getElementById('printTodayTitle');
-  const dateEl=document.getElementById('printTodayDate');
-  const tbody=document.getElementById('printTodayTableBody');
-  const empty=document.getElementById('printTodayEmpty'); if(!tbody) return;
-
-  const today = new Date();
-  if(title) title.textContent='SERVIÇOS DE HOJE';
-  if(dateEl) dateEl.textContent=today.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
-
-  const rows=appointments
-    .filter(a=> isSameLocalDay(a.date, today))
-    .sort((a,b)=> a.period!==b.period ? (a.period==='Manhã'?-1:1) :
-          ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)));
-
-  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
-  if(empty) empty.style.display='none';
-
-  tbody.innerHTML = rows.map(a=>`
-    <tr><td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td>
-    <td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
-}
-function updatePrintTomorrowTable(){
-  const dateEl=document.getElementById('printTomorrowDate');
-  const tbody=document.getElementById('printTomorrowTableBody');
-  const empty=document.getElementById('printTomorrowEmpty'); if(!tbody) return;
-  const tomorrow=addDays(new Date(),1); const iso=localISO(tomorrow);
-  if(dateEl) dateEl.textContent=tomorrow.toLocaleDateString('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
-  const rows=appointments.filter(a=>a.date===iso).sort((a,b)=>
-    (a.period!==b.period ? (a.period==='Manhã'?-1:1) :
-    ((a.sortIndex??1e9)-(b.sortIndex??1e9)) || String(a.id).localeCompare(String(b.id)))
-  );
-  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
-  if(empty) empty.style.display='none';
-  tbody.innerHTML = rows.map(a=>`<tr>
-    <td>${a.period||''}</td><td>${a.plate||''}</td><td>${a.car||''}</td>
-    <td>${a.service||''}</td><td>${a.status||''}</td><td>${a.notes||''}</td><td>${a.extra||''}</td></tr>`).join('');
-}
-function updatePrintToOrderTable(){
-  const tbody=document.getElementById('printToOrderTableBody');
-  const empty=document.getElementById('printToOrderEmpty'); if(!tbody) return;
-
-  const today = new Date();
-  const maxDay = addDays(today, 3);
-  const rows = appointments
-    .filter(a=>{
-      if(a.status !== 'NE' || !a.date) return false;
-      const d = new Date(a.date);
-      const d0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-      const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      return d0 >= t0 && d0 <= maxDay;
-    })
-    .sort((a,b)=> new Date(a.date)-new Date(b.date) ||
-                 (a.period==='Manhã'?-1:1) - (b.period==='Manhã'?-1:1) ||
-                 ((a.sortIndex??1e9)-(b.sortIndex??1e9)));
-
-  if(rows.length===0){ if(empty) empty.style.display='block'; tbody.innerHTML=''; return; }
-  if(empty) empty.style.display='none';
-
-  tbody.innerHTML = rows.map(a=>{
-    const dt = new Date(a.date);
-    return `<tr>
-      <td>${dt.toLocaleDateString('pt-PT')}</td>
-      <td>${a.period||''}</td>
-      <td>${a.plate||''}</td>
-      <td>${a.car||''}</td>
-      <td>${a.service||''}</td>
-      <td>${a.notes||''}</td>
-      <td>${a.extra||''}</td>
-    </tr>`;
-  }).join('');
-}
-
-/* ===========================
-   STUBS
-=========================== */
-function closeBackupModal(){ const m=document.getElementById('backupModal'); if(m) m.classList.remove('show'); }
-function showStats(){ const m=document.getElementById('statsModal'); if(m) m.classList.add('show'); }
-function importFromJson(file){ const s=document.getElementById('importStatus'); if(s) s.textContent=`Ficheiro: ${file.name}`; }
-function exportToJson(){ showToast('Export JSON pronto (stub).','info'); }
-function exportToCsv(){ showToast('Export CSV pronto (stub).','info'); }
 
 /* ===========================
    BOOT
@@ -699,12 +686,21 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('todayDay')?.addEventListener('click', ()=>{ currentMobileDay=new Date(); renderMobileDay(); });
   document.getElementById('nextDay')?.addEventListener('click', ()=>{ currentMobileDay=addDays(currentMobileDay,1); renderMobileDay(); });
 
-  // Impressão — Hoje + Amanhã + Vidros p/ Encomendar
+  // Impressão — HOJE + AMANHÃ + VIDROS
   document.getElementById('printPage')?.addEventListener('click', ()=>{
     updatePrintTodayTable();
     updatePrintTomorrowTable();
     updatePrintToOrderTable();
+
+    // mostrar apenas as 3 secções de impressão
+    document.querySelectorAll('.schedule-container, .unscheduled-container, .services-table-container, .mobile-day-container, .search-bar, .nav-bar, .page-header, .glass-orders-container, .no-print').forEach(el=> el.style.display='none');
+    document.querySelector('.print-today-section')?.setAttribute('style','display:block');
+    document.querySelector('.print-tomorrow-section')?.setAttribute('style','display:block');
+    document.querySelector('.print-toorder-section')?.setAttribute('style','display:block');
+
     window.print();
+
+    setTimeout(()=>{ location.reload(); }, 300);
   });
 
   // Pesquisa
@@ -734,12 +730,63 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   }
   document.getElementById('deleteAppointment')?.addEventListener('click', ()=>{ if(editingId) deleteAppointment(editingId); });
 
-  // Re-render quando muda breakpoint (gira a tela etc.)
-  MOBILE_Q.addEventListener?.('change', ()=> renderAll());
-
   // Estados
-  attachStatusListeners();
+  document.addEventListener('change', __onStatusChange, true);
 
   await load();
   renderAll();
 });
+
+/* ===========================
+   STATUS (checkboxes) — delegação
+=========================== */
+async function __onStatusChange(e) {
+  const target = e.target;
+  if (!(target instanceof HTMLInputElement)) return;
+  if (target.type !== 'checkbox') return;
+  const statusKey = target.getAttribute('data-status'); // "NE" | "VE" | "ST"
+  if (!statusKey) return;
+
+  const card = target.closest('.appointment-block');
+  if (!card) return;
+  const id = Number(card.getAttribute('data-id'));
+  const a = appointments.find(x => x.id == id);
+  if (!a) return;
+
+  card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
+    if (cb !== target) cb.checked = false;
+  });
+
+  const prevStatus = a.status;
+  a.status = statusKey;
+
+  card.classList.remove('status-NE', 'status-VE', 'status-ST');
+  card.classList.add('status-' + statusKey);
+
+  try {
+    const payload = sanitizeForApi(a);
+    const updated = await apiPut(`/api/appointments/${id}`, payload);
+    if (updated && typeof updated === 'object') Object.assign(a, updated);
+    showToast(`Status gravado: ${statusKey}`, 'success');
+    renderGlassOrdersTable(); // pode impactar a lista de vidros
+  } catch (err) {
+    a.status = prevStatus;
+    card.classList.remove('status-NE', 'status-VE', 'status-ST');
+    card.classList.add('status-' + prevStatus);
+    card.querySelectorAll('.appt-status input[type="checkbox"]').forEach(cb => {
+      cb.checked = cb.getAttribute('data-status') === prevStatus;
+    });
+    showToast('Erro a gravar status: ' + (err.message || err), 'error');
+  }
+}
+
+/* ===========================
+   Render ALL
+=========================== */
+function renderAll(){
+  renderSchedule();
+  renderUnscheduled();
+  renderMobileDay();
+  renderServicesTable();
+  renderGlassOrdersTable(); // nova tabela
+}
