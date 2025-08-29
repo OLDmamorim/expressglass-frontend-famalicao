@@ -583,3 +583,7 @@ table.schedule td:first-child{ border-left:none; }
 .nav-add-service .action-btn:hover {
   background: #1d4ed8;
 }
+.nav-add-service {
+  margin-top: 8px;
+  margin-left: 0;        /* encosta à esquerda */
+}
