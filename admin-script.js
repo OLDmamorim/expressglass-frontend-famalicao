@@ -1,4 +1,5 @@
 // admin-script.js - Lógica do painel administrativo (SIMPLIFICADO - sem localidades)
+// Version: 1.0.1 - Fixed syntax error with quotes
 
 let editingPortalId = null;
 let editingUserId = null;
