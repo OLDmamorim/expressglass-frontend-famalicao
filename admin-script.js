@@ -145,8 +145,8 @@ async function handlePortalSubmit(e) {
 
   try {
     const url = editingPortalId 
-      ? `/.netlify/functions/portals/${editingPortalId}`
-      : `${authClient.baseURL}/portals';
+      ? `${authClient.baseURL}/portals/${editingPortalId}`
+      : `${authClient.baseURL}/portals`;
     
     const method = editingPortalId ? 'PUT' : 'POST';
 
@@ -179,7 +179,7 @@ async function deletePortal(id, name) {
   }
 
   try {
-    const response = await authClient.authenticatedFetch(`/.netlify/functions/portals/${id}`, {
+    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/portals/${id}`, {
       method: 'DELETE'
     });
 
@@ -323,8 +323,8 @@ async function handleUserSubmit(e) {
 
   try {
     const url = editingUserId 
-      ? `/.netlify/functions/users/${editingUserId}`
-      : `${authClient.baseURL}/users';
+      ? `${authClient.baseURL}/users/${editingUserId}`
+      : `${authClient.baseURL}/users`;
     
     const method = editingUserId ? 'PUT' : 'POST';
 
@@ -356,7 +356,7 @@ async function deleteUser(id, username) {
   }
 
   try {
-    const response = await authClient.authenticatedFetch(`/.netlify/functions/users/${id}`, {
+    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/users/${id}`, {
       method: 'DELETE'
     });
 
