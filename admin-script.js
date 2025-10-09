@@ -226,8 +226,8 @@ async function loadUsers() {
         <td><span class="badge badge-${user.role}">${user.role === 'admin' ? 'Admin' : 'User'}</span></td>
         <td>${new Date(user.createdAt).toLocaleDateString('pt-PT')}</td>
         <td class="actions-cell">
-          <button class="btn-edit" onclick='editUser(${JSON.stringify(user)})'>Editar</button>
-          <button class="btn-delete" onclick="deleteUser(${user.id}, '${user.username}')">Eliminar</button>
+          <button class="btn-edit" onclick="editUser(${user.id})">Editar</button>
+          <button class="btn-delete" onclick="deleteUser(${user.id})">Eliminar</button>
         </td>
       </tr>
     `).join('');
@@ -271,22 +271,34 @@ function openNewUserModal() {
   openModal('userModal');
 }
 
-function editUser(user) {
-  editingUserId = user.id;
-  document.getElementById('userModalTitle').textContent = 'Editar Utilizador';
-  document.getElementById('userUsername').value = user.username;
-  document.getElementById('userPassword').value = '';
-  document.getElementById('userPassword').removeAttribute('required');
-  document.getElementById('userRole').value = user.role;
-  document.getElementById('userPortal').value = user.portalId || '';
-  
-  if (user.role === 'admin') {
-    document.getElementById('portalSelectGroup').style.display = 'none';
-  } else {
-    document.getElementById('portalSelectGroup').style.display = 'block';
+async function editUser(userId) {
+  try {
+    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/users`);
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error);
+    
+    const user = data.data.find(u => u.id === userId);
+    if (!user) throw new Error('Utilizador não encontrado');
+    
+    editingUserId = user.id;
+    document.getElementById('userModalTitle').textContent = 'Editar Utilizador';
+    document.getElementById('userUsername').value = user.username;
+    document.getElementById('userPassword').value = '';
+    document.getElementById('userPassword').removeAttribute('required');
+    document.getElementById('userRole').value = user.role;
+    document.getElementById('userPortal').value = user.portalId || '';
+    
+    if (user.role === 'admin') {
+      document.getElementById('portalSelectGroup').style.display = 'none';
+    } else {
+      document.getElementById('portalSelectGroup').style.display = 'block';
+    }
+    
+    openModal('userModal');
+  } catch (error) {
+    console.error('Erro ao carregar utilizador:', error);
+    showToast('Erro ao carregar utilizador', 'error');
   }
-  
-  openModal('userModal');
 }
 
 async function handleUserSubmit(e) {
@@ -351,9 +363,23 @@ async function handleUserSubmit(e) {
   }
 }
 
-async function deleteUser(id, username) {
-  if (!confirm(`Tem certeza que deseja eliminar o utilizador "${username}"?\n\nEsta ação não pode ser desfeita.`)) {
-    return;
+async function deleteUser(id) {
+  try {
+    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/users`);
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error);
+    
+    const user = data.data.find(u => u.id === id);
+    const username = user ? user.username : 'este utilizador';
+    
+    if (!confirm(`Tem certeza que deseja eliminar o utilizador "${username}"?\n\nEsta ação não pode ser desfeita.`)) {
+      return;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar utilizador:', error);
+    if (!confirm(`Tem certeza que deseja eliminar este utilizador?\n\nEsta ação não pode ser desfeita.`)) {
+      return;
+    }
   }
 
   try {
