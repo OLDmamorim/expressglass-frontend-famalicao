@@ -174,6 +174,7 @@ class AuthClient {
 }
 
 // Instância global
-window.authClient = new AuthClient();
+const authClient = new AuthClient();
+window.authClient = authClient;
 
-console.log('🔐 Cliente de autenticação inicializado');
+console.log('[AuthClient] Inicializado com sucesso');
