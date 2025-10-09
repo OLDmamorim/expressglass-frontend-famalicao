@@ -6,28 +6,43 @@ let editingUserId = null;
 
 // ===== INICIALIZAÇÃO =====
 (async () => {
-  // Verificar autenticação
-  if (!authClient.isAuthenticated()) {
+  try {
+    // Verificar autenticação
+    console.log('Verificando autenticação...');
+    if (!authClient.isAuthenticated()) {
+      console.log('Não autenticado - redirecionando para login');
+      window.location.href = '/login.html';
+      return;
+    }
+
+    console.log('Verificando permissões...');
+    const result = await authClient.verifyAuth();
+    
+    if (!result.success || !authClient.isAdmin()) {
+      console.log('Acesso negado - não é admin');
+      alert('Acesso negado: apenas administradores podem aceder a esta página');
+      authClient.logout();
+      window.location.href = '/login.html';
+      return;
+    }
+
+    console.log('Autenticação OK - carregando painel');
+    
+    // Exibir nome do utilizador
+    const user = authClient.getUser();
+    if (user && user.username) {
+      document.getElementById('currentUser').textContent = user.username;
+    }
+
+    // Carregar dados
+    loadPortals();
+    loadUsers();
+    loadPortalsForSelect();
+  } catch (error) {
+    console.error('Erro na inicialização:', error);
+    alert('Erro ao inicializar painel: ' + error.message);
     window.location.href = '/login.html';
-    return;
   }
-
-  const result = await authClient.verifyAuth();
-  
-  if (!result.success || !authClient.isAdmin()) {
-    alert('Acesso negado: apenas administradores podem aceder a esta página');
-    authClient.logout();
-    window.location.href = '/login.html';
-    return;
-  }
-
-  // Exibir nome do utilizador
-  document.getElementById('currentUser').textContent = authClient.getUser().username;
-
-  // Carregar dados
-  loadPortals();
-  loadUsers();
-  loadPortalsForSelect();
 
   // Event listeners
   setupEventListeners();
