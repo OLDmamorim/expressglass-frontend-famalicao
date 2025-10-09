@@ -3,7 +3,13 @@
 
 class AuthClient {
   constructor() {
-    this.baseURL = '/.netlify/functions';
+    // Detectar ambiente: staging ou production
+    const hostname = window.location.hostname;
+    if (hostname.includes('staging--')) {
+      this.baseURL = 'https://staging--expressglass-backend-famalicao.netlify.app/.netlify/functions';
+    } else {
+      this.baseURL = 'https://expressglass-backend-famalicao.netlify.app/.netlify/functions';
+    }
     this.token = this.getStoredToken();
     this.user = this.getStoredUser();
   }
