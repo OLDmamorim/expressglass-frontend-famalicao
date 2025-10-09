@@ -85,7 +85,7 @@ async function loadPortals() {
   tbody.innerHTML = '<tr><td colspan="5" class="loading">A carregar...</td></tr>';
 
   try {
-    const response = await authClient.authenticatedFetch('/.netlify/functions/portals');
+    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/portals`);
     const data = await response.json();
 
     if (!data.success) {
@@ -146,7 +146,7 @@ async function handlePortalSubmit(e) {
   try {
     const url = editingPortalId 
       ? `/.netlify/functions/portals/${editingPortalId}`
-      : '/.netlify/functions/portals';
+      : `${authClient.baseURL}/portals';
     
     const method = editingPortalId ? 'PUT' : 'POST';
 
@@ -205,7 +205,7 @@ async function loadUsers() {
   tbody.innerHTML = '<tr><td colspan="6" class="loading">A carregar...</td></tr>';
 
   try {
-    const response = await authClient.authenticatedFetch('/.netlify/functions/users');
+    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/users');
     const data = await response.json();
 
     if (!data.success) {
@@ -242,7 +242,7 @@ async function loadPortalsForSelect() {
   const select = document.getElementById('userPortal');
   
   try {
-    const response = await authClient.authenticatedFetch('/.netlify/functions/portals');
+    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/portals');
     const data = await response.json();
 
     if (!data.success) {
@@ -324,7 +324,7 @@ async function handleUserSubmit(e) {
   try {
     const url = editingUserId 
       ? `/.netlify/functions/users/${editingUserId}`
-      : '/.netlify/functions/users';
+      : `${authClient.baseURL}/users';
     
     const method = editingUserId ? 'PUT' : 'POST';
 
