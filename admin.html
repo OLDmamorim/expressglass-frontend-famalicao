@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Administrativo - Expressglass</title>
+  <link rel="stylesheet" href="admin-style.css">
+</head>
+<body>
+  <div class="admin-container">
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="header-content">
+        <h1>🔧 Painel Administrativo</h1>
+        <div class="header-actions">
+          <span class="user-info">👤 <span id="currentUser"></span></span>
+          <button class="btn-logout" id="btnLogout">Sair</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="portals">Portais</button>
+      <button class="tab-btn" data-tab="users">Utilizadores</button>
+    </div>
+
+    <!-- Tab: Portais -->
+    <div class="tab-content active" id="tab-portals">
+      <div class="content-header">
+        <h2>Gestão de Portais</h2>
+        <button class="btn-primary" id="btnNewPortal">+ Novo Portal</button>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Utilizadores</th>
+              <th>Criado em</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="portalsTableBody">
+            <tr>
+              <td colspan="5" class="loading">A carregar...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Utilizadores -->
+    <div class="tab-content" id="tab-users">
+      <div class="content-header">
+        <h2>Gestão de Utilizadores</h2>
+        <button class="btn-primary" id="btnNewUser">+ Novo Utilizador</button>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Portal</th>
+              <th>Role</th>
+              <th>Criado em</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr>
+              <td colspan="6" class="loading">A carregar...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Portal -->
+  <div class="modal" id="portalModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="portalModalTitle">Novo Portal</h3>
+        <button class="btn-close" onclick="closeModal('portalModal')">&times;</button>
+      </div>
+      <form id="portalForm">
+        <div class="form-group">
+          <label for="portalName">Nome do Portal *</label>
+          <input type="text" id="portalName" required placeholder="Ex: Famalicão, Porto, Braga">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('portalModal')">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Utilizador -->
+  <div class="modal" id="userModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="userModalTitle">Novo Utilizador</h3>
+        <button class="btn-close" onclick="closeModal('userModal')">&times;</button>
+      </div>
+      <form id="userForm">
+        <div class="form-group">
+          <label for="userUsername">Username *</label>
+          <input type="text" id="userUsername" required placeholder="Digite o username">
+        </div>
+        <div class="form-group">
+          <label for="userPassword">Password *</label>
+          <input type="password" id="userPassword" placeholder="Digite a password">
+          <small class="form-hint">Deixe em branco para manter a password atual (ao editar)</small>
+        </div>
+        <div class="form-group">
+          <label for="userRole">Role *</label>
+          <select id="userRole" required>
+            <option value="user">Utilizador Normal</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div class="form-group" id="portalSelectGroup">
+          <label for="userPortal">Portal *</label>
+          <select id="userPortal">
+            <option value="">A carregar...</option>
+          </select>
+          <small class="form-hint">Apenas para utilizadores normais</small>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('userModal')">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="auth-client.js"></script>
+  <script src="admin-script.js"></script>
+</body>
+</html>
+
