@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Syntax</title>
+</head>
+<body>
+  <h1>Test Syntax</h1>
+  <div id="output"></div>
+  
+  <script>
+    // Testar se o template literal funciona
+    const users = [
+      {id: 1, username: 'admin', portalName: 'Famalicão', role: 'admin', createdAt: new Date()}
+    ];
+    
+    const html = users.map(user => `
+      <tr>
+        <td>${user.id}</td>
+        <td><strong>${user.username}</strong></td>
+        <td>${user.portalName || "<em>Nenhum</em>"}</td>
+        <td><span class="badge badge-${user.role}">${user.role === 'admin' ? 'Admin' : 'User'}</span></td>
+        <td>${new Date(user.createdAt).toLocaleDateString('pt-PT')}</td>
+        <td class="actions-cell">
+          <button class="btn-edit" onclick="alert(${user.id})">Editar</button>
+          <button class="btn-delete" onclick="alert(${user.id})">Eliminar</button>
+        </td>
+      </tr>
+    `).join('');
+    
+    document.getElementById('output').innerHTML = '<table>' + html + '</table>';
+    console.log('✅ Syntax OK!');
+  </script>
+</body>
+</html>
+
