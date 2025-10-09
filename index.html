@@ -278,6 +278,37 @@
     </div>
   </div>
 
+  <!-- autenticação -->
+  <script src="auth-client.js"></script>
+  
+  <!-- verificação de autenticação -->
+  <script>
+    (async () => {
+      // Verificar se está autenticado
+      if (!authClient.isAuthenticated()) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      const result = await authClient.verifyAuth();
+      
+      if (!result.success) {
+        authClient.logout();
+        window.location.href = '/login.html';
+        return;
+      }
+
+      // Se for admin, redirecionar para painel admin
+      if (authClient.isAdmin()) {
+        window.location.href = '/admin.html';
+        return;
+      }
+
+      // Utilizador normal - continuar carregamento
+      console.log('Utilizador autenticado:', authClient.getUser().username);
+    })();
+  </script>
+
   <!-- script principal -->
   <script src="script.js?v=9" defer></script>
 </body>
