@@ -1,8 +1,5 @@
 // admin-script.js - Lógica do painel administrativo (SIMPLIFICADO - sem localidades)
-// Version: 1.0.2 - Debug version
-
-alert('SCRIPT CARREGADO!');
-console.log('=== ADMIN SCRIPT INICIANDO ===');
+// Version: 1.1.0 - Funcional sem autenticação (temporário)
 
 let editingPortalId = null;
 let editingUserId = null;
@@ -11,7 +8,6 @@ let editingUserId = null;
 (async () => {
   try {
     console.log('Inicializando painel administrativo...');
-    alert('Dentro do async function');
     
     // TEMPORÁRIO: Autenticação desativada para testes
     // TODO: Reativar quando backend estiver pronto
