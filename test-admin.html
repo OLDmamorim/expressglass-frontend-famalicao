@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste - Painel Administrativo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #667eea;
+      color: white;
+    }
+    .loading {
+      text-align: center;
+      color: #999;
+      font-style: italic;
+    }
+    .error {
+      color: #e74c3c;
+      text-align: center;
+    }
+    #debug {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Teste - Painel Administrativo</h1>
+    
+    <div id="debug">
+      <strong>Debug Log:</strong><br>
+      <div id="debugLog">Inicializando...</div>
+    </div>
+
+    <h2>Portais</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Utilizadores</th>
+          <th>Criado em</th>
+        </tr>
+      </thead>
+      <tbody id="portalsTable">
+        <tr>
+          <td colspan="4" class="loading">A carregar...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Função de debug
+    function log(message) {
+      const debugLog = document.getElementById('debugLog');
+      debugLog.innerHTML += '<br>' + new Date().toLocaleTimeString() + ': ' + message;
+      console.log(message);
+    }
+
+    log('Script iniciado');
+
+    // Detectar ambiente
+    const hostname = window.location.hostname;
+    let baseURL;
+    
+    if (hostname.includes('staging--')) {
+      baseURL = 'https://staging--expressglass-backend-famalicao.netlify.app/.netlify/functions';
+      log('Ambiente: STAGING');
+    } else if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+      baseURL = 'http://localhost:8888/.netlify/functions';
+      log('Ambiente: LOCAL');
+    } else {
+      baseURL = 'https://expressglass-backend-famalicao.netlify.app/.netlify/functions';
+      log('Ambiente: PRODUCTION');
+    }
+
+    log('Base URL: ' + baseURL);
+
+    // Carregar portais
+    async function loadPortals() {
+      log('Iniciando carregamento de portais...');
+      const tbody = document.getElementById('portalsTable');
+      
+      try {
+        log('Fazendo fetch para: ' + baseURL + '/portals');
+        const response = await fetch(baseURL + '/portals');
+        log('Response status: ' + response.status);
+        
+        const data = await response.json();
+        log('Dados recebidos: ' + JSON.stringify(data));
+
+        if (!data.success) {
+          throw new Error(data.error || 'Erro desconhecido');
+        }
+
+        if (data.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">Nenhum portal encontrado</td></tr>';
+          log('Nenhum portal encontrado');
+          return;
+        }
+
+        tbody.innerHTML = data.data.map(portal => `
+          <tr>
+            <td>${portal.id}</td>
+            <td><strong>${portal.name}</strong></td>
+            <td>${portal.user_count || 0}</td>
+            <td>${new Date(portal.created_at).toLocaleDateString('pt-PT')}</td>
+          </tr>
+        `).join('');
+
+        log('✅ ' + data.data.length + ' portais carregados com sucesso!');
+
+      } catch (error) {
+        log('❌ ERRO: ' + error.message);
+        tbody.innerHTML = '<tr><td colspan="4" class="error">Erro ao carregar dados: ' + error.message + '</td></tr>';
+      }
+    }
+
+    // Executar ao carregar a página
+    log('Aguardando DOM...');
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        log('DOM carregado, iniciando loadPortals...');
+        loadPortals();
+      });
+    } else {
+      log('DOM já carregado, iniciando loadPortals...');
+      loadPortals();
+    }
+  </script>
+</body>
+</html>
+
