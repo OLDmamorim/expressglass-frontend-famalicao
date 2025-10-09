@@ -7,15 +7,17 @@ let editingUserId = null;
 // ===== INICIALIZAÇÃO =====
 (async () => {
   try {
-    // Verificar autenticação
-    console.log('Verificando autenticação...');
+    console.log('Inicializando painel administrativo...');
+    
+    // TEMPORÁRIO: Autenticação desativada para testes
+    // TODO: Reativar quando backend estiver pronto
+    /*
     if (!authClient.isAuthenticated()) {
       console.log('Não autenticado - redirecionando para login');
       window.location.href = '/login.html';
       return;
     }
 
-    console.log('Verificando permissões...');
     const result = await authClient.verifyAuth();
     
     if (!result.success || !authClient.isAdmin()) {
@@ -25,15 +27,12 @@ let editingUserId = null;
       window.location.href = '/login.html';
       return;
     }
-
-    console.log('Autenticação OK - carregando painel');
+    */
     
-    // Exibir nome do utilizador
-    const user = authClient.getUser();
-    if (user && user.username) {
-      document.getElementById('currentUser').textContent = user.username;
-    }
+    // Exibir nome do utilizador (mock)
+    document.getElementById('currentUser').textContent = 'Admin (Teste)';
 
+    console.log('Carregando dados...');
     // Carregar dados
     loadPortals();
     loadUsers();
@@ -41,7 +40,6 @@ let editingUserId = null;
   } catch (error) {
     console.error('Erro na inicialização:', error);
     alert('Erro ao inicializar painel: ' + error.message);
-    window.location.href = '/login.html';
   }
 
   // Event listeners
