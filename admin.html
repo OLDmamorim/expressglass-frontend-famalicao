@@ -143,8 +143,52 @@
   <!-- Toast Notification -->
   <div class="toast" id="toast"></div>
 
-  <script src="auth-client.js?v=20251009b"></script>
-  <script src="admin-script.js?v=20251009b"></script>
+  <script src="auth-client.js?v=20251009c"></script>
+  
+  <!-- Proteção de Rota -->
+  <script>
+    // Executar antes de carregar o admin-script.js
+    (async function() {
+      // Verificar se está autenticado
+      if (!authClient.isAuthenticated()) {
+        console.log('Não autenticado - redirecionando para login');
+        window.location.href = '/login.html';
+        return;
+      }
+
+      // Verificar se é admin
+      const result = await authClient.verifyAuth();
+      
+      if (!result.success || !authClient.isAdmin()) {
+        alert('Acesso negado! Apenas administradores podem aceder a esta página.');
+        authClient.logout();
+        window.location.href = '/login.html';
+        return;
+      }
+
+      // Mostrar informação do utilizador no header
+      const user = authClient.getUser();
+      document.addEventListener('DOMContentLoaded', () => {
+        const userDisplay = document.getElementById('currentUser');
+        if (userDisplay) {
+          userDisplay.textContent = `${user.username} (${user.role === 'admin' ? 'Admin' : 'User'})`;
+        }
+
+        // Implementar logout
+        const btnLogout = document.getElementById('btnLogout');
+        if (btnLogout) {
+          btnLogout.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja sair?')) {
+              authClient.logout();
+              window.location.href = '/login.html';
+            }
+          });
+        }
+      });
+    })();
+  </script>
+  
+  <script src="admin-script.js?v=20251009c"></script>
 </body>
 </html>
 
