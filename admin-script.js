@@ -221,7 +221,7 @@ async function loadUsers() {
       <tr>
         <td>${user.id}</td>
         <td><strong>${user.username}</strong></td>
-        <td>${user.portalName || '<em>Nenhum</em>'}</td>
+        <td>${user.portalName || "<em>Nenhum</em>"}</td>
         <td><span class="badge badge-${user.role}">${user.role === 'admin' ? 'Admin' : 'User'}</span></td>
         <td>${new Date(user.createdAt).toLocaleDateString('pt-PT')}</td>
         <td class="actions-cell">
