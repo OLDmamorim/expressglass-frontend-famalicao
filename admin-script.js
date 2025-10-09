@@ -99,7 +99,8 @@ async function loadPortals() {
   tbody.innerHTML = '<tr><td colspan="5" class="loading">A carregar...</td></tr>';
 
   try {
-    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/portals`);
+    // TEMPORÁRIO: Usar fetch normal enquanto autenticação está desativada
+    const response = await fetch(`${authClient.baseURL}/portals`);
     const data = await response.json();
 
     if (!data.success) {
@@ -164,7 +165,7 @@ async function handlePortalSubmit(e) {
     
     const method = editingPortalId ? 'PUT' : 'POST';
 
-    const response = await authClient.authenticatedFetch(url, {
+    const response = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(portalData)
@@ -193,7 +194,7 @@ async function deletePortal(id, name) {
   }
 
   try {
-    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/portals/${id}`, {
+    const response = await fetch(`${authClient.baseURL}/portals/${id}`, {
       method: 'DELETE'
     });
 
@@ -219,7 +220,7 @@ async function loadUsers() {
   tbody.innerHTML = '<tr><td colspan="6" class="loading">A carregar...</td></tr>';
 
   try {
-    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/users');
+    const response = await fetch(`${authClient.baseURL}/users');
     const data = await response.json();
 
     if (!data.success) {
@@ -256,7 +257,7 @@ async function loadPortalsForSelect() {
   const select = document.getElementById('userPortal');
   
   try {
-    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/portals');
+    const response = await fetch(`${authClient.baseURL}/portals');
     const data = await response.json();
 
     if (!data.success) {
@@ -286,7 +287,8 @@ function openNewUserModal() {
 
 async function editUser(userId) {
   try {
-    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/users`);
+    // TEMPORÁRIO: Usar fetch normal enquanto autenticação está desativada
+    const response = await fetch(`${authClient.baseURL}/users`);
     const data = await response.json();
     if (!data.success) throw new Error(data.error);
     
@@ -354,7 +356,7 @@ async function handleUserSubmit(e) {
     
     const method = editingUserId ? 'PUT' : 'POST';
 
-    const response = await authClient.authenticatedFetch(url, {
+    const response = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData)
@@ -378,7 +380,8 @@ async function handleUserSubmit(e) {
 
 async function deleteUser(id) {
   try {
-    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/users`);
+    // TEMPORÁRIO: Usar fetch normal enquanto autenticação está desativada
+    const response = await fetch(`${authClient.baseURL}/users`);
     const data = await response.json();
     if (!data.success) throw new Error(data.error);
     
@@ -396,7 +399,7 @@ async function deleteUser(id) {
   }
 
   try {
-    const response = await authClient.authenticatedFetch(`${authClient.baseURL}/users/${id}`, {
+    const response = await fetch(`${authClient.baseURL}/users/${id}`, {
       method: 'DELETE'
     });
 
