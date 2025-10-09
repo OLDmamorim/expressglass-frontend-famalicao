@@ -220,7 +220,7 @@ async function loadUsers() {
   tbody.innerHTML = '<tr><td colspan="6" class="loading">A carregar...</td></tr>';
 
   try {
-    const response = await fetch(`${authClient.baseURL}/users');
+    const response = await fetch(`${authClient.baseURL}/users`);
     const data = await response.json();
 
     if (!data.success) {
@@ -236,7 +236,7 @@ async function loadUsers() {
       <tr>
         <td>${user.id}</td>
         <td><strong>${user.username}</strong></td>
-        <td>${user.portalName || "<em>Nenhum</em>"}</td>
+        <td>${user.portalName || '<em>Nenhum</em>'}</td>
         <td><span class="badge badge-${user.role}">${user.role === 'admin' ? 'Admin' : 'User'}</span></td>
         <td>${new Date(user.createdAt).toLocaleDateString('pt-PT')}</td>
         <td class="actions-cell">
@@ -257,7 +257,7 @@ async function loadPortalsForSelect() {
   const select = document.getElementById('userPortal');
   
   try {
-    const response = await fetch(`${authClient.baseURL}/portals');
+    const response = await fetch(`${authClient.baseURL}/portals`);
     const data = await response.json();
 
     if (!data.success) {
