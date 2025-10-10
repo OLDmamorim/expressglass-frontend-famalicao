@@ -228,8 +228,19 @@
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
 
+    // Verificar se veio por sessão expirada
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('expired') === 'true') {
+      showError('⏱️ Sessão expirada. Por favor, faça login novamente.');
+    }
+
     // Verificar se já está autenticado
     (async () => {
+      // Não redirecionar se veio por sessão expirada
+      if (urlParams.get('expired') === 'true') {
+        return;
+      }
+      
       if (authClient.isAuthenticated()) {
         const result = await authClient.verifyAuth();
         if (result.success) {

@@ -98,6 +98,24 @@ class ApiClient {
         console.log(`🔄 API Request (tentativa ${attempt}):`, options.method || 'GET', url, `[Portal: ${this.portalId}]`);
         
         const response = await fetch(url, defaultOptions);
+        
+        // Tratar erro 401 (Unauthorized) - redirecionar para login
+        if (response.status === 401) {
+          console.warn('🔒 Sessão expirada ou não autenticado');
+          
+          // Limpar autenticação
+          if (window.authClient) {
+            window.authClient.logout();
+          }
+          
+          // Redirecionar para login
+          if (!window.location.pathname.includes('login.html')) {
+            window.location.href = '/login.html?expired=true';
+          }
+          
+          throw new Error('Sessão expirada. Por favor, faça login novamente.');
+        }
+        
         const data = await response.json();
         
         if (!response.ok) {
