@@ -128,12 +128,12 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background:#f6f7
   }
   
   .header-main-title {
-    font-size: 18px;
+    font-size: 16px;
     text-align: center;
   }
   
   .header-main-title #portalName {
-    font-size: 18px;
+    font-size: 16px;
   }
   
   .header-actions {
