@@ -36,8 +36,13 @@
 <body>
   <div class="page">
     <header class="page-header">
-      <h1>AGENDAMENTOS FAMALICÃO</h1>
-      <p class="subtitle">Agendamento serviços Expressglass</p>
+      <div class="header-left">
+        <img src="assets/express-glass.png" alt="ExpressGlass" class="header-logo">
+        <div class="header-title">
+          <h1>VIDROS ESPECIAIS</h1>
+          <p class="subtitle">Vidros para Viaturas</p>
+        </div>
+      </div>
       <div class="header-actions">
         <div id="connectionStatus" class="connection-status" title="Status da conexão">
           <span id="statusIcon">🌐</span>
@@ -46,7 +51,9 @@
         <button id="backupBtn" class="header-btn" title="Backup de dados">💾</button>
         <button id="statsBtn" class="header-btn" title="Estatísticas">📊</button>
         <button id="searchBtn" class="header-btn" title="Pesquisar">🔍</button>
-        <button id="btnLogout" class="header-btn" title="Sair" style="background: #ef4444; color: white; padding: 8px 16px; border-radius: 6px; font-weight: 600;">Sair</button>
+        <div id="userAvatar" class="user-avatar" title="Utilizador">
+          <span id="userInitials">MA</span>
+        </div>
       </div>
     </header>
 
@@ -316,18 +323,28 @@
         window.reinitApiClient();
       }
 
-      // Implementar logout (aguardar um pouco para o DOM estar pronto)
+      // Atualizar avatar com iniciais do utilizador
       setTimeout(() => {
-        const btnLogout = document.getElementById('btnLogout');
-        if (btnLogout) {
-          btnLogout.addEventListener('click', () => {
+        const user = authClient.getUser();
+        const userInitials = document.getElementById('userInitials');
+        const userAvatar = document.getElementById('userAvatar');
+        
+        if (user && userInitials) {
+          // Obter primeiras letras do username (máximo 2)
+          const initials = user.username
+            .substring(0, 2)
+            .toUpperCase();
+          userInitials.textContent = initials;
+        }
+
+        // Adicionar evento de clique no avatar para mostrar menu (futuramente)
+        if (userAvatar) {
+          userAvatar.addEventListener('click', () => {
             if (confirm('Tem certeza que deseja sair?')) {
               authClient.logout();
               window.location.href = '/login.html';
             }
           });
-        } else {
-          console.error('Botão de logout não encontrado');
         }
       }, 100);
     })();
