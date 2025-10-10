@@ -165,7 +165,7 @@ async function handlePortalSubmit(e) {
     
     const method = editingPortalId ? 'PUT' : 'POST';
 
-    const response = await fetch(url, {
+    const response = await authClient.authenticatedFetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(portalData)
@@ -356,7 +356,7 @@ async function handleUserSubmit(e) {
     
     const method = editingUserId ? 'PUT' : 'POST';
 
-    const response = await fetch(url, {
+    const response = await authClient.authenticatedFetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData)
