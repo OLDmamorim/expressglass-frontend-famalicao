@@ -9,6 +9,10 @@ class ApiClient {
     this.retryAttempts = 3;
     this.retryDelay = 1000;
     
+    // Portal ID - identifica qual portal está a usar a aplicação
+    // 1 = Famalicão, 2 = Braga, 3 = Vila Verde
+    this.portalId = this.detectPortalId();
+    
     // Escutar mudanças de conectividade
     window.addEventListener('online', () => {
       this.isOnline = true;
@@ -20,6 +24,33 @@ class ApiClient {
       this.isOnline = false;
       console.log('📱 Modo offline ativado - usando localStorage');
     });
+  }
+  
+  // Detectar Portal ID baseado no hostname ou configuração
+  detectPortalId() {
+    const hostname = window.location.hostname;
+    
+    // Mapeamento de domínios para portal_id
+    if (hostname.includes('famalicao')) return 1;
+    if (hostname.includes('braga')) return 2;
+    if (hostname.includes('vilaverde') || hostname.includes('vila-verde')) return 3;
+    
+    // Verificar localStorage (configuração manual)
+    const storedPortalId = localStorage.getItem('eg_portal_id');
+    if (storedPortalId) {
+      return parseInt(storedPortalId, 10);
+    }
+    
+    // Default: Famalicão
+    console.warn('⚠️ Portal ID não detectado, usando default: Famalicão (1)');
+    return 1;
+  }
+  
+  // Configurar manualmente o Portal ID (útil para testes)
+  setPortalId(portalId) {
+    this.portalId = portalId;
+    localStorage.setItem('eg_portal_id', portalId.toString());
+    console.log(`✅ Portal ID configurado: ${portalId}`);
   }
   
   // Detectar URL da API automaticamente
@@ -42,6 +73,7 @@ class ApiClient {
     const defaultOptions = {
       headers: {
         'Content-Type': 'application/json',
+        'X-Portal-Id': this.portalId.toString(),
         ...options.headers
       },
       ...options
@@ -49,7 +81,7 @@ class ApiClient {
     
     for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
       try {
-        console.log(`🔄 API Request (tentativa ${attempt}):`, options.method || 'GET', url);
+        console.log(`🔄 API Request (tentativa ${attempt}):`, options.method || 'GET', url, `[Portal: ${this.portalId}]`);
         
         const response = await fetch(url, defaultOptions);
         const data = await response.json();
@@ -325,6 +357,7 @@ class ApiClient {
     return {
       online: this.isOnline,
       apiUrl: this.baseURL,
+      portalId: this.portalId,
       lastSync: localStorage.getItem('eg_last_sync')
     };
   }
