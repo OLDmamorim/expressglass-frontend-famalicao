@@ -341,10 +341,10 @@
 
         // Obter nome do portal do utilizador
         const portalName = document.getElementById('portalName');
-        if (portalName && user && user.portalName) {
-          portalName.textContent = user.portalName.toUpperCase();
-          document.title = `Agendamentos ${user.portalName}`;
-          console.log('✅ Portal atualizado:', user.portalName);
+        if (portalName && user && user.portal && user.portal.name) {
+          portalName.textContent = user.portal.name.toUpperCase();
+          document.title = `Agendamentos ${user.portal.name}`;
+          console.log('✅ Portal atualizado:', user.portal.name);
         }
 
         // Adicionar evento de clique no avatar para logout
@@ -361,6 +361,6 @@
   </script>
 
   <!-- script principal -->
-  <script src="script.js?v=15" defer></script>
+  <script src="script.js?v=16" defer></script>
 </body>
 </html>
