@@ -44,11 +44,10 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background:#f6f7
   letter-spacing: 0.5px;
 }
 
-.header-portal-name { 
-  margin:4px 0 0; 
-  font-size:14px;
-  color:#6b7280;
-  font-weight: 500;
+.header-main-title #portalName {
+  font-size:20px;
+  font-weight:700;
+  color:#1f2937;
 }
 
 .header-actions{ 

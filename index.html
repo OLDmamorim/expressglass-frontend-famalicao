@@ -41,8 +41,7 @@
       </div>
       
       <div class="header-center">
-        <h1 class="header-main-title">AGENDAMENTO</h1>
-        <p class="header-portal-name" id="portalName">Famalicão</p>
+        <h1 class="header-main-title">AGENDAMENTO <span id="portalName">FAMALICÃO</span></h1>
       </div>
       
       <div class="header-actions">
@@ -357,7 +356,7 @@
               const portal = portals.find(p => p.id === userPortalId);
               
               if (portal) {
-                portalName.textContent = portal.name;
+                portalName.textContent = portal.name.toUpperCase();
                 document.title = `Agendamentos ${portal.name}`;
               }
             }
@@ -380,6 +379,6 @@
   </script>
 
   <!-- script principal -->
-  <script src="script.js?v=13" defer></script>
+  <script src="script.js?v=14" defer></script>
 </body>
 </html>
