@@ -154,7 +154,7 @@ function normalizeAllBucketsOrder(list){
 =========================== */
 async function load(){
   try{
-    const rows = await apiGet('/api/appointments');
+    const rows = await apiGet('/appointments');
     const mapped = rows.map(a=>({
       ...a,
       date: parseDate(a.date),
@@ -240,7 +240,7 @@ async function onDropAppointment(id,targetBucket,targetIndex){
 
   try{
     const payload = sanitizeForApi(a);
-    const updated=await apiPut(`/api/appointments/${id}`, payload);
+    const updated=await apiPut(`/appointments/${id}`, payload);
     if(updated && typeof updated==='object') Object.assign(a,updated);
     await load(); renderAll(); showToast('Agendamento movido!','success');
   }catch(e){
@@ -641,11 +641,11 @@ async function saveAppointment(){
     const payload = sanitizeForApi(appointment);
 
     if(isEdit){
-      await apiPut(`/api/appointments/${editingId}`, payload);
+      await apiPut(`/appointments/${editingId}`, payload);
       showToast('Agendamento atualizado!','success');
     }else{
       const { id, ...toCreate } = payload;
-      await apiPost('/api/appointments', toCreate);
+      await apiPost('/appointments', toCreate);
       showToast('Agendamento criado!','success');
     }
 
@@ -661,7 +661,7 @@ function editAppointment(id){ openAppointmentModal(id); }
 async function deleteAppointment(id){
   if(!confirm('Eliminar este agendamento?')) return;
   try{
-    await apiDelete(`/api/appointments/${id}`);
+    await apiDelete(`/appointments/${id}`);
     await load(); renderAll(); showToast('Eliminado!','success');
     if(editingId==id) closeAppointmentModal();
   }
@@ -766,7 +766,7 @@ async function __onStatusChange(e) {
 
   try {
     const payload = sanitizeForApi(a);
-    const updated = await apiPut(`/api/appointments/${id}`, payload);
+    const updated = await apiPut(`/appointments/${id}`, payload);
     if (updated && typeof updated === 'object') Object.assign(a, updated);
     showToast(`Status gravado: ${statusKey}`, 'success');
     renderGlassOrdersTable(); // pode impactar a lista de vidros
