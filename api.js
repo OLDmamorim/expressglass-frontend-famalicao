@@ -70,12 +70,21 @@ class ApiClient {
   async makeRequest(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     
+    // Preparar headers
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-Portal-Id': this.portalId.toString(),
+      ...options.headers
+    };
+    
+    // Adicionar token JWT se disponível (prioridade sobre X-Portal-Id)
+    if (window.authClient && window.authClient.getToken()) {
+      headers['Authorization'] = `Bearer ${window.authClient.getToken()}`;
+      console.log('🔐 Token JWT incluído na requisição');
+    }
+    
     const defaultOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Portal-Id': this.portalId.toString(),
-        ...options.headers
-      },
+      headers,
       ...options
     };
     
