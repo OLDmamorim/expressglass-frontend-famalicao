@@ -54,16 +54,21 @@ class ApiClient {
   }
   
   // Detectar URL da API automaticamente
-  detectApiUrl( ) {
-  const hostname = window.location.hostname;
-  
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:8888/api';
-  } else {
-    // ✅ CORREÇÃO: usar backend específico
-    return 'https://expressglass-backend.netlify.app/api';
+  detectApiUrl() {
+    const hostname = window.location.hostname;
+    
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8888/.netlify/functions';
+    }
+    
+    // Detectar staging vs produção
+    if (hostname.includes('staging--')) {
+      return 'https://staging--expressglass-backend-famalicao.netlify.app/.netlify/functions';
+    }
+    
+    // Produção
+    return 'https://expressglass-backend-famalicao.netlify.app/.netlify/functions';
   }
-}
 
   
   // Fazer requisição HTTP com retry automático
