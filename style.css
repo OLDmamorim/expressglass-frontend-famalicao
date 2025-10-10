@@ -21,7 +21,7 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background:#f6f7
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  min-width: 150px;
 }
 
 .header-logo {
@@ -29,19 +29,26 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background:#f6f7
   width: auto;
 }
 
-.header-title h1 { 
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.header-main-title { 
   margin:0; 
-  font-size:18px; 
+  font-size:20px; 
   font-weight:700; 
   color:#1f2937;
   letter-spacing: 0.5px;
 }
 
-.subtitle { 
-  margin:2px 0 0; 
-  font-size:12px;
+.header-portal-name { 
+  margin:4px 0 0; 
+  font-size:14px;
   color:#6b7280;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .header-actions{ 

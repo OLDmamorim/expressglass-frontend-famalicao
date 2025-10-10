@@ -38,11 +38,13 @@
     <header class="page-header">
       <div class="header-left">
         <img src="assets/express-glass.png" alt="ExpressGlass" class="header-logo">
-        <div class="header-title">
-          <h1 id="portalTitle">AGENDAMENTO</h1>
-          <p class="subtitle">Vidros para Viaturas</p>
-        </div>
       </div>
+      
+      <div class="header-center">
+        <h1 class="header-main-title">AGENDAMENTO</h1>
+        <p class="header-portal-name" id="portalName">Famalicão</p>
+      </div>
+      
       <div class="header-actions">
         <div id="connectionStatus" class="connection-status" title="Status da conexão">
           <span id="statusIcon">🌐</span>
@@ -338,8 +340,9 @@
           userInitials.textContent = initials;
         }
 
-        // Obter nome do portal e atualizar título
-        if (portalTitle && window.apiClient) {
+        // Obter nome do portal e atualizar
+        const portalName = document.getElementById('portalName');
+        if (portalName && window.apiClient) {
           try {
             const response = await fetch(`${window.apiClient.apiURL}/portals`, {
               headers: {
@@ -354,7 +357,7 @@
               const portal = portals.find(p => p.id === userPortalId);
               
               if (portal) {
-                portalTitle.textContent = `AGENDAMENTO ${portal.name.toUpperCase()}`;
+                portalName.textContent = portal.name;
                 document.title = `Agendamentos ${portal.name}`;
               }
             }
@@ -377,6 +380,6 @@
   </script>
 
   <!-- script principal -->
-  <script src="script.js?v=12" defer></script>
+  <script src="script.js?v=13" defer></script>
 </body>
 </html>
