@@ -339,30 +339,12 @@
           userInitials.textContent = initials;
         }
 
-        // Obter nome do portal e atualizar
+        // Obter nome do portal do utilizador
         const portalName = document.getElementById('portalName');
-        if (portalName && window.apiClient) {
-          try {
-            const response = await fetch(`${window.apiClient.apiURL}/portals`, {
-              headers: {
-                'Authorization': `Bearer ${authClient.getToken()}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            if (response.ok) {
-              const portals = await response.json();
-              const userPortalId = window.apiClient.portalId;
-              const portal = portals.find(p => p.id === userPortalId);
-              
-              if (portal) {
-                portalName.textContent = portal.name.toUpperCase();
-                document.title = `Agendamentos ${portal.name}`;
-              }
-            }
-          } catch (error) {
-            console.error('Erro ao obter nome do portal:', error);
-          }
+        if (portalName && user && user.portalName) {
+          portalName.textContent = user.portalName.toUpperCase();
+          document.title = `Agendamentos ${user.portalName}`;
+          console.log('✅ Portal atualizado:', user.portalName);
         }
 
         // Adicionar evento de clique no avatar para logout
@@ -379,6 +361,6 @@
   </script>
 
   <!-- script principal -->
-  <script src="script.js?v=14" defer></script>
+  <script src="script.js?v=15" defer></script>
 </body>
 </html>
