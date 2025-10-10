@@ -26,22 +26,30 @@ class ApiClient {
     });
   }
   
-  // Detectar Portal ID baseado no hostname ou configuração
+  // Detectar Portal ID baseado no utilizador autenticado
   detectPortalId() {
-    const hostname = window.location.hostname;
+    // 1. PRIORIDADE: Obter do authClient (JWT token)
+    if (window.authClient && window.authClient.isAuthenticated()) {
+      const portalId = window.authClient.getPortalId();
+      if (portalId) {
+        console.log(`✅ Portal ID obtido do JWT: ${portalId}`);
+        return portalId;
+      }
+    }
     
-    // Mapeamento de domínios para portal_id
-    if (hostname.includes('famalicao')) return 1;
-    if (hostname.includes('braga')) return 2;
-    if (hostname.includes('vilaverde') || hostname.includes('vila-verde')) return 3;
-    
-    // Verificar localStorage (configuração manual)
+    // 2. FALLBACK: Verificar localStorage (configuração manual)
     const storedPortalId = localStorage.getItem('eg_portal_id');
     if (storedPortalId) {
+      console.log(`⚠️ Portal ID obtido do localStorage: ${storedPortalId}`);
       return parseInt(storedPortalId, 10);
     }
     
-    // Default: Famalicão
+    // 3. FALLBACK: Detectar por hostname (para ambientes multi-domínio)
+    const hostname = window.location.hostname;
+    if (hostname.includes('braga')) return 2;
+    if (hostname.includes('vilaverde') || hostname.includes('vila-verde')) return 3;
+    
+    // 4. DEFAULT: Famalicão (apenas se nenhum método funcionar)
     console.warn('⚠️ Portal ID não detectado, usando default: Famalicão (1)');
     return 1;
   }
@@ -396,7 +404,14 @@ class ApiClient {
 }
 
 // Instância global do cliente API
+// Nota: Será reinicializado após login para obter o portal_id correto do JWT
 window.apiClient = new ApiClient();
+
+// Método para reinicializar o apiClient após login
+window.reinitApiClient = function() {
+  window.apiClient = new ApiClient();
+  console.log('🔄 Cliente API reinicializado:', window.apiClient.getConnectionStatus());
+};
 
 console.log('🌐 Cliente API inicializado:', window.apiClient.getConnectionStatus());
 

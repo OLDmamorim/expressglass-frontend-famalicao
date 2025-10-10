@@ -310,6 +310,11 @@
 
       // Utilizador normal - continuar carregamento
       console.log('Utilizador autenticado:', authClient.getUser().username);
+      
+      // Reinicializar apiClient para obter o portal_id correto do JWT
+      if (window.reinitApiClient) {
+        window.reinitApiClient();
+      }
 
       // Implementar logout (aguardar um pouco para o DOM estar pronto)
       setTimeout(() => {
