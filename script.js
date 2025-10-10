@@ -274,7 +274,9 @@ function renderSchedule(){
         })
     );
     const blocks=items.map(a=>{
+      const calibragemBadge = a.calibragem ? '<div class="calibragem-badge" title="Calibragem"></div>' : '';
       return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
+                ${calibragemBadge}
                 <div class="appt-header">
                   <strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}
                 </div>
@@ -330,7 +332,9 @@ function renderUnscheduled(){
   }
 
   const blocks=uns.map(a=>{
+    const calibragemBadge = a.calibragem ? '<div class="calibragem-badge" title="Calibragem"></div>' : '';
     return `<div class="appointment-block status-${a.status}" data-id="${a.id}" draggable="true">
+              ${calibragemBadge}
               <div class="appt-header">
                 <strong>${(a.plate||'')}</strong> | ${(a.service||'')} | ${(a.car||'').toUpperCase()}
               </div>
@@ -368,7 +372,9 @@ function renderMobileDay(){
   );
   const container=document.getElementById('mobileDayList'); if(!container) return;
   container.innerHTML = dayItems.map(a=>{
-    return `<div class="appointment-block status-${a.status}" style="margin-bottom:10px;" data-id="${a.id}">
+    const calibragemBadge = a.calibragem ? '<div class="calibragem-badge" title="Calibragem"></div>' : '';
+    return `<div class="appointment-block status-${a.status}" style="margin-bottom:10px; position: relative;" data-id="${a.id}">
+              ${calibragemBadge}
               <div class="appt-header">${a.period} - ${(a.plate||'')} | ${(a.service||'')} | ${(a.car||'').toUpperCase()}</div>
               <div class="appt-sub">${a.notes||''}</div>
             </div>`;
@@ -584,6 +590,7 @@ function openAppointmentModal(id=null){
       document.getElementById('appointmentStatus').value = a.status||'NE';
       document.getElementById('appointmentNotes').value  = a.notes||'';
       document.getElementById('appointmentExtra').value  = a.extra||'';
+      document.getElementById('appointmentCalibragem').checked = a.calibragem || false;
       del.classList.remove('hidden');
     }
   }else{
@@ -622,6 +629,7 @@ async function saveAppointment(){
     status:  document.getElementById('appointmentStatus').value,
     notes:   document.getElementById('appointmentNotes').value,
     extra:   document.getElementById('appointmentExtra').value,
+    calibragem: document.getElementById('appointmentCalibragem').checked,
     sortIndex: 1
   };
 
