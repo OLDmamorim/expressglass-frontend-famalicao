@@ -39,7 +39,7 @@
       <div class="header-left">
         <img src="assets/express-glass.png" alt="ExpressGlass" class="header-logo">
         <div class="header-title">
-          <h1>VIDROS ESPECIAIS</h1>
+          <h1 id="portalTitle">AGENDAMENTO</h1>
           <p class="subtitle">Vidros para Viaturas</p>
         </div>
       </div>
@@ -323,11 +323,12 @@
         window.reinitApiClient();
       }
 
-      // Atualizar avatar com iniciais do utilizador
-      setTimeout(() => {
+      // Atualizar avatar e título com informações do utilizador
+      setTimeout(async () => {
         const user = authClient.getUser();
         const userInitials = document.getElementById('userInitials');
         const userAvatar = document.getElementById('userAvatar');
+        const portalTitle = document.getElementById('portalTitle');
         
         if (user && userInitials) {
           // Obter primeiras letras do username (máximo 2)
@@ -337,7 +338,32 @@
           userInitials.textContent = initials;
         }
 
-        // Adicionar evento de clique no avatar para mostrar menu (futuramente)
+        // Obter nome do portal e atualizar título
+        if (portalTitle && window.apiClient) {
+          try {
+            const response = await fetch(`${window.apiClient.apiURL}/portals`, {
+              headers: {
+                'Authorization': `Bearer ${authClient.getToken()}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (response.ok) {
+              const portals = await response.json();
+              const userPortalId = window.apiClient.portalId;
+              const portal = portals.find(p => p.id === userPortalId);
+              
+              if (portal) {
+                portalTitle.textContent = `AGENDAMENTO ${portal.name.toUpperCase()}`;
+                document.title = `Agendamentos ${portal.name}`;
+              }
+            }
+          } catch (error) {
+            console.error('Erro ao obter nome do portal:', error);
+          }
+        }
+
+        // Adicionar evento de clique no avatar para logout
         if (userAvatar) {
           userAvatar.addEventListener('click', () => {
             if (confirm('Tem certeza que deseja sair?')) {
@@ -351,6 +377,6 @@
   </script>
 
   <!-- script principal -->
-  <script src="script.js?v=11" defer></script>
+  <script src="script.js?v=12" defer></script>
 </body>
 </html>

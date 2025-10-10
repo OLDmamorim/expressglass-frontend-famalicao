@@ -6,15 +6,16 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background:#f6f7
 /* Header */
 .page-header{ 
   position:relative; 
-  background: #2d3748;
-  color:#fff; 
+  background: #ffffff;
+  color:#1f2937; 
   padding:16px 24px; 
   border-radius:0; 
   margin: -20px -20px 18px -20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,.08);
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .header-left {
@@ -24,22 +25,22 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background:#f6f7
 }
 
 .header-logo {
-  height: 50px;
+  height: 45px;
   width: auto;
 }
 
 .header-title h1 { 
   margin:0; 
-  font-size:20px; 
+  font-size:18px; 
   font-weight:700; 
-  color:#fff;
+  color:#1f2937;
   letter-spacing: 0.5px;
 }
 
 .subtitle { 
   margin:2px 0 0; 
-  font-size:13px;
-  color:#cbd5e0;
+  font-size:12px;
+  color:#6b7280;
   font-weight: 400;
 }
 
@@ -50,9 +51,9 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background:#f6f7
 }
 
 .header-btn{ 
-  background:rgba(255,255,255,.1); 
-  border:1px solid rgba(255,255,255,.2); 
-  color:#fff; 
+  background:#f3f4f6; 
+  border:1px solid #e5e7eb; 
+  color:#374151; 
   padding:8px 12px; 
   border-radius:8px; 
   cursor:pointer;
@@ -60,7 +61,7 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background:#f6f7
 }
 
 .header-btn:hover {
-  background:rgba(255,255,255,.2);
+  background:#e5e7eb;
   transform: translateY(-1px);
 }
 
@@ -68,11 +69,12 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background:#f6f7
   display:flex; 
   gap:6px; 
   align-items:center; 
-  background:rgba(255,255,255,.1); 
-  border:1px solid rgba(255,255,255,.2); 
+  background:#f3f4f6; 
+  border:1px solid #e5e7eb; 
   padding:6px 10px; 
   border-radius:8px; 
   font-size:12px;
+  color:#374151;
 }
 
 .user-avatar {
@@ -88,7 +90,7 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background:#f6f7
   color: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 2px solid rgba(255,255,255,.3);
+  border: 2px solid #3b82f6;
 }
 
 .user-avatar:hover {
