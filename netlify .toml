@@ -1,0 +1,61 @@
+# 🚀 Configuração do Netlify para ExpressGlass Frontend
+# Com suporte a variáveis de ambiente
+
+[build]
+  publish = "."
+  command = "echo 'No build required - static site'"
+
+# ===== VARIÁVEIS DE AMBIENTE =====
+# Exemplo de configuração (adicionar estas no Netlify UI)
+# API_URL = "https://expressglass-backend-famalicao.netlify.app/.netlify/functions"
+# PORTAL_NAME = "Famalicão"
+
+# ===== INJEÇÃO DE VARIÁVEIS NO HTML =====
+# Injeta um script inline que define as variáveis globais
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Content-Type = "text/html; charset=utf-8"
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    # Headers de segurança
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# ===== HEADERS DE SEGURANÇA GLOBAIS =====
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# ===== CACHE PARA ASSETS ESTÁTICOS =====
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+[[headers]]
+  for = "/*.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+# ===== NETLIFY FUNCTIONS (se adicionadas no futuro) =====
+# Configuração para serverless functions
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
