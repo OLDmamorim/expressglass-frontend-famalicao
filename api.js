@@ -1,5 +1,6 @@
 // 🌐 Cliente API para Portal de Agendamento Expressglass
 // Comunicação com Netlify Functions + fallback para localStorage
+// ✅ Agora com suporte a variáveis de ambiente
 
 class ApiClient {
   constructor() {
@@ -61,20 +62,36 @@ class ApiClient {
     console.log(`✅ Portal ID configurado: ${portalId}`);
   }
   
-  // Detectar URL da API automaticamente
+  // Detectar URL da API automaticamente com suporte a variáveis de ambiente
   detectApiUrl() {
+    // 1. PRIORIDADE: Variável de ambiente injectada pelo Netlify
+    if (window.EXPRESSGLASS_API_URL) {
+      console.log('🌍 API URL obtida da variável de ambiente (Netlify)');
+      return window.EXPRESSGLASS_API_URL;
+    }
+    
+    // 2. PRIORIDADE: Variável de ambiente global da config
+    if (window.EXPRESSGLASS_CONFIG && window.EXPRESSGLASS_CONFIG.API_URL) {
+      console.log('🌍 API URL obtida de EXPRESSGLASS_CONFIG');
+      return window.EXPRESSGLASS_CONFIG.API_URL;
+    }
+    
     const hostname = window.location.hostname;
     
+    // 3. Ambiente local de desenvolvimento
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      console.log('🖥️ Ambiente local detectado');
       return 'http://localhost:8888/.netlify/functions';
     }
     
-    // Detectar staging vs produção
+    // 4. Staging
     if (hostname.includes('staging--')) {
+      console.log('🔄 Ambiente staging detectado');
       return 'https://staging--expressglass-backend-famalicao.netlify.app/.netlify/functions';
     }
     
-    // Produção
+    // 5. Produção (fallback)
+    console.log('🚀 Ambiente produção detectado (fallback)');
     return 'https://expressglass-backend-famalicao.netlify.app/.netlify/functions';
   }
 
@@ -103,13 +120,13 @@ class ApiClient {
     
     for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
       try {
-        console.log(`🔄 API Request (tentativa ${attempt}):`, options.method || 'GET', url, `[Portal: ${this.portalId}]`);
+        console.log(`📡 API Request (tentativa ${attempt}):`, options.method || 'GET', url, `[Portal: ${this.portalId}]`);
         
         const response = await fetch(url, defaultOptions);
         
         // Tratar erro 401 (Unauthorized) - redirecionar para login
         if (response.status === 401) {
-          console.warn('🔒 Sessão expirada ou não autenticado');
+          console.warn('🔓 Sessão expirada ou não autenticado');
           
           // Limpar autenticação
           if (window.authClient) {
@@ -368,7 +385,7 @@ class ApiClient {
       
       if (offlineAppointments.length === 0) return;
       
-      console.log(`🔄 Sincronizando ${offlineAppointments.length} agendamentos offline...`);
+      console.log(`📡 Sincronizando ${offlineAppointments.length} agendamentos offline...`);
       
       for (const appointment of offlineAppointments) {
         try {
@@ -418,8 +435,7 @@ window.apiClient = new ApiClient();
 // Método para reinicializar o apiClient após login
 window.reinitApiClient = function() {
   window.apiClient = new ApiClient();
-  console.log('🔄 Cliente API reinicializado:', window.apiClient.getConnectionStatus());
+  console.log('📡 Cliente API reinicializado:', window.apiClient.getConnectionStatus());
 };
 
 console.log('🌐 Cliente API inicializado:', window.apiClient.getConnectionStatus());
-
