@@ -156,13 +156,21 @@ class ApiClient {
       
       const response = await this.makeRequest('/appointments');
       
-      if (response.success) {
-        // Guardar no localStorage como backup
-        this.saveToLocalStorage(response.data);
-        return response.data;
-      } else {
+      // Suportar ambos os formatos: array direto ou objeto {success, data}
+      let data;
+      if (Array.isArray(response)) {
+        data = response;
+      } else if (response.success && response.data) {
+        data = response.data;
+      } else if (response.error) {
         throw new Error(response.error);
+      } else {
+        throw new Error('Formato de resposta inválido');
       }
+      
+      // Guardar no localStorage como backup
+      this.saveToLocalStorage(data);
+      return data;
       
     } catch (error) {
       console.warn('📱 Fallback para localStorage:', error.message);
