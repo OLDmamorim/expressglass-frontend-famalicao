@@ -9,9 +9,7 @@ let editingUserId = null;
   try {
     console.log('Inicializando painel administrativo...');
     
-    // TEMPORÁRIO: Autenticação desativada para testes
-    // TODO: Reativar quando backend estiver pronto
-    /*
+    // Verificar autenticação
     if (!authClient.isAuthenticated()) {
       console.log('Não autenticado - redirecionando para login');
       window.location.href = '/login.html';
@@ -27,10 +25,10 @@ let editingUserId = null;
       window.location.href = '/login.html';
       return;
     }
-    */
     
-    // Exibir nome do utilizador (mock)
-    document.getElementById('currentUser').textContent = 'Admin (Teste)';
+    // Exibir nome do utilizador
+    const currentUserName = authClient.user ? authClient.user.username : 'Admin';
+    document.getElementById('currentUser').textContent = `${currentUserName} (${authClient.user.role})`;
 
     console.log('Carregando dados...');
     // Carregar dados
