@@ -97,20 +97,18 @@ async function loadPortals() {
   tbody.innerHTML = '<tr><td colspan="5" class="loading">A carregar...</td></tr>';
 
   try {
-    // TEMPORÁRIO: Usar fetch normal enquanto autenticação está desativada
     const response = await authClient.authenticatedFetch(`${authClient.baseURL}/portals`);
     const data = await response.json();
 
-    if (!data.success) {
-      throw new Error(data.error);
-    }
+    // Suportar tanto array direto quanto objeto {success, data}
+    const portals = Array.isArray(data) ? data : (data.success ? data.data : []);
 
-    if (data.data.length === 0) {
+    if (portals.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#6b7280;">Nenhum portal encontrado</td></tr>';
       return;
     }
 
-    tbody.innerHTML = data.data.map(portal => `
+    tbody.innerHTML = portals.map(portal => `
       <tr>
         <td>${portal.id}</td>
         <td><strong>${portal.name}</strong></td>
@@ -221,16 +219,15 @@ async function loadUsers() {
     const response = await authClient.authenticatedFetch(`${authClient.baseURL}/users`);
     const data = await response.json();
 
-    if (!data.success) {
-      throw new Error(data.error);
-    }
+    // Suportar tanto array direto quanto objeto {success, data}
+    const users = Array.isArray(data) ? data : (data.success ? data.data : []);
 
-    if (data.data.length === 0) {
+    if (users.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#6b7280;">Nenhum utilizador encontrado</td></tr>';
       return;
     }
 
-    tbody.innerHTML = data.data.map(user => `
+    tbody.innerHTML = users.map(user => `
       <tr>
         <td>${user.id}</td>
         <td><strong>${user.username}</strong></td>
@@ -258,12 +255,11 @@ async function loadPortalsForSelect() {
     const response = await authClient.authenticatedFetch(`${authClient.baseURL}/portals`);
     const data = await response.json();
 
-    if (!data.success) {
-      throw new Error(data.error);
-    }
+    // Suportar tanto array direto quanto objeto {success, data}
+    const portals = Array.isArray(data) ? data : (data.success ? data.data : []);
 
     select.innerHTML = '<option value="">Selecione um portal</option>' +
-      data.data.map(portal => `<option value="${portal.id}">${portal.name}</option>`).join('');
+      portals.map(portal => `<option value="${portal.id}">${portal.name}</option>`).join('');
 
   } catch (error) {
     console.error('Erro ao carregar portais:', error);
