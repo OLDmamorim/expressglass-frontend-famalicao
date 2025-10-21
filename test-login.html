@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste de Login</title>
+</head>
+<body>
+  <h1>Teste de Login - ExpressGlass</h1>
+  <button id="testBtn">Testar Login</button>
+  <pre id="output"></pre>
+
+  <script>
+    const output = document.getElementById('output');
+    const testBtn = document.getElementById('testBtn');
+
+    testBtn.addEventListener('click', async () => {
+      output.textContent = 'Testando login...\n';
+      
+      try {
+        const response = await fetch('https://expressglass-backend-famalicao.netlify.app/.netlify/functions/auth-login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            username: 'admin', 
+            password: 'XGl@55#7458' 
+          })
+        });
+
+        output.textContent += `Status: ${response.status}\n`;
+        output.textContent += `Status Text: ${response.statusText}\n\n`;
+
+        const data = await response.json();
+        output.textContent += `Response:\n${JSON.stringify(data, null, 2)}`;
+
+      } catch (error) {
+        output.textContent += `ERRO: ${error.message}\n`;
+        output.textContent += `Stack: ${error.stack}`;
+      }
+    });
+  </script>
+</body>
+</html>
+
