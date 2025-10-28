@@ -246,6 +246,10 @@
         if (result.success) {
           redirectUser(result.user);
           return;
+        } else {
+          // Limpar localStorage se verificação falhar para prevenir loop
+          authClient.logout();
+          console.log('⚠️ Token inválido removido - faça login novamente');
         }
       }
     })();

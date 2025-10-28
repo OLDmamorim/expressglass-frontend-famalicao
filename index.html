@@ -329,38 +329,37 @@
       }
 
       // Atualizar avatar e título com informações do utilizador
-      setTimeout(async () => {
-        const user = authClient.getUser();
-        const userInitials = document.getElementById('userInitials');
-        const userAvatar = document.getElementById('userAvatar');
-        const portalTitle = document.getElementById('portalTitle');
-        
-        if (user && userInitials) {
-          // Obter primeiras letras do username (máximo 2)
-          const initials = user.username
-            .substring(0, 2)
-            .toUpperCase();
-          userInitials.textContent = initials;
-        }
+      // Removido setTimeout para executar imediatamente e evitar condição de corrida
+      const user = authClient.getUser();
+      const userInitials = document.getElementById('userInitials');
+      const userAvatar = document.getElementById('userAvatar');
+      const portalTitle = document.getElementById('portalTitle');
+      
+      if (user && userInitials) {
+        // Obter primeiras letras do username (máximo 2)
+        const initials = user.username
+          .substring(0, 2)
+          .toUpperCase();
+        userInitials.textContent = initials;
+      }
 
-        // Obter nome do portal do utilizador
-        const portalName = document.getElementById('portalName');
-        if (portalName && user && user.portal && user.portal.name) {
-          portalName.textContent = user.portal.name.toUpperCase();
-          document.title = `Agendamentos ${user.portal.name}`;
-          console.log('✅ Portal atualizado:', user.portal.name);
-        }
+      // Obter nome do portal do utilizador
+      const portalName = document.getElementById('portalName');
+      if (portalName && user && user.portal && user.portal.name) {
+        portalName.textContent = user.portal.name.toUpperCase();
+        document.title = `Agendamentos ${user.portal.name}`;
+        console.log('✅ Portal atualizado:', user.portal.name);
+      }
 
-        // Adicionar evento de clique no avatar para logout
-        if (userAvatar) {
-          userAvatar.addEventListener('click', () => {
-            if (confirm('Tem certeza que deseja sair?')) {
-              authClient.logout();
-              window.location.href = '/login.html';
-            }
-          });
-        }
-      }, 100);
+      // Adicionar evento de clique no avatar para logout
+      if (userAvatar) {
+        userAvatar.addEventListener('click', () => {
+          if (confirm('Tem certeza que deseja sair?')) {
+            authClient.logout();
+            window.location.href = '/login.html';
+          }
+        });
+      }
     })();
   </script>
 
